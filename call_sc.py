@@ -1,13 +1,13 @@
 import base64
 
 from algosdk.future import transaction
-from algosdk import account, mnemonic
+from algosdk import account, mnemonic, encoding
 from algosdk.v2client import algod
 from pyteal import compileTeal, Mode
 from datetime import datetime,timezone
 from zoneinfo import ZoneInfo
 
-APP_ID = "94241155"
+APP_ID = 94241155
 
 # # Read a file
 # def load_resource(res):
@@ -135,6 +135,7 @@ def call_app(client, private_key, index, msg):
 
     # await confirmation
     transaction.wait_for_confirmation(client, tx_id)
+    print("Transaction ID:", tx_id)
 
 
 def generate_algorand_keypair():
@@ -180,10 +181,7 @@ def format_state(state):
         formatted_key = base64.b64decode(key).decode('utf-8')
         if value['type'] == 1:
             # byte string
-            if formatted_key == 'voted':
-                formatted_value = base64.b64decode(value['bytes']).decode('utf-8')
-            else:
-                formatted_value = value['bytes']
+            formatted_value = encoding.encode_address(base64.b64decode(value['bytes']))
             formatted[formatted_key] = formatted_value
         else:
             # integer
@@ -199,8 +197,10 @@ def main():
 
     msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending notification --> {}".format(msg))
-    call_app(algod_client, pvt_key, APP_ID, msg)
+    # call_app(algod_client, pvt_key, APP_ID, msg)
 
-    read_local_state(algod_client, address, APP_ID)
+    # read_local_state(algod_client, address, APP_ID)
+    print("Local state:",
+          read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", APP_ID))
 
 main()

@@ -26,7 +26,7 @@ handle_updateapp = Return(is_creator())
 handle_deleteapp = Return(is_creator())
 
 notify = Seq([
-    App.localPut(Int(0), Bytes("TxnID"), Txn.sender()),
+    App.localPut(Txn.accounts[0], Bytes("TxnID"), Txn.tx_id()),
     Approve()
 ])
 
@@ -38,9 +38,7 @@ notify = Seq([
 
 # application calls
 handle_noop = Seq([
-    # First, lets fail immediately if this transaction is grouped with any others
-    Assert(Global.group_size() == Int(1)),
-    Cond(
+        Cond(
         [Txn.application_args[0] == Bytes("Notify"), notify]
     )
 ])

@@ -117,16 +117,15 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
 # helper function that formats global state for printing
 def format_state(state):
     formatted = {}
+    # import ipdb; ipdb.set_trace()
+
     for item in state:
         key = item['key']
         value = item['value']
         formatted_key = base64.b64decode(key).decode('utf-8')
         if value['type'] == 1:
             # byte string
-            if formatted_key == 'voted':
-                formatted_value = base64.b64decode(value['bytes']).decode('utf-8')
-            else:
-                formatted_value = value['bytes']
+            formatted_value = base64.b64decode(value['bytes'])
             formatted[formatted_key] = formatted_value
         else:
             # integer
@@ -191,7 +190,7 @@ def main():
     #                     global_schema, local_schema)
 
     app_id = APP_ID
-    # update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
+    update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     # read global state of application
     print("Global state:", read_global_state(algod_client, app_id))

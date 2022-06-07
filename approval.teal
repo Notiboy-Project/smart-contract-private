@@ -25,19 +25,15 @@ int NoOp
 bnz main_l7
 err
 main_l7:
-global GroupSize
-int 1
-==
-assert
 txna ApplicationArgs 0
 byte "Notify"
 ==
 bnz main_l9
 err
 main_l9:
-int 0
+txna Accounts 0
 byte "TxnID"
-txn Sender
+txn TxID
 app_local_put
 int 1
 return
