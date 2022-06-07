@@ -1,40 +1,49 @@
 from pyteal import *
 
 
-handle_creation = Seq(
-    App.globalPut(Bytes("Count"), Int(0)),
-    Return(Int(1))
-)
+handle_creation = Seq([
+    App.globalPut(Bytes("Creator"), Bytes("Deepak")),
+    Approve()
+])
 
-handle_optin = Return(Int(1))
+is_creator = Assert(Txn.sender() == Global.creator_address())
+
+
+@Subroutine(TealType.uint64)
+def is_creator():
+    return Eq(Txn.sender(), Global.creator_address())
+
+
+handle_optin = Seq([
+    If(App.optedIn(Txn.sender(), Global.current_application_id()), Approve()),
+    Approve()
+])
 # no txn should clear the local state
-handle_closeout = Return(Int(0))
-# no txn should update the app
-handle_updateapp = Return(Int(0))
+handle_closeout = Reject()
+# txn can update the app only if initiated by creator
+handle_updateapp = Return(is_creator())
 # no txn should delete the app
-handle_deleteapp = Return(Int(0))
-# these are typically calls to the app
-handle_noop = Return(Int(0))
+handle_deleteapp = Return(is_creator())
 
-add = Seq(
-    App.globalPut(Bytes("Count"), App.globalGet(Bytes("Count"))+Int(1)),
-    Return(Int(1))
-)
-deduct = Seq(
-    If(App.globalGet(Bytes("Count")) > Int(0),
-        App.globalPut(Bytes("Count"), App.globalGet(Bytes("Count"))-Int(1)),
-       ),
-    Return(Int(1))
-)
+notify = Seq([
+    App.localPut(Int(0), Bytes("TxnID"), Txn.sender()),
+    Approve()
+])
 
-handle_noop = Seq(
+# deduct = Seq([
+#     If(App.globalGet(Bytes("Count")) > Int(0))
+#     .Then(App.globalPut(Bytes("Count"), App.globalGet(Bytes("Count"))-Int(1))),
+#     Approve()
+# ])
+
+# application calls
+handle_noop = Seq([
     # First, lets fail immediately if this transaction is grouped with any others
     Assert(Global.group_size() == Int(1)),
     Cond(
-        [Txn.application_args[0] == Bytes("Add"), add],
-        [Txn.application_args[0] == Bytes("Deduct"), deduct]
+        [Txn.application_args[0] == Bytes("Notify"), notify]
     )
-)
+])
 
 
 def approval_program():
@@ -47,11 +56,11 @@ def approval_program():
         [Txn.on_completion() == OnComplete.NoOp, handle_noop]
     )
 
-    return compileTeal(program, Mode.Application, version=5)
+    return compileTeal(program, Mode.Application, version=6)
 
 def clear_state_program():
     program = Return(Int(1))
-    return compileTeal(program, Mode.Application, version=5)
+    return compileTeal(program, Mode.Application, version=6)
 
 print(approval_program())
 print(clear_state_program())
