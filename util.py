@@ -21,11 +21,17 @@ def format_local_state(state):
         key = item['key']
         value = item['value']
         byte_key = base64.b64decode(key)
-
-        formatted_key = int.from_bytes(byte_key, "big")
+        if byte_key.decode() == "index":
+            formatted_key = byte_key.decode()
+        else:
+            formatted_key = int.from_bytes(byte_key, "big")
         if value['type'] == 1:
             # byte string
-            formatted_value = encoding.encode_address(base64.b64decode(value['bytes']))
+            byte_value = base64.b64decode(value['bytes'])
+            if byte_key.decode() == "index":
+                formatted_value = int.from_bytes(byte_value, "big")
+            else:
+                formatted_value = encoding.encode_address(byte_value)
             formatted[formatted_key] = formatted_value
         else:
             # integer

@@ -31,17 +31,19 @@ byte "Notify"
 bnz main_l9
 err
 main_l9:
+txn Sender
 global CurrentApplicationID
 byte "index"
-app_global_get_ex
+app_local_get_ex
 store 3
 store 2
 load 3
 !
 bnz main_l13
 main_l10:
+txn Sender
 byte "index"
-app_global_get
+app_local_get
 store 0
 load 0
 btoi
@@ -57,16 +59,19 @@ int 0
 ==
 bnz main_l12
 main_l11:
-txna Accounts 0
+byte "index"
+app_global_del
+txn Sender
 load 1
 app_local_del
 txn Sender
 load 1
 txn TxID
 app_local_put
+txn Sender
 byte "index"
 load 1
-app_global_put
+app_local_put
 int 1
 return
 main_l12:
@@ -75,10 +80,11 @@ itob
 store 1
 b main_l11
 main_l13:
+txn Sender
 byte "index"
 int 0
 itob
-app_global_put
+app_local_put
 b main_l10
 main_l14:
 callsub iscreator_0

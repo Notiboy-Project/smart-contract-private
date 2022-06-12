@@ -28,12 +28,12 @@ handle_deleteapp = Return(is_creator())
 
 index = ScratchVar(TealType.bytes)
 next_index = ScratchVar(TealType.bytes)
-index_val = App.globalGetEx(app_id, Bytes("index"))
+index_val = App.localGetEx(Txn.sender(), app_id, Bytes("index"))
 init_index = Seq([
         index_val,
         If(Not(index_val.hasValue()))
-        .Then(App.globalPut(Bytes("index"), Itob(Int(0)))),
-        App.globalGet(Bytes("index"))
+        .Then(App.localPut(Txn.sender(), Bytes("index"), Itob(Int(0)))),
+        App.localGet(Txn.sender(), Bytes("index"))
 ])
 
 notify = Seq([
@@ -43,19 +43,12 @@ notify = Seq([
     )),
     If(Btoi(next_index.load()) == Int(0))
     .Then(next_index.store(Itob(Int(1)))),
-    # App.localDel(Txn.sender(), Itob(Int(16))),
-    App.localDel(Txn.accounts[0], next_index.load()),
+    App.localDel(Txn.sender(), next_index.load()),
     App.localPut(Txn.sender(), next_index.load(), Txn.tx_id()),
-    App.globalPut(Bytes("index"), next_index.load()),
+    App.localPut(Txn.sender(), Bytes("index"), next_index.load()),
     Approve()
 ])
 
-
-# deduct = Seq([
-#     If(App.globalGet(Bytes("Count")) > Int(0))
-#     .Then(App.globalPut(Bytes("Count"), App.globalGet(Bytes("Count"))-Int(1))),
-#     Approve()
-# ])
 
 # application calls
 handle_noop = Seq([
