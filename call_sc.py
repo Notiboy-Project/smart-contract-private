@@ -1,12 +1,11 @@
-import base64
-
-from algosdk.future import transaction
-from algosdk import account, mnemonic, encoding
-from algosdk.v2client import algod
-from pyteal import compileTeal, Mode
-from datetime import datetime,timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from algosdk import account
+from algosdk.future import transaction
+from algosdk.v2client import algod
+
+from util import read_local_state, read_global_state
 APP_ID = 94241155
 
 # # Read a file
@@ -16,8 +15,8 @@ APP_ID = 94241155
 #     with open(path, "rb") as fin:
 #         data = fin.read()
 #     return data
-#
-#
+
+
 # def contract_account_example():
 #     # Create an algod client
 #     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -161,34 +160,6 @@ def get_algod_client(private_key, my_address):
     return algod_client
 
 
-# read user local state
-def read_local_state(client, addr, app_id):
-    results = client.account_info(addr)
-    for local_state in results["apps-local-state"]:
-        if local_state["id"] == app_id:
-            if "key-value" not in local_state:
-                return {}
-            return format_state(local_state["key-value"])
-    return {}
-
-
-# helper function that formats global state for printing
-def format_state(state):
-    formatted = {}
-    for item in state:
-        key = item['key']
-        value = item['value']
-        formatted_key = base64.b64decode(key).decode('utf-8')
-        if value['type'] == 1:
-            # byte string
-            formatted_value = encoding.encode_address(base64.b64decode(value['bytes']))
-            formatted[formatted_key] = formatted_value
-        else:
-            # integer
-            formatted[formatted_key] = value['uint']
-    return formatted
-
-
 def main():
     pvt_key, address = generate_algorand_keypair()
     algod_client = get_algod_client(pvt_key, address)
@@ -197,10 +168,14 @@ def main():
 
     msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending notification --> {}".format(msg))
-    # call_app(algod_client, pvt_key, APP_ID, msg)
+    call_app(algod_client, pvt_key, APP_ID, msg)
 
-    # read_local_state(algod_client, address, APP_ID)
-    print("Local state:",
-          read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", APP_ID))
+    print("Global state:", read_global_state(algod_client, APP_ID))
+    print("Local state")
+    local_state = read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", APP_ID)
+    # import ipdb;
+    # ipdb.set_trace()
+    for k, v in local_state.items():
+        print("{} --> {}".format(k,v))
 
 main()

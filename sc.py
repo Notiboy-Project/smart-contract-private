@@ -1,13 +1,13 @@
 from pyteal import *
 
+is_creator = Assert(Txn.sender() == Global.creator_address())
+app_id = Global.current_application_id()
+
 
 handle_creation = Seq([
     App.globalPut(Bytes("Creator"), Bytes("Deepak")),
     Approve()
 ])
-
-is_creator = Assert(Txn.sender() == Global.creator_address())
-
 
 @Subroutine(TealType.uint64)
 def is_creator():
@@ -15,7 +15,7 @@ def is_creator():
 
 
 handle_optin = Seq([
-    If(App.optedIn(Txn.sender(), Global.current_application_id()), Approve()),
+    If(App.optedIn(Txn.sender(), app_id), Approve()),
     Approve()
 ])
 # no txn should clear the local state
@@ -25,10 +25,31 @@ handle_updateapp = Return(is_creator())
 # no txn should delete the app
 handle_deleteapp = Return(is_creator())
 
+
+index = ScratchVar(TealType.bytes)
+next_index = ScratchVar(TealType.bytes)
+index_val = App.globalGetEx(app_id, Bytes("index"))
+init_index = Seq([
+        index_val,
+        If(Not(index_val.hasValue()))
+        .Then(App.globalPut(Bytes("index"), Itob(Int(0)))),
+        App.globalGet(Bytes("index"))
+])
+
 notify = Seq([
-    App.localPut(Txn.accounts[0], Bytes("TxnID"), Txn.tx_id()),
+    index.store(init_index),
+    next_index.store(Itob(
+        (Btoi(index.load()) + Int(1)) % Int(16)
+    )),
+    If(Btoi(next_index.load()) == Int(0))
+    .Then(next_index.store(Itob(Int(1)))),
+    # App.localDel(Txn.sender(), Itob(Int(16))),
+    App.localDel(Txn.accounts[0], next_index.load()),
+    App.localPut(Txn.sender(), next_index.load(), Txn.tx_id()),
+    App.globalPut(Bytes("index"), next_index.load()),
     Approve()
 ])
+
 
 # deduct = Seq([
 #     If(App.globalGet(Bytes("Count")) > Int(0))

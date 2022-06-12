@@ -2,23 +2,23 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l16
+bnz main_l20
 txn OnCompletion
 int OptIn
 ==
-bnz main_l13
+bnz main_l17
 txn OnCompletion
 int CloseOut
 ==
-bnz main_l12
+bnz main_l16
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l11
+bnz main_l15
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l10
+bnz main_l14
 txn OnCompletion
 int NoOp
 ==
@@ -31,32 +31,75 @@ byte "Notify"
 bnz main_l9
 err
 main_l9:
+global CurrentApplicationID
+byte "index"
+app_global_get_ex
+store 3
+store 2
+load 3
+!
+bnz main_l13
+main_l10:
+byte "index"
+app_global_get
+store 0
+load 0
+btoi
+int 1
++
+int 16
+%
+itob
+store 1
+load 1
+btoi
+int 0
+==
+bnz main_l12
+main_l11:
 txna Accounts 0
-byte "TxnID"
+load 1
+app_local_del
+txn Sender
+load 1
 txn TxID
 app_local_put
+byte "index"
+load 1
+app_global_put
 int 1
 return
-main_l10:
-callsub iscreator_0
-return
-main_l11:
-callsub iscreator_0
-return
 main_l12:
+int 1
+itob
+store 1
+b main_l11
+main_l13:
+byte "index"
+int 0
+itob
+app_global_put
+b main_l10
+main_l14:
+callsub iscreator_0
+return
+main_l15:
+callsub iscreator_0
+return
+main_l16:
 int 0
 return
-main_l13:
+main_l17:
 txn Sender
 global CurrentApplicationID
 app_opted_in
-bnz main_l15
+bnz main_l19
 int 1
 return
-main_l15:
+main_l19:
 int 1
 return
-main_l16:
+main_l20:
 byte "Creator"
 byte "Deepak"
 app_global_put

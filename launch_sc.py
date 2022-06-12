@@ -6,6 +6,7 @@ from algosdk import account, mnemonic, logic
 import base64
 
 from sc import approval_program, clear_state_program
+from util import read_local_state, read_global_state
 
 APP_ID = 94241155
 
@@ -114,42 +115,6 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
 
     return app_id
 
-# helper function that formats global state for printing
-def format_state(state):
-    formatted = {}
-    # import ipdb; ipdb.set_trace()
-
-    for item in state:
-        key = item['key']
-        value = item['value']
-        formatted_key = base64.b64decode(key).decode('utf-8')
-        if value['type'] == 1:
-            # byte string
-            formatted_value = base64.b64decode(value['bytes'])
-            formatted[formatted_key] = formatted_value
-        else:
-            # integer
-            formatted[formatted_key] = value['uint']
-    return formatted
-
-
-# helper function to read app global state
-def read_global_state(client, app_id):
-    app = client.application_info(app_id)
-    global_state = app['params']['global-state'] if "global-state" in app['params'] else []
-    return format_state(global_state)
-
-
-# read user local state
-def read_local_state(client, addr, app_id):
-    results = client.account_info(addr)
-    for local_state in results["apps-local-state"]:
-        if local_state["id"] == app_id:
-            if "key-value" not in local_state:
-                return {}
-            return format_state(local_state["key-value"])
-    return {}
-
 
 def main():
     pvt_key, address = generate_algorand_keypair()
@@ -192,10 +157,10 @@ def main():
     app_id = APP_ID
     update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
-    # read global state of application
     print("Global state:", read_global_state(algod_client, app_id))
-
-    print("Local state:", read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", APP_ID))
-
+    print("Local state")
+    local_state = read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", app_id)
+    for k, v in local_state.items():
+        print("{} --> {}".format(k,v))
 
 main()
