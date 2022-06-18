@@ -6,78 +6,12 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 
 from util import read_local_state, read_global_state
+
 APP_ID = 94241155
-
-# # Read a file
-# def load_resource(res):
-#     dir_path = os.path.dirname(os.path.realpath(__file__))
-#     path = os.path.join(dir_path, res)
-#     with open(path, "rb") as fin:
-#         data = fin.read()
-#     return data
+DAPP_NAME = "mydapp"
 
 
-# def contract_account_example():
-#     # Create an algod client
-#     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-#     algod_address = "https://node.testnet.algoexplorerapi.io"
-#     receiver = "NQMDAY2QKOZ4ZKJLE6HEO6LTGRJHP3WQVZ5C2M4HKQQLFHV5BU5AW4NVRY"
-#     algod_client = algod.AlgodClient(algod_token, algod_address)
-#     myprogram = "logic-sig.teal"
-#     # Read TEAL program
-#     data = load_resource(myprogram)
-#     source = data.decode('utf-8')
-#     response = algod_client.compile(source)
-#     print("Response Result = ", response['result'])
-#     print("Response Hash = ", response['hash'])
-#     # Create logic sig
-#     programstr = response['result']
-#     t = programstr.encode("ascii")
-#     print("Encoded before %s, after %s", programstr, t)
-#     # program = b"hex-encoded-program"
-#     program = base64.decodebytes(t)
-#     print(program)
-#     print(len(program) * 8)
-#     # string parameter
-#     # arg_str = "<my string>"
-#     # arg1 = arg_str.encode()
-#     # lsig = transaction.LogicSig(program, args=[arg1])
-#     # see more info here: https://developer.algorand.org/docs/features/asc1/sdks/#accessing-teal-program-from-sdks
-#     # Create arg to pass if TEAL program requires an arg
-#     # if not, omit args param
-#     arg1 = (123).to_bytes(8, 'big')
-#     lsig = LogicSig(program, args=[arg1])
-#     sender = lsig.address()
-#     # Get suggested parameters
-#     params = algod_client.suggested_params()
-#     # Comment out the next two (2) lines to use suggested fees
-#     # params.flat_fee = True
-#     # params.fee = 1000
-#     # Build transaction
-#     amount = 10000
-#     closeremainderto = None
-#     # Create a transaction
-#     txn = PaymentTxn(
-#         sender, params, receiver, amount, closeremainderto)
-#     # Create the LogicSigTransaction with contract account LogicSig
-#     lstx = transaction.LogicSigTransaction(txn, lsig)
-#     # transaction.write_to_file([lstx], "simple.stxn")
-#     # Send raw LogicSigTransaction to network
-#     txid = algod_client.send_transaction(lstx)
-#     print("Transaction ID: " + txid)
-#     # wait for confirmation
-#     try:
-#         confirmed_txn = wait_for_confirmation(algod_client, txid, 4)
-#         print("TXID: ", txid)
-#         print("Result confirmed in round: {}".format(confirmed_txn['confirmed-round']))
-#     except Exception as err:
-#         print(err)
-#     print("Transaction information: {}".format(
-#         json.dumps(confirmed_txn, indent=4)))
-
-
-# opt-in to application
-def opt_in_app(client, private_key, index):
+def opt_in_app(client, private_key, index, dapp_name):
     # declare sender
     sender = account.address_from_private_key(private_key)
     print("OptIn from account: ", sender)
@@ -88,8 +22,13 @@ def opt_in_app(client, private_key, index):
     params.flat_fee = True
     params.fee = 1000
 
+    app_args = [
+        str.encode(dapp_name),
+        str.encode("dapp"),
+    ]
+
     # create unsigned transaction
-    txn = transaction.ApplicationOptInTxn(sender, params, index)
+    txn = transaction.ApplicationOptInTxn(sender, params, index, app_args)
 
     # sign transaction
     signed_txn = txn.sign(private_key)
@@ -137,21 +76,26 @@ def call_app(client, private_key, index, msg):
     print("Transaction ID:", tx_id)
 
 
-def generate_algorand_keypair():
-    # private_key, address = account.generate_account()
-    # print("My address: {}".format(address))
-    # print("My private key: {}".format(private_key))
-    # print("My passphrase: {}".format(mnemonic.from_private_key(private_key)))
+def generate_algorand_keypair(overwrite):
+    if overwrite:
+        private_key, address = account.generate_account()
+        with open("secret.txt", "w") as f:
+            f.write('{}\n{}\n'.format(address, private_key))
+    else:
+        with open("secret.txt", "r") as f:
+            lns = f.readlines()
+            address = lns[0].rstrip('\n')
+            private_key = lns[1].rstrip('\n')
 
-    private_key = "jTDuUq3AFTJBkmOQGLlB3mVnmvmUHQfxgEw/bs+XOO5ILNWQqI/QPl2a+VPDU78TeHBlZiTs7TfqPEjdm9wYoQ=="
-    address = "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU"
+    print("My address: {}".format(address))
+    print("My private key: {}".format(private_key))
 
     return private_key, address
 
 
 def get_algod_client(private_key, my_address):
     algod_address = "http://localhost:4001"
-    # algod_address = "https://node.testnet.algoexplorerapi.io"
+    algod_address = "https://node.testnet.algoexplorerapi.io"
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
@@ -161,10 +105,15 @@ def get_algod_client(private_key, my_address):
 
 
 def main():
-    pvt_key, address = generate_algorand_keypair()
+    # gen_new_address = True
+    gen_new_address = False
+    pvt_key, address = generate_algorand_keypair(gen_new_address)
     algod_client = get_algod_client(pvt_key, address)
 
-    # opt_in_app(algod_client, pvt_key, APP_ID)
+    # try:
+    #     opt_in_app(algod_client, pvt_key, APP_ID, DAPP_NAME)
+    # except Exception as err:
+    #     print("error opting in, err: {}".format(err))
 
     msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending notification --> {}".format(msg))
@@ -172,10 +121,10 @@ def main():
 
     print("Global state:", read_global_state(algod_client, APP_ID))
     print("Local state")
-    local_state = read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", APP_ID)
-    # import ipdb;
-    # ipdb.set_trace()
+    local_state = read_local_state(algod_client, address, APP_ID)
+
     for k, v in local_state.items():
-        print("{} --> {}".format(k,v))
+        print("{} --> {}".format(k, v))
+
 
 main()

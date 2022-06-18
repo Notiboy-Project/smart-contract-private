@@ -6,6 +6,8 @@ from algosdk import encoding
 # read user local state
 def read_local_state(client, addr, app_id):
     results = client.account_info(addr)
+    # import ipdb;
+    # ipdb.set_trace()
     for local_state in results["apps-local-state"]:
         if local_state["id"] == app_id:
             if "key-value" not in local_state:
@@ -50,11 +52,10 @@ def format_global_state(state):
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if formatted_key == "index":
-                formatted_value = int.from_bytes(byte_value, "big")
-            elif formatted_key == "Creator":
+            if formatted_key == "Creator":
                 formatted_value = byte_value.decode()
-
+            else:
+                formatted_value = encoding.encode_address(byte_value)
             formatted[formatted_key] = formatted_value
         else:
             # integer

@@ -2,23 +2,23 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l20
+bnz main_l16
 txn OnCompletion
 int OptIn
 ==
-bnz main_l17
+bnz main_l15
 txn OnCompletion
 int CloseOut
 ==
-bnz main_l16
+bnz main_l14
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l15
+bnz main_l13
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l14
+bnz main_l12
 txn OnCompletion
 int NoOp
 ==
@@ -33,79 +33,67 @@ err
 main_l9:
 txn Sender
 global CurrentApplicationID
-byte "index"
-app_local_get_ex
-store 3
-store 2
-load 3
-!
-bnz main_l13
-main_l10:
-txn Sender
-byte "index"
-app_local_get
-store 0
-load 0
+app_opted_in
+assert
+callsub isvalid_1
+assert
+callsub loadindex_3
 btoi
 int 1
 +
 int 16
 %
 itob
-store 1
-load 1
+store 0
+load 0
 btoi
 int 0
 ==
-bnz main_l12
-main_l11:
-byte "index"
-app_global_del
+bnz main_l11
+main_l10:
 txn Sender
-load 1
+load 0
 app_local_del
 txn Sender
-load 1
+load 0
 txn TxID
 app_local_put
 txn Sender
 byte "index"
-load 1
+load 0
 app_local_put
 int 1
 return
-main_l12:
+main_l11:
 int 1
 itob
-store 1
-b main_l11
-main_l13:
-txn Sender
-byte "index"
-int 0
-itob
-app_local_put
+store 0
 b main_l10
-main_l14:
+main_l12:
+callsub isvalid_1
+assert
 callsub iscreator_0
+return
+main_l13:
+callsub isvalid_1
+assert
+callsub iscreator_0
+return
+main_l14:
+callsub isvalid_1
+assert
+int 0
 return
 main_l15:
-callsub iscreator_0
+callsub isvalid_1
+assert
+callsub registerdapp_2
+pop
+int 1
 return
 main_l16:
-int 0
-return
-main_l17:
-txn Sender
-global CurrentApplicationID
-app_opted_in
-bnz main_l19
-int 1
-return
-main_l19:
-int 1
-return
-main_l20:
+callsub isvalid_1
+assert
 byte "Creator"
 byte "Deepak"
 app_global_put
@@ -117,4 +105,53 @@ iscreator_0:
 txn Sender
 global CreatorAddress
 ==
+retsub
+
+// is_valid
+isvalid_1:
+global GroupSize
+int 1
+==
+txn RekeyTo
+global ZeroAddress
+==
+&&
+retsub
+
+// register_dapp
+registerdapp_2:
+txn NumAppArgs
+int 2
+==
+assert
+txna ApplicationArgs 0
+txn Sender
+app_global_put
+txna ApplicationArgs 1
+byte "dapp"
+==
+assert
+int 1
+return
+
+// load_index
+loadindex_3:
+txn Sender
+global CurrentApplicationID
+byte "index"
+app_local_get_ex
+store 2
+store 1
+load 2
+!
+bz loadindex_3_l2
+txn Sender
+byte "index"
+int 0
+itob
+app_local_put
+loadindex_3_l2:
+txn Sender
+byte "index"
+app_local_get
 retsub

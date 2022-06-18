@@ -10,6 +10,7 @@ from util import read_local_state, read_global_state
 
 APP_ID = 94241155
 
+
 def generate_algorand_keypair():
     # private_key, address = account.generate_account()
     # print("My address: {}".format(address))
@@ -23,8 +24,8 @@ def generate_algorand_keypair():
 
 
 def get_algod_client(private_key, my_address):
-    algod_address = "http://localhost:4001"
-    # algod_address = "https://node.testnet.algoexplorerapi.io"
+    # algod_address = "http://localhost:4001"
+    algod_address = "https://node.testnet.algoexplorerapi.io"
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
@@ -50,7 +51,8 @@ def create_app(client, private_key, approval_program, clear_program, global_sche
     params = client.suggested_params()
 
     # create unsigned transaction
-    txn = transaction.ApplicationCreateTxn(sender, params, on_complete, approval_program, clear_program, global_schema, local_schema)
+    txn = transaction.ApplicationCreateTxn(sender, params, on_complete, approval_program, clear_program, global_schema,
+                                           local_schema)
 
     # sign transaction
     signed_txn = txn.sign(private_key)
@@ -130,7 +132,6 @@ def main():
     global_bytes = 64
     global_schema = transaction.StateSchema(global_ints, global_bytes)
 
-
     # compile program to TEAL assembly
     with open("./approval.teal", "w") as f:
         approval_program_teal = approval_program()
@@ -158,9 +159,6 @@ def main():
     update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
-    print("Local state")
-    local_state = read_local_state(algod_client, "JAWNLEFIR7ID4XM27FJ4GU57CN4HAZLGETWO2N7KHREN3G64DCQ37HJ5UU", app_id)
-    for k, v in local_state.items():
-        print("{} --> {}".format(k,v))
+
 
 main()
