@@ -37,7 +37,7 @@ app_opted_in
 assert
 callsub isvalid_1
 assert
-callsub loadindex_3
+callsub loadindex_4
 btoi
 int 1
 +
@@ -85,9 +85,9 @@ assert
 int 0
 return
 main_l15:
-callsub isvalid_1
+callsub isvalidoptin_2
 assert
-callsub registerdapp_2
+callsub registerdapp_3
 pop
 int 1
 return
@@ -118,16 +118,54 @@ global ZeroAddress
 &&
 retsub
 
+// is_valid_optin
+isvalidoptin_2:
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+gtxn 1 RekeyTo
+global ZeroAddress
+==
+&&
+global GroupSize
+int 2
+==
+&&
+gtxn 1 TypeEnum
+int appl
+==
+&&
+gtxn 1 OnCompletion
+int OptIn
+==
+&&
+gtxn 0 TypeEnum
+int pay
+==
+&&
+gtxn 0 Receiver
+addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
+==
+&&
+gtxn 0 Amount
+int 1000000
+>=
+&&
+retsub
+
 // register_dapp
-registerdapp_2:
-txn NumAppArgs
+registerdapp_3:
+gtxn 1 NumAppArgs
 int 2
 ==
 assert
-txna ApplicationArgs 0
-txn Sender
+gtxna 1 ApplicationArgs 0
+gtxn 1 Sender
 app_global_put
-txna ApplicationArgs 1
+byte "test"
+byte "test"
+app_global_put
+gtxna 1 ApplicationArgs 1
 byte "dapp"
 ==
 assert
@@ -135,7 +173,7 @@ int 1
 return
 
 // load_index
-loadindex_3:
+loadindex_4:
 txn Sender
 global CurrentApplicationID
 byte "index"
@@ -144,13 +182,13 @@ store 2
 store 1
 load 2
 !
-bz loadindex_3_l2
+bz loadindex_4_l2
 txn Sender
 byte "index"
 int 0
 itob
 app_local_put
-loadindex_3_l2:
+loadindex_4_l2:
 txn Sender
 byte "index"
 app_local_get

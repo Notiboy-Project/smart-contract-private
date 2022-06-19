@@ -1,3 +1,5 @@
+import ipdb
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -8,7 +10,7 @@ from algosdk.v2client import algod
 from util import read_local_state, read_global_state
 
 APP_ID = 94241155
-DAPP_NAME = "mydapp"
+DAPP_NAME = "mydapp12"
 
 
 def opt_in_app(client, private_key, index, dapp_name):
@@ -28,21 +30,31 @@ def opt_in_app(client, private_key, index, dapp_name):
     ]
 
     # create unsigned transaction
-    txn = transaction.ApplicationOptInTxn(sender, params, index, app_args)
+    txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args)
+
+    # pay 1 algo
+    txn1 = transaction.PaymentTxn(sender, params, "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA",
+                                  1000000)
+
+    gid = transaction.calculate_group_id([txn1, txn2])
+    transaction.assign_group_id([txn1, txn2])
+    txn1.gid = gid
+    txn2.gid = gid
 
     # sign transaction
-    signed_txn = txn.sign(private_key)
-    tx_id = signed_txn.transaction.get_txid()
+    signed_txn1 = txn1.sign(private_key)
+    signed_txn2 = txn2.sign(private_key)
+    signed_group = [signed_txn1, signed_txn2]
 
     # send transaction
-    client.send_transactions([signed_txn])
+    tx_id = client.send_transactions(signed_group)
 
     # await confirmation
     transaction.wait_for_confirmation(client, tx_id)
 
     # display results
     transaction_response = client.pending_transaction_info(tx_id)
-    print("OptIn to app-id:", transaction_response["txn"]["txn"]["apid"])
+    print("OptIn to app-id: {} in round: {}".format(index, transaction_response.get("confirmed-round")))
 
 
 # call application
@@ -110,14 +122,17 @@ def main():
     pvt_key, address = generate_algorand_keypair(gen_new_address)
     algod_client = get_algod_client(pvt_key, address)
 
-    # try:
-    #     opt_in_app(algod_client, pvt_key, APP_ID, DAPP_NAME)
-    # except Exception as err:
-    #     print("error opting in, err: {}".format(err))
+    try:
+        opt_in_app(algod_client, pvt_key, APP_ID, DAPP_NAME)
+    except Exception as err:
+        print("error opting in, err: {}".format(err))
 
     msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending notification --> {}".format(msg))
-    call_app(algod_client, pvt_key, APP_ID, msg)
+    try:
+        call_app(algod_client, pvt_key, APP_ID, msg)
+    except Exception as err:
+        print("error calling app, err: {}".format(err))
 
     print("Global state:", read_global_state(algod_client, APP_ID))
     print("Local state")

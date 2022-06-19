@@ -55,7 +55,10 @@ def format_global_state(state):
             if formatted_key == "Creator":
                 formatted_value = byte_value.decode()
             else:
-                formatted_value = encoding.encode_address(byte_value)
+                try:
+                    formatted_value = encoding.encode_address(byte_value)
+                except Exception as err:
+                    formatted_value = byte_value.decode()
             formatted[formatted_key] = formatted_value
         else:
             # integer

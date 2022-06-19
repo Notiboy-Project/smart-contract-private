@@ -2,6 +2,10 @@ from pyteal import *
 
 USER_TYPE_DAPP = "dapp"
 INDEX_KEY = "index"
+# dummy address that belongs to algo dispenser source account
+NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
+# 1 algo
+OPTIN_FEE = 1000000
 
 is_creator = Assert(Txn.sender() == Global.creator_address())
 app_id = Global.current_application_id()
@@ -21,13 +25,47 @@ def is_valid():
     )
 
 
+@Subroutine(TealType.uint64)
+def is_valid_optin1():
+    return Seq([
+        Assert(
+            And(
+                Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+                Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+                Eq(Global.group_size(), Int(2)),
+                Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+                Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
+                Eq(Gtxn[0].type_enum(), TxnType.Payment),
+                Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+                Ge(Gtxn[0].amount(), Int(OPTIN_FEE))
+            )
+        ),
+        Approve()
+    ])
+
+
+@Subroutine(TealType.uint64)
+def is_valid_optin():
+    return And(
+        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(2)),
+        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
+        Eq(Gtxn[0].type_enum(), TxnType.Payment),
+        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+        Ge(Gtxn[0].amount(), Int(OPTIN_FEE))
+    )
+
+
 # invoked as part of dapp opt-in
 @Subroutine(TealType.uint64)
 def register_dapp():
     return Seq([
-        Assert(Txn.application_args.length() == Int(2)),
-        App.globalPut(Txn.application_args[0], Txn.sender()),
-        Assert(Txn.application_args[1] == Bytes(USER_TYPE_DAPP)),
+        Assert(Gtxn[1].application_args.length() == Int(2)),
+        App.globalPut(Gtxn[1].application_args[0], Gtxn[1].sender()),
+        App.globalPut(Bytes("test"), Bytes("test")),
+        Assert(Gtxn[1].application_args[1] == Bytes(USER_TYPE_DAPP)),
         Approve()
     ])
 
@@ -48,32 +86,6 @@ def load_index():
 
 
 next_index = ScratchVar(TealType.bytes)
-
-
-# ensure that index 0 is reserved
-@Subroutine(TealType.uint64)
-def round_to_one():
-    return Seq([
-        If(Btoi(next_index.load()) == Int(0))
-        .Then(next_index.store(Itob(Int(1)))),
-        Approve()
-    ])
-
-
-# increments index and updates it with txn id
-@Subroutine(TealType.uint64)
-def inc_update_index():
-    return Seq([
-        next_index.store(Itob(
-            (Btoi(load_index()) + Int(1)) % Int(16)
-        )),
-        Pop(round_to_one()),
-        App.localDel(Txn.sender(), next_index.load()),
-        App.localPut(Txn.sender(), next_index.load(), Txn.tx_id()),
-        App.localPut(Txn.sender(), Bytes(INDEX_KEY), next_index.load()),
-        Approve()
-    ])
-
 
 notify = Seq([
     Assert(App.optedIn(Txn.sender(), app_id)),
@@ -96,7 +108,7 @@ handle_creation = Seq([
 ])
 
 handle_optin = Seq([
-    Assert(is_valid()),
+    Assert(is_valid_optin()),
     Pop(register_dapp()),
     Approve()
 ])
