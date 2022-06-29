@@ -109,13 +109,9 @@ retsub
 
 // is_valid
 isvalid_1:
-global GroupSize
-int 1
-==
 txn RekeyTo
 global ZeroAddress
 ==
-&&
 retsub
 
 // is_valid_optin
@@ -150,6 +146,11 @@ addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
 gtxn 0 Amount
 int 1000000
 >=
+&&
+gtxna 1 ApplicationArgs 0
+app_global_get
+byte ""
+==
 &&
 retsub
 

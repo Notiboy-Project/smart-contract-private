@@ -19,42 +19,26 @@ def is_creator():
 @Subroutine(TealType.uint64)
 def is_valid():
     return And(
-        # not a group txn
-        Eq(Global.group_size(), Int(1)),
         Eq(Txn.rekey_to(), Global.zero_address())
     )
 
 
 @Subroutine(TealType.uint64)
-def is_valid_optin1():
-    return Seq([
-        Assert(
-            And(
-                Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-                Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-                Eq(Global.group_size(), Int(2)),
-                Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-                Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
-                Eq(Gtxn[0].type_enum(), TxnType.Payment),
-                Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
-                Ge(Gtxn[0].amount(), Int(OPTIN_FEE))
-            )
-        ),
-        Approve()
-    ])
-
-
-@Subroutine(TealType.uint64)
 def is_valid_optin():
     return And(
-        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(2)),
-        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
-        Eq(Gtxn[0].type_enum(), TxnType.Payment),
-        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
-        Ge(Gtxn[0].amount(), Int(OPTIN_FEE))
+        And(
+            Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+            Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+            Eq(Global.group_size(), Int(2)),
+            Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+            Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
+            Eq(Gtxn[0].type_enum(), TxnType.Payment),
+            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+            Ge(Gtxn[0].amount(), Int(OPTIN_FEE))
+        ),
+        # check if dapp name is already registered
+        # Client should take care of case sensitivity
+        Eq(App.globalGet(Gtxn[1].application_args[0]), Bytes(""))
     )
 
 
