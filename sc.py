@@ -148,6 +148,9 @@ private_notify = Seq([
 
 next_index = ScratchVar(TealType.bytes)
 
+'''
+app_args: pub_notify
+'''
 public_notify = Seq([
     Assert(App.optedIn(Txn.sender(), app_id)),
     Assert(is_valid()),
@@ -200,7 +203,7 @@ handle_deleteapp = Seq([
 # application calls
 handle_noop = Seq([
     Cond(
-        [Txn.application_args[0] == Bytes("Notify"), public_notify],
+        [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify]
     )
 ])

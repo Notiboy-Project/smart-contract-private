@@ -175,7 +175,7 @@ def main():
     print("Sending notification --> {}".format(msg))
     try:
         app_args = [
-            str.encode("Notify"),
+            str.encode("pub_notify"),
         ]
         # call_app(algod_client, pvt_key, APP_ID, msg, app_args)
     except Exception as err:

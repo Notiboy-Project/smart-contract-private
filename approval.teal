@@ -26,7 +26,7 @@ bnz main_l7
 err
 main_l7:
 txna ApplicationArgs 0
-byte "Notify"
+byte "pub_notify"
 ==
 bnz main_l11
 txna ApplicationArgs 0
