@@ -1,11 +1,14 @@
 from pyteal import *
 
-USER_TYPE_DAPP = "dapp"
+OPTIN_TYPE_DAPP = "dapp"
+OPTIN_TYPE_USER = "user"
 INDEX_KEY = "index"
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 # 1 algo
-OPTIN_FEE = 1000000
+DAPP_OPTIN_FEE = 1000000
+# 1 algo
+USER_OPTIN_FEE = 1000000
 
 is_creator = Assert(Txn.sender() == Global.creator_address())
 app_id = Global.current_application_id()
@@ -33,23 +36,46 @@ def is_valid_optin():
             Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
             Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
             Eq(Gtxn[0].type_enum(), TxnType.Payment),
-            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
-            Ge(Gtxn[0].amount(), Int(OPTIN_FEE))
-        ),
-        # check if dapp name is already registered
-        # Client should take care of case sensitivity
-        Eq(App.globalGet(Gtxn[1].application_args[0]), Bytes(""))
+            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR))
+        )
     )
 
 
 # invoked as part of dapp opt-in
+# arg: "dapp" dapp_name
+# global registry will have dapp_name <-> sender_addr mapping
 @Subroutine(TealType.uint64)
 def register_dapp():
     return Seq([
-        Assert(Gtxn[1].application_args.length() == Int(2)),
-        App.globalPut(Gtxn[1].application_args[0], Gtxn[1].sender()),
-        App.globalPut(Bytes("test"), Bytes("test")),
-        Assert(Gtxn[1].application_args[1] == Bytes(USER_TYPE_DAPP)),
+        Assert(
+            And(
+                Gtxn[1].application_args.length() == Int(2),
+                Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
+                # amt is >= optin fee
+                Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
+                # check if dapp name is already registered
+                # Client should take care of case sensitivity
+                Eq(App.globalGet(Gtxn[1].application_args[1]), Bytes(""))
+            )
+        ),
+        App.globalPut(Gtxn[1].application_args[1], Gtxn[1].sender()),
+        Approve()
+    ])
+
+
+# invoked as part of user opt-in
+# arg: "user"
+@Subroutine(TealType.uint64)
+def register_user():
+    return Seq([
+        Assert(
+            And(
+                Gtxn[1].application_args.length() == Int(1),
+                Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_USER),
+                # amt is >= optin fee
+                Ge(Gtxn[0].amount(), Int(USER_OPTIN_FEE))
+            )
+        ),
         Approve()
     ])
 
@@ -69,9 +95,33 @@ def load_index():
     ])
 
 
+'''
+args: pvt_notify rcvr_addr dapp_name
+'''
+private_notify = Seq([
+    # dapp opted in?
+    Assert(App.optedIn(Txn.sender(), app_id)),
+    # rcvr opted in?
+    Assert(App.optedIn(Txn.application_args[1], app_id)),
+    # sender opted in?
+    Assert(App.optedIn(Txn.sender(), app_id)),
+    Assert(is_valid()),
+    # verify dapp_name belongs to sender
+    Assert(
+        Eq(
+            App.globalGet(Txn.application_args[2]), Txn.sender()
+        )
+    ),
+    # delete existing pvt notification, key as dapp_name
+    App.localDel(Txn.application_args[1], Txn.application_args[2]),
+    # key dapp_name, value as txn_id
+    App.localPut(Txn.application_args[1], Txn.application_args[2], Txn.tx_id()),
+    Approve()
+])
+
 next_index = ScratchVar(TealType.bytes)
 
-notify = Seq([
+public_notify = Seq([
     Assert(App.optedIn(Txn.sender(), app_id)),
     Assert(is_valid()),
     next_index.store(Itob(
@@ -91,9 +141,17 @@ handle_creation = Seq([
     Approve()
 ])
 
+# args: user/dapp <dapp_name if arg1 is dapp>
 handle_optin = Seq([
     Assert(is_valid_optin()),
-    Pop(register_dapp()),
+    If(
+        And(
+            Ge(Gtxn[1].application_args.length(), Int(1)),
+            Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
+        )
+    )
+    .Then(Pop(register_dapp()))
+    .Else(Pop(register_user())),
     Approve()
 ])
 # no txn should clear the local state
@@ -115,7 +173,8 @@ handle_deleteapp = Seq([
 # application calls
 handle_noop = Seq([
     Cond(
-        [Txn.application_args[0] == Bytes("Notify"), notify]
+        [Txn.application_args[0] == Bytes("Notify"), public_notify],
+        [Txn.application_args[0] == Bytes("pvt_notify"), private_notify]
     )
 ])
 

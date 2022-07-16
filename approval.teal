@@ -2,23 +2,23 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l16
+bnz main_l21
 txn OnCompletion
 int OptIn
 ==
-bnz main_l15
+bnz main_l17
 txn OnCompletion
 int CloseOut
 ==
-bnz main_l14
+bnz main_l16
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l13
+bnz main_l15
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l12
+bnz main_l14
 txn OnCompletion
 int NoOp
 ==
@@ -28,16 +28,49 @@ main_l7:
 txna ApplicationArgs 0
 byte "Notify"
 ==
-bnz main_l9
+bnz main_l11
+txna ApplicationArgs 0
+byte "pvt_notify"
+==
+bnz main_l10
 err
-main_l9:
+main_l10:
+txn Sender
+global CurrentApplicationID
+app_opted_in
+assert
+txna ApplicationArgs 1
+global CurrentApplicationID
+app_opted_in
+assert
 txn Sender
 global CurrentApplicationID
 app_opted_in
 assert
 callsub isvalid_1
 assert
-callsub loadindex_4
+txna ApplicationArgs 2
+app_global_get
+txn Sender
+==
+assert
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+app_local_del
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+txn TxID
+app_local_put
+int 1
+return
+main_l11:
+txn Sender
+global CurrentApplicationID
+app_opted_in
+assert
+callsub isvalid_1
+assert
+callsub loadindex_5
 btoi
 int 1
 +
@@ -49,8 +82,8 @@ load 0
 btoi
 int 0
 ==
-bnz main_l11
-main_l10:
+bnz main_l13
+main_l12:
 txn Sender
 load 0
 app_local_del
@@ -64,34 +97,47 @@ load 0
 app_local_put
 int 1
 return
-main_l11:
+main_l13:
 int 1
 itob
 store 0
-b main_l10
-main_l12:
-callsub isvalid_1
-assert
-callsub iscreator_0
-return
-main_l13:
-callsub isvalid_1
-assert
-callsub iscreator_0
-return
+b main_l12
 main_l14:
+callsub isvalid_1
+assert
+callsub iscreator_0
+return
+main_l15:
+callsub isvalid_1
+assert
+callsub iscreator_0
+return
+main_l16:
 callsub isvalid_1
 assert
 int 0
 return
-main_l15:
+main_l17:
 callsub isvalidoptin_2
 assert
-callsub registerdapp_3
+gtxn 1 NumAppArgs
+int 1
+>=
+gtxna 1 ApplicationArgs 0
+byte "dapp"
+==
+&&
+bnz main_l20
+callsub registeruser_4
 pop
+main_l19:
 int 1
 return
-main_l16:
+main_l20:
+callsub registerdapp_3
+pop
+b main_l19
+main_l21:
 callsub isvalid_1
 assert
 byte "Creator"
@@ -143,15 +189,6 @@ gtxn 0 Receiver
 addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
 ==
 &&
-gtxn 0 Amount
-int 1000000
->=
-&&
-gtxna 1 ApplicationArgs 0
-app_global_get
-byte ""
-==
-&&
 retsub
 
 // register_dapp
@@ -159,22 +196,45 @@ registerdapp_3:
 gtxn 1 NumAppArgs
 int 2
 ==
-assert
 gtxna 1 ApplicationArgs 0
-gtxn 1 Sender
-app_global_put
-byte "test"
-byte "test"
-app_global_put
-gtxna 1 ApplicationArgs 1
 byte "dapp"
 ==
+&&
+gtxn 0 Amount
+int 1000000
+>=
+&&
+gtxna 1 ApplicationArgs 1
+app_global_get
+byte ""
+==
+&&
+assert
+gtxna 1 ApplicationArgs 1
+gtxn 1 Sender
+app_global_put
+int 1
+return
+
+// register_user
+registeruser_4:
+gtxn 1 NumAppArgs
+int 1
+==
+gtxna 1 ApplicationArgs 0
+byte "user"
+==
+&&
+gtxn 0 Amount
+int 1000000
+>=
+&&
 assert
 int 1
 return
 
 // load_index
-loadindex_4:
+loadindex_5:
 txn Sender
 global CurrentApplicationID
 byte "index"
@@ -183,13 +243,13 @@ store 2
 store 1
 load 2
 !
-bz loadindex_4_l2
+bz loadindex_5_l2
 txn Sender
 byte "index"
 int 0
 itob
 app_local_put
-loadindex_4_l2:
+loadindex_5_l2:
 txn Sender
 byte "index"
 app_local_get

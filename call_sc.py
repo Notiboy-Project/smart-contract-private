@@ -25,8 +25,8 @@ def opt_in_app(client, private_key, index, dapp_name):
     params.fee = 1000
 
     app_args = [
-        str.encode(dapp_name),
         str.encode("dapp"),
+        str.encode(dapp_name),
     ]
 
     # create unsigned transaction
