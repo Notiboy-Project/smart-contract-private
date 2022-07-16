@@ -6,14 +6,15 @@ from zoneinfo import ZoneInfo
 from algosdk import account
 from algosdk.future import transaction
 from algosdk.v2client import algod
+from algosdk.encoding import decode_address
 
 from util import read_local_state, read_global_state
 
 APP_ID = 94241155
-DAPP_NAME = "mydapp12"
+DAPP_NAME = "mydapp13"
 
 
-def opt_in_app(client, private_key, index, dapp_name):
+def opt_in(client, private_key, index, dapp_name):
     # declare sender
     sender = account.address_from_private_key(private_key)
     print("OptIn from account: ", sender)
@@ -24,10 +25,17 @@ def opt_in_app(client, private_key, index, dapp_name):
     params.flat_fee = True
     params.fee = 1000
 
-    app_args = [
-        str.encode("dapp"),
-        str.encode(dapp_name),
-    ]
+    if dapp_name == "":
+        app_args = [
+            str.encode("user"),
+        ]
+    else:
+        app_args = [
+            str.encode("dapp"),
+            str.encode(dapp_name),
+        ]
+
+    print("app_args: ", app_args)
 
     # create unsigned transaction
     txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args)
@@ -58,7 +66,7 @@ def opt_in_app(client, private_key, index, dapp_name):
 
 
 # call application
-def call_app(client, private_key, index, msg):
+def call_app(client, private_key, index, msg, app_args, acct_args):
     # declare sender
     sender = account.address_from_private_key(private_key)
     print("Call from account:", sender)
@@ -69,12 +77,8 @@ def call_app(client, private_key, index, msg):
     params.flat_fee = True
     params.fee = 1000
 
-    app_args = [
-        str.encode("Notify"),
-    ]
-
     # create unsigned transaction
-    txn = transaction.ApplicationNoOpTxn(sender, params, index, app_args, note=str.encode(msg))
+    txn = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, note=str.encode(msg))
 
     # sign transaction
     signed_txn = txn.sign(private_key)
@@ -88,13 +92,13 @@ def call_app(client, private_key, index, msg):
     print("Transaction ID:", tx_id)
 
 
-def generate_algorand_keypair(overwrite):
+def generate_algorand_keypair(overwrite, fname):
     if overwrite:
         private_key, address = account.generate_account()
-        with open("secret.txt", "w") as f:
+        with open(fname, "w") as f:
             f.write('{}\n{}\n'.format(address, private_key))
     else:
-        with open("secret.txt", "r") as f:
+        with open(fname, "r") as f:
             lns = f.readlines()
             address = lns[0].rstrip('\n')
             private_key = lns[1].rstrip('\n')
@@ -116,30 +120,76 @@ def get_algod_client(private_key, my_address):
     return algod_client
 
 
+def pvt_notify():
+    # gen_new_address = True
+    gen_new_address = False
+    pvt_key, rcvr_address = generate_algorand_keypair(gen_new_address, "rcvr-secret.txt")
+    algod_client = get_algod_client(pvt_key, rcvr_address)
+
+    try:
+        pass
+        # opt_in(algod_client, pvt_key, APP_ID, "")
+    except Exception as err:
+        print("error opting in, err: {}".format(err))
+
+    msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
+    print("Sending private notification --> {}".format(msg))
+
+    try:
+        # gen_new_address = True
+        gen_new_address = False
+        pvt_key, address = generate_algorand_keypair(gen_new_address, "sndr-secret.txt")
+        algod_client = get_algod_client(pvt_key, address)
+
+        app_args = [
+            str.encode("pvt_notify"),
+            str.encode(DAPP_NAME),
+        ]
+        acct_args = [
+            rcvr_address
+        ]
+        # call_app(algod_client, pvt_key, APP_ID, msg, app_args, acct_args)
+    except Exception as err:
+        print("error calling app, err: {}".format(err))
+
+    print("Local state of receiver ", rcvr_address)
+    local_state = read_local_state(algod_client, rcvr_address, APP_ID)
+
+    for k, v in local_state.items():
+        print("{} --> {}".format(k, v))
+
+
 def main():
     # gen_new_address = True
     gen_new_address = False
-    pvt_key, address = generate_algorand_keypair(gen_new_address)
+    pvt_key, address = generate_algorand_keypair(gen_new_address, "sndr-secret.txt")
     algod_client = get_algod_client(pvt_key, address)
 
     try:
-        opt_in_app(algod_client, pvt_key, APP_ID, DAPP_NAME)
+        pass
+        # opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
     msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending notification --> {}".format(msg))
     try:
-        call_app(algod_client, pvt_key, APP_ID, msg)
+        app_args = [
+            str.encode("Notify"),
+        ]
+        # call_app(algod_client, pvt_key, APP_ID, msg, app_args)
     except Exception as err:
         print("error calling app, err: {}".format(err))
 
     print("Global state:", read_global_state(algod_client, APP_ID))
-    print("Local state")
+
+    print("Local state of sender")
     local_state = read_local_state(algod_client, address, APP_ID)
 
     for k, v in local_state.items():
         print("{} --> {}".format(k, v))
+
+    pvt_notify()
 
 
 main()

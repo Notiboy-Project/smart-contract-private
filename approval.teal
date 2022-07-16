@@ -39,7 +39,7 @@ txn Sender
 global CurrentApplicationID
 app_opted_in
 assert
-txna ApplicationArgs 1
+txna Accounts 1
 global CurrentApplicationID
 app_opted_in
 assert
@@ -49,16 +49,16 @@ app_opted_in
 assert
 callsub isvalid_1
 assert
-txna ApplicationArgs 2
+txna ApplicationArgs 1
 app_global_get
 txn Sender
 ==
 assert
+txna Accounts 1
 txna ApplicationArgs 1
-txna ApplicationArgs 2
 app_local_del
+txna Accounts 1
 txna ApplicationArgs 1
-txna ApplicationArgs 2
 txn TxID
 app_local_put
 int 1
@@ -121,8 +121,8 @@ main_l17:
 callsub isvalidoptin_2
 assert
 gtxn 1 NumAppArgs
-int 1
->=
+int 2
+==
 gtxna 1 ApplicationArgs 0
 byte "dapp"
 ==
@@ -206,7 +206,7 @@ int 1000000
 &&
 gtxna 1 ApplicationArgs 1
 app_global_get
-byte ""
+int 0
 ==
 &&
 assert

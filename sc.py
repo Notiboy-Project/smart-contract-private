@@ -55,7 +55,7 @@ def register_dapp():
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
                 # check if dapp name is already registered
                 # Client should take care of case sensitivity
-                Eq(App.globalGet(Gtxn[1].application_args[1]), Bytes(""))
+                App.globalGet(Gtxn[1].application_args[1]) == Int(0)
             )
         ),
         App.globalPut(Gtxn[1].application_args[1], Gtxn[1].sender()),
@@ -98,6 +98,7 @@ def load_index():
 '''
 args: pvt_notify rcvr_addr dapp_name
 '''
+'''
 private_notify = Seq([
     # dapp opted in?
     Assert(App.optedIn(Txn.sender(), app_id)),
@@ -116,6 +117,32 @@ private_notify = Seq([
     App.localDel(Txn.application_args[1], Txn.application_args[2]),
     # key dapp_name, value as txn_id
     App.localPut(Txn.application_args[1], Txn.application_args[2], Txn.tx_id()),
+    Approve()
+])
+'''
+
+'''
+app_args: pvt_notify dapp_name
+acct_args: rcvr_addr
+'''
+private_notify = Seq([
+    # dapp opted in?
+    Assert(App.optedIn(Txn.sender(), app_id)),
+    # rcvr opted in?
+    Assert(App.optedIn(Txn.accounts[1], app_id)),
+    # sender opted in?
+    Assert(App.optedIn(Txn.sender(), app_id)),
+    Assert(is_valid()),
+    # verify dapp_name belongs to sender
+    Assert(
+        Eq(
+            App.globalGet(Txn.application_args[1]), Txn.sender()
+        )
+    ),
+    # delete existing pvt notification, key as dapp_name
+    App.localDel(Txn.accounts[1], Txn.application_args[1]),
+    # key dapp_name, value as txn_id
+    App.localPut(Txn.accounts[1], Txn.application_args[1], Txn.tx_id()),
     Approve()
 ])
 
@@ -146,7 +173,7 @@ handle_optin = Seq([
     Assert(is_valid_optin()),
     If(
         And(
-            Ge(Gtxn[1].application_args.length(), Int(1)),
+            Eq(Gtxn[1].application_args.length(), Int(2)),
             Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
         )
     )
