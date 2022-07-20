@@ -29,21 +29,41 @@ def is_valid():
 @Subroutine(TealType.uint64)
 def is_valid_optin():
     return And(
-        And(
-            Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-            Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-            Eq(Global.group_size(), Int(2)),
-            Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-            Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
-            Eq(Gtxn[0].type_enum(), TxnType.Payment),
-            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR))
-        )
+        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(2)),
+        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
+        Eq(Gtxn[0].type_enum(), TxnType.Payment),
+        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR))
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_notification():
+    return And(
+        Eq(Gtxn[1].application_args.length(), Int(2)),
+        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(2)),
+        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[0].type_enum(), TxnType.Payment),
+        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+        Eq(
+            # verify dapp name belongs to sender
+            # <txn1 sender>:<txn2 sender> == dapp_name in global state
+            Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender()), App.globalGet(Gtxn[1].application_args[1])
+        ),
+        # dapp opted in?
+        Eq(App.optedIn(Gtxn[1].sender(), app_id), Int(1)),
     )
 
 
 # invoked as part of dapp opt-in
 # arg: "dapp" dapp_name
 # global registry will have dapp_name <-> sender_addr mapping
+# grp txn - txn1 is payment, txn2 is app call
 @Subroutine(TealType.uint64)
 def register_dapp():
     return Seq([
@@ -58,7 +78,7 @@ def register_dapp():
                 App.globalGet(Gtxn[1].application_args[1]) == Int(0)
             )
         ),
-        App.globalPut(Gtxn[1].application_args[1], Gtxn[1].sender()),
+        App.globalPut(Gtxn[1].application_args[1], Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender())),
         Approve()
     ])
 
@@ -96,49 +116,14 @@ def load_index():
 
 
 '''
-args: pvt_notify rcvr_addr dapp_name
-'''
-'''
-private_notify = Seq([
-    # dapp opted in?
-    Assert(App.optedIn(Txn.sender(), app_id)),
-    # rcvr opted in?
-    Assert(App.optedIn(Txn.application_args[1], app_id)),
-    # sender opted in?
-    Assert(App.optedIn(Txn.sender(), app_id)),
-    Assert(is_valid()),
-    # verify dapp_name belongs to sender
-    Assert(
-        Eq(
-            App.globalGet(Txn.application_args[2]), Txn.sender()
-        )
-    ),
-    # delete existing pvt notification, key as dapp_name
-    App.localDel(Txn.application_args[1], Txn.application_args[2]),
-    # key dapp_name, value as txn_id
-    App.localPut(Txn.application_args[1], Txn.application_args[2], Txn.tx_id()),
-    Approve()
-])
-'''
-
-'''
 app_args: pvt_notify dapp_name
 acct_args: rcvr_addr
 '''
 private_notify = Seq([
-    # dapp opted in?
-    Assert(App.optedIn(Txn.sender(), app_id)),
+    # is rcvr address passed?
+    Assert(Eq(Gtxn[1].accounts.length(), Int(1))),
     # rcvr opted in?
     Assert(App.optedIn(Txn.accounts[1], app_id)),
-    # sender opted in?
-    Assert(App.optedIn(Txn.sender(), app_id)),
-    Assert(is_valid()),
-    # verify dapp_name belongs to sender
-    Assert(
-        Eq(
-            App.globalGet(Txn.application_args[1]), Txn.sender()
-        )
-    ),
     # delete existing pvt notification, key as dapp_name
     App.localDel(Txn.accounts[1], Txn.application_args[1]),
     # key dapp_name, value as txn_id
@@ -149,11 +134,9 @@ private_notify = Seq([
 next_index = ScratchVar(TealType.bytes)
 
 '''
-app_args: pub_notify
+app_args: pub_notify dapp_name
 '''
 public_notify = Seq([
-    Assert(App.optedIn(Txn.sender(), app_id)),
-    Assert(is_valid()),
     next_index.store(Itob(
         (Btoi(load_index()) + Int(1)) % Int(16)
     )),
@@ -202,6 +185,7 @@ handle_deleteapp = Seq([
 
 # application calls
 handle_noop = Seq([
+    Assert(is_valid_notification()),
     Cond(
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify]

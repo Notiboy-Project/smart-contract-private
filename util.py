@@ -2,7 +2,7 @@ import base64
 
 from algosdk import encoding
 
-DAPP_NAME = "mydapp13"
+DAPP_NAME = "mydapp1"
 
 
 # read user local state
@@ -63,7 +63,10 @@ def format_global_state(state):
                 formatted_value = byte_value.decode()
             else:
                 try:
-                    formatted_value = encoding.encode_address(byte_value)
+                    import ipdb;
+                    # ipdb.set_trace()
+                    formatted_value = encoding.encode_address(byte_value[:32]) + ":" + encoding.encode_address(
+                        byte_value[33:])
                 except Exception as err:
                     formatted_value = byte_value.decode()
             formatted[formatted_key] = formatted_value

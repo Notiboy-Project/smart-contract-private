@@ -25,6 +25,8 @@ int NoOp
 bnz main_l7
 err
 main_l7:
+callsub isvalidnotification_3
+assert
 txna ApplicationArgs 0
 byte "pub_notify"
 ==
@@ -35,24 +37,13 @@ byte "pvt_notify"
 bnz main_l10
 err
 main_l10:
-txn Sender
-global CurrentApplicationID
-app_opted_in
+gtxn 1 NumAccounts
+int 1
+==
 assert
 txna Accounts 1
 global CurrentApplicationID
 app_opted_in
-assert
-txn Sender
-global CurrentApplicationID
-app_opted_in
-assert
-callsub isvalid_1
-assert
-txna ApplicationArgs 1
-app_global_get
-txn Sender
-==
 assert
 txna Accounts 1
 txna ApplicationArgs 1
@@ -64,13 +55,7 @@ app_local_put
 int 1
 return
 main_l11:
-txn Sender
-global CurrentApplicationID
-app_opted_in
-assert
-callsub isvalid_1
-assert
-callsub loadindex_5
+callsub loadindex_6
 btoi
 int 1
 +
@@ -128,13 +113,13 @@ byte "dapp"
 ==
 &&
 bnz main_l20
-callsub registeruser_4
+callsub registeruser_5
 pop
 main_l19:
 int 1
 return
 main_l20:
-callsub registerdapp_3
+callsub registerdapp_4
 pop
 b main_l19
 main_l21:
@@ -191,8 +176,58 @@ addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
 &&
 retsub
 
+// is_valid_notification
+isvalidnotification_3:
+gtxn 1 NumAppArgs
+int 2
+==
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 1 RekeyTo
+global ZeroAddress
+==
+&&
+global GroupSize
+int 2
+==
+&&
+gtxn 1 TypeEnum
+int appl
+==
+&&
+gtxn 1 OnCompletion
+int NoOp
+==
+&&
+gtxn 0 TypeEnum
+int pay
+==
+&&
+gtxn 0 Receiver
+addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
+==
+&&
+gtxn 0 Sender
+byte ":"
+concat
+gtxn 1 Sender
+concat
+gtxna 1 ApplicationArgs 1
+app_global_get
+==
+&&
+gtxn 1 Sender
+global CurrentApplicationID
+app_opted_in
+int 1
+==
+&&
+retsub
+
 // register_dapp
-registerdapp_3:
+registerdapp_4:
 gtxn 1 NumAppArgs
 int 2
 ==
@@ -211,13 +246,17 @@ int 0
 &&
 assert
 gtxna 1 ApplicationArgs 1
+gtxn 0 Sender
+byte ":"
+concat
 gtxn 1 Sender
+concat
 app_global_put
 int 1
 return
 
 // register_user
-registeruser_4:
+registeruser_5:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -234,7 +273,7 @@ int 1
 return
 
 // load_index
-loadindex_5:
+loadindex_6:
 txn Sender
 global CurrentApplicationID
 byte "index"
@@ -243,13 +282,13 @@ store 2
 store 1
 load 2
 !
-bz loadindex_5_l2
+bz loadindex_6_l2
 txn Sender
 byte "index"
 int 0
 itob
 app_local_put
-loadindex_5_l2:
+loadindex_6_l2:
 txn Sender
 byte "index"
 app_local_get

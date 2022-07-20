@@ -10,8 +10,8 @@ from algosdk.encoding import decode_address
 
 from util import read_local_state, read_global_state
 
-APP_ID = 94241155
-DAPP_NAME = "mydapp13"
+APP_ID = 100343195
+DAPP_NAME = "mydapp1"
 
 
 def opt_in(client, private_key, index, dapp_name):
@@ -78,14 +78,24 @@ def call_app(client, private_key, index, msg, app_args, acct_args):
     params.fee = 1000
 
     # create unsigned transaction
-    txn = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, note=str.encode(msg))
+    txn2 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, note=str.encode(msg))
+
+    # pay 0 algo
+    txn1 = transaction.PaymentTxn(sender, params, "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA",
+                                  0)
+
+    gid = transaction.calculate_group_id([txn1, txn2])
+    transaction.assign_group_id([txn1, txn2])
+    txn1.gid = gid
+    txn2.gid = gid
 
     # sign transaction
-    signed_txn = txn.sign(private_key)
-    tx_id = signed_txn.transaction.get_txid()
+    signed_txn1 = txn1.sign(private_key)
+    signed_txn2 = txn2.sign(private_key)
+    signed_group = [signed_txn1, signed_txn2]
 
     # send transaction
-    client.send_transactions([signed_txn])
+    tx_id = client.send_transactions(signed_group)
 
     # await confirmation
     transaction.wait_for_confirmation(client, tx_id)
@@ -127,8 +137,8 @@ def pvt_notify():
     algod_client = get_algod_client(pvt_key, rcvr_address)
 
     try:
-        pass
-        # opt_in(algod_client, pvt_key, APP_ID, "")
+        # pass
+        opt_in(algod_client, pvt_key, APP_ID, "")
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
@@ -148,7 +158,7 @@ def pvt_notify():
         acct_args = [
             rcvr_address
         ]
-        # call_app(algod_client, pvt_key, APP_ID, msg, app_args, acct_args)
+        call_app(algod_client, pvt_key, APP_ID, msg, app_args, acct_args)
     except Exception as err:
         print("error calling app, err: {}".format(err))
 
@@ -166,8 +176,8 @@ def main():
     algod_client = get_algod_client(pvt_key, address)
 
     try:
-        pass
-        # opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
+        # pass
+        opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
@@ -176,8 +186,9 @@ def main():
     try:
         app_args = [
             str.encode("pub_notify"),
+            str.encode(DAPP_NAME),
         ]
-        # call_app(algod_client, pvt_key, APP_ID, msg, app_args)
+        call_app(algod_client, pvt_key, APP_ID, msg, app_args, [])
     except Exception as err:
         print("error calling app, err: {}".format(err))
 

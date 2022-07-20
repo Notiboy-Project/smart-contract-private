@@ -8,7 +8,7 @@ import base64
 from sc import approval_program, clear_state_program
 from util import read_local_state, read_global_state
 
-APP_ID = 94241155
+APP_ID = 100343195
 
 
 def generate_algorand_keypair():
