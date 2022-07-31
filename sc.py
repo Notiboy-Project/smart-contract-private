@@ -120,7 +120,6 @@ def is_verified():
     ret_val = ScratchVar(TealType.uint64)
     val = App.globalGet(Txn.application_args[1])
     return Seq([
-        val,
         If(
             Le(
                 Len(val), Int(65)
@@ -139,7 +138,7 @@ def is_verified():
         )
         .Then(ret_val.store(Int(1)))
         .Else(ret_val.store(Int(0))),
-        ret_val
+        ret_val.load()
     ])
 
 
@@ -147,7 +146,6 @@ def is_verified():
 def is_valid_dapp_addr_for_verify():
     val = App.globalGet(Txn.application_args[1])
     return Seq([
-        val,
         Assert(
             And(
                 Ge(Len(val), Int(65)),

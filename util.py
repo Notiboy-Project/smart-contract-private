@@ -3,6 +3,7 @@ import base64
 from algosdk import encoding
 
 DAPP_NAME = "mydapp1"
+APP_ID = 100343195
 
 
 # read user local state
