@@ -62,7 +62,7 @@ def is_valid_notification():
 
 # invoked as part of dapp opt-in
 # arg: "dapp" dapp_name
-# global registry will have dapp_name <-> sender_addr mapping
+# global registry will have | dapp_name | <-> | sender_addr : dapp_lsig_addr | mapping
 # grp txn - txn1 is payment, txn2 is app call
 @Subroutine(TealType.uint64)
 def register_dapp():
@@ -115,11 +115,87 @@ def load_index():
     ])
 
 
+@Subroutine(TealType.uint64)
+def is_verified():
+    ret_val = ScratchVar(TealType.uint64)
+    val = App.globalGet(Txn.application_args[1])
+    return Seq([
+        val,
+        If(
+            Le(
+                Len(val), Int(65)
+            )
+        )
+        .Then(ret_val.store(Int(0)))
+        .ElseIf(
+            And(
+                Eq(
+                    Len(val), Int(67)
+                ),
+                Eq(
+                    Extract(val, Int(66), Int(1)), Bytes("v")
+                )
+            )
+        )
+        .Then(ret_val.store(Int(1)))
+        .Else(ret_val.store(Int(0))),
+        ret_val
+    ])
+
+
+@Subroutine(TealType.uint64)
+def is_valid_dapp_addr_for_verify():
+    val = App.globalGet(Txn.application_args[1])
+    return Seq([
+        val,
+        Assert(
+            And(
+                Ge(Len(val), Int(65)),
+                Eq(
+                    Extract(val, Int(33), Int(32)), Txn.application_args[1]
+                )
+            )
+        ),
+        Approve()
+    ])
+
+
+'''
+app_args: verify dapp_name
+acct_args: dapp_lsig_addr
+'''
+verify_dapp = Seq([
+    Assert(
+        And(
+            is_valid(),
+            Eq(Txn.application_args.length(), Int(2)),
+            # is dapp lsig address passed?
+            Eq(Txn.accounts.length(), Int(1)),
+            # dapp lsig opted in?
+            App.optedIn(Txn.accounts[0], app_id),
+            # called by creator?
+            is_creator(),
+            # dapp lsig address present in global state against dapp name?
+            is_valid_dapp_addr_for_verify()
+        )
+    ),
+    If(Eq(is_verified(), Int(0)))
+    .Then(
+        App.globalPut(Txn.application_args[1],
+                      Concat(
+                          App.globalGet(Txn.application_args[1]), Bytes(":v"),
+                      )
+                      )
+    ),
+    Approve()
+])
+
 '''
 app_args: pvt_notify dapp_name
 acct_args: rcvr_addr
 '''
 private_notify = Seq([
+    Assert(is_valid_notification()),
     # is rcvr address passed?
     Assert(Eq(Gtxn[1].accounts.length(), Int(1))),
     # rcvr opted in?
@@ -137,6 +213,7 @@ next_index = ScratchVar(TealType.bytes)
 app_args: pub_notify dapp_name
 '''
 public_notify = Seq([
+    Assert(is_valid_notification()),
     next_index.store(Itob(
         (Btoi(load_index()) + Int(1)) % Int(16)
     )),
@@ -185,10 +262,10 @@ handle_deleteapp = Seq([
 
 # application calls
 handle_noop = Seq([
-    Assert(is_valid_notification()),
     Cond(
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
-        [Txn.application_args[0] == Bytes("pvt_notify"), private_notify]
+        [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
+        [Txn.application_args[0] == Bytes("verify"), verify_dapp]
     )
 ])
 
