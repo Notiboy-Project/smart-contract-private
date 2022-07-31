@@ -117,15 +117,14 @@ def load_index():
 
 @Subroutine(TealType.uint64)
 def is_verified():
-    ret_val = ScratchVar(TealType.uint64)
     val = App.globalGet(Txn.application_args[1])
-    return Seq([
+    return (
         If(
-            Le(
+            Eq(
                 Len(val), Int(65)
             )
         )
-        .Then(ret_val.store(Int(0)))
+        .Then(Int(0))
         .ElseIf(
             And(
                 Eq(
@@ -136,10 +135,9 @@ def is_verified():
                 )
             )
         )
-        .Then(ret_val.store(Int(1)))
-        .Else(ret_val.store(Int(0))),
-        ret_val.load()
-    ])
+        .Then(Int(1))
+        .Else(Int(0))
+    )
 
 
 @Subroutine(TealType.uint64)
@@ -150,7 +148,7 @@ def is_valid_dapp_addr_for_verify():
             And(
                 Ge(Len(val), Int(65)),
                 Eq(
-                    Extract(val, Int(33), Int(32)), Txn.application_args[1]
+                    Extract(val, Int(33), Int(32)), Txn.accounts[1]
                 )
             )
         ),
@@ -170,18 +168,19 @@ verify_dapp = Seq([
             # is dapp lsig address passed?
             Eq(Txn.accounts.length(), Int(1)),
             # dapp lsig opted in?
-            App.optedIn(Txn.accounts[0], app_id),
+            App.optedIn(Txn.accounts[1], app_id),
             # called by creator?
             is_creator(),
             # dapp lsig address present in global state against dapp name?
             is_valid_dapp_addr_for_verify()
         )
     ),
-    If(Eq(is_verified(), Int(0)))
+    If(Neq(is_verified(), Int(1)))
     .Then(
         App.globalPut(Txn.application_args[1],
                       Concat(
-                          App.globalGet(Txn.application_args[1]), Bytes(":v"),
+                          # App.globalGet(Txn.application_args[1]), Bytes(":v"),
+                          Extract(App.globalGet(Txn.application_args[1]), Int(0), Int(65)), Bytes(":v")
                       )
                       )
     ),

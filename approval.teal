@@ -48,7 +48,7 @@ txn NumAccounts
 int 1
 ==
 &&
-txna Accounts 0
+txna Accounts 1
 global CurrentApplicationID
 app_opted_in
 &&
@@ -58,8 +58,8 @@ callsub isvaliddappaddrforverify_8
 &&
 assert
 callsub isverified_7
-int 0
-==
+int 1
+!=
 bnz main_l13
 main_l12:
 int 1
@@ -68,6 +68,7 @@ main_l13:
 txna ApplicationArgs 1
 txna ApplicationArgs 1
 app_global_get
+extract 0 65
 byte ":v"
 concat
 app_global_put
@@ -340,7 +341,7 @@ txna ApplicationArgs 1
 app_global_get
 len
 int 65
-<=
+==
 bnz isverified_7_l4
 txna ApplicationArgs 1
 app_global_get
@@ -355,17 +356,13 @@ byte "v"
 &&
 bnz isverified_7_l3
 int 0
-store 3
 b isverified_7_l5
 isverified_7_l3:
 int 1
-store 3
 b isverified_7_l5
 isverified_7_l4:
 int 0
-store 3
 isverified_7_l5:
-load 3
 retsub
 
 // is_valid_dapp_addr_for_verify
@@ -378,7 +375,7 @@ int 65
 txna ApplicationArgs 1
 app_global_get
 extract 33 32
-txna ApplicationArgs 1
+txna Accounts 1
 ==
 &&
 assert

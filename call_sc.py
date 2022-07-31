@@ -197,7 +197,7 @@ def main():
     for k, v in local_state.items():
         print("{} --> {}".format(k, v))
 
-    pvt_notify()
+    # pvt_notify()
 
 
 main()

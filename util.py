@@ -65,9 +65,13 @@ def format_global_state(state):
             else:
                 try:
                     import ipdb;
-                    # ipdb.set_trace()
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + encoding.encode_address(
-                        byte_value[33:])
+                        byte_value[33:65])
+                    print("Total length of value is ", len(byte_value))
+                    
+                    if len(byte_value) == 67 and byte_value[66:67].decode() == "v":
+                        print("{} is verified".format(formatted_key))
+                        formatted_value = formatted_value + ":verfied"
                 except Exception as err:
                     formatted_value = byte_value.decode()
             formatted[formatted_key] = formatted_value
