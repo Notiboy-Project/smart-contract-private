@@ -2,7 +2,8 @@ import base64
 
 from algosdk import encoding
 
-DAPP_NAME = "mydapp1"
+DAPP_NAME = "mydapp2"
+# DAPP_NAME = "Karol"
 APP_ID = 100343195
 
 
@@ -68,7 +69,7 @@ def format_global_state(state):
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + encoding.encode_address(
                         byte_value[33:65])
                     print("Total length of value is ", len(byte_value))
-                    
+
                     if len(byte_value) == 67 and byte_value[66:67].decode() == "v":
                         print("{} is verified".format(formatted_key))
                         formatted_value = formatted_value + ":verfied"

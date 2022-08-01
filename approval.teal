@@ -2,23 +2,23 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l25
+bnz main_l17
 txn OnCompletion
 int OptIn
 ==
-bnz main_l21
+bnz main_l13
 txn OnCompletion
 int CloseOut
 ==
-bnz main_l20
+bnz main_l12
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l19
+bnz main_l11
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l18
+bnz main_l10
 txn OnCompletion
 int NoOp
 ==
@@ -26,19 +26,11 @@ bnz main_l7
 err
 main_l7:
 txna ApplicationArgs 0
-byte "pub_notify"
-==
-bnz main_l15
-txna ApplicationArgs 0
-byte "pvt_notify"
-==
-bnz main_l14
-txna ApplicationArgs 0
 byte "verify"
 ==
-bnz main_l11
+bnz main_l9
 err
-main_l11:
+main_l9:
 callsub isvalid_1
 txn NumAppArgs
 int 2
@@ -54,96 +46,37 @@ app_opted_in
 &&
 callsub iscreator_0
 &&
-callsub isvaliddappaddrforverify_8
-&&
-assert
-callsub isverified_7
-int 1
-!=
-bnz main_l13
-main_l12:
-int 1
-return
-main_l13:
-txna ApplicationArgs 1
 txna ApplicationArgs 1
 app_global_get
-extract 0 65
-byte ":v"
-concat
-app_global_put
-b main_l12
-main_l14:
-callsub isvalidnotification_3
-assert
-gtxn 1 NumAccounts
-int 1
-==
-assert
-txna Accounts 1
-global CurrentApplicationID
-app_opted_in
-assert
-txna Accounts 1
+len
+int 65
+>=
+&&
 txna ApplicationArgs 1
-app_local_del
+app_global_get
+extract 33 32
 txna Accounts 1
-txna ApplicationArgs 1
-txn TxID
-app_local_put
-int 1
-return
-main_l15:
-callsub isvalidnotification_3
-assert
-callsub loadindex_6
-btoi
-int 1
-+
-int 16
-%
-itob
-store 0
-load 0
-btoi
-int 0
 ==
-bnz main_l17
-main_l16:
-txn Sender
-load 0
-app_local_del
-txn Sender
-load 0
-txn TxID
-app_local_put
-txn Sender
-byte "index"
-load 0
-app_local_put
-int 1
+&&
+assert
+callsub markdappverified_6
 return
-main_l17:
-int 1
-itob
-store 0
-b main_l16
-main_l18:
+main_l10:
 callsub isvalid_1
 assert
 callsub iscreator_0
 return
-main_l19:
+main_l11:
 callsub isvalid_1
 assert
 callsub iscreator_0
 return
-main_l20:
+main_l12:
 callsub isvalid_1
 assert
 int 0
 return
-main_l21:
+main_l13:
 callsub isvalidoptin_2
 assert
 gtxn 1 NumAppArgs
@@ -153,17 +86,17 @@ gtxna 1 ApplicationArgs 0
 byte "dapp"
 ==
 &&
-bnz main_l24
-callsub registeruser_5
+bnz main_l16
+callsub registeruser_4
 pop
-main_l23:
+main_l15:
 int 1
 return
-main_l24:
-callsub registerdapp_4
+main_l16:
+callsub registerdapp_3
 pop
-b main_l23
-main_l25:
+b main_l15
+main_l17:
 callsub isvalid_1
 assert
 byte "Creator"
@@ -217,58 +150,8 @@ addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
 &&
 retsub
 
-// is_valid_notification
-isvalidnotification_3:
-gtxn 1 NumAppArgs
-int 2
-==
-gtxn 0 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 1 RekeyTo
-global ZeroAddress
-==
-&&
-global GroupSize
-int 2
-==
-&&
-gtxn 1 TypeEnum
-int appl
-==
-&&
-gtxn 1 OnCompletion
-int NoOp
-==
-&&
-gtxn 0 TypeEnum
-int pay
-==
-&&
-gtxn 0 Receiver
-addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
-==
-&&
-gtxn 0 Sender
-byte ":"
-concat
-gtxn 1 Sender
-concat
-gtxna 1 ApplicationArgs 1
-app_global_get
-==
-&&
-gtxn 1 Sender
-global CurrentApplicationID
-app_opted_in
-int 1
-==
-&&
-retsub
-
 // register_dapp
-registerdapp_4:
+registerdapp_3:
 gtxn 1 NumAppArgs
 int 2
 ==
@@ -297,7 +180,7 @@ int 1
 return
 
 // register_user
-registeruser_5:
+registeruser_4:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -313,36 +196,14 @@ assert
 int 1
 return
 
-// load_index
-loadindex_6:
-txn Sender
-global CurrentApplicationID
-byte "index"
-app_local_get_ex
-store 2
-store 1
-load 2
-!
-bz loadindex_6_l2
-txn Sender
-byte "index"
-int 0
-itob
-app_local_put
-loadindex_6_l2:
-txn Sender
-byte "index"
-app_local_get
-retsub
-
 // is_verified
-isverified_7:
+isverified_5:
 txna ApplicationArgs 1
 app_global_get
 len
 int 65
 ==
-bnz isverified_7_l4
+bnz isverified_5_l4
 txna ApplicationArgs 1
 app_global_get
 len
@@ -354,30 +215,35 @@ extract 66 1
 byte "v"
 ==
 &&
-bnz isverified_7_l3
+bnz isverified_5_l3
 int 0
-b isverified_7_l5
-isverified_7_l3:
+b isverified_5_l5
+isverified_5_l3:
 int 1
-b isverified_7_l5
-isverified_7_l4:
+b isverified_5_l5
+isverified_5_l4:
 int 0
-isverified_7_l5:
+isverified_5_l5:
 retsub
 
-// is_valid_dapp_addr_for_verify
-isvaliddappaddrforverify_8:
+// mark_dapp_verified
+markdappverified_6:
 txna ApplicationArgs 1
 app_global_get
-len
-int 65
->=
+store 0
+callsub isverified_5
+int 1
+!=
+bz markdappverified_6_l2
 txna ApplicationArgs 1
-app_global_get
-extract 33 32
-txna Accounts 1
-==
-&&
-assert
+app_global_del
+txna ApplicationArgs 1
+load 0
+byte ":v"
+concat
+app_global_put
+int 1
+return
+markdappverified_6_l2:
 int 1
 return

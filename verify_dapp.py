@@ -54,6 +54,7 @@ def call_app(client, private_key, index, app_args, acct_args):
     params.flat_fee = True
     params.fee = 1000
 
+    print("app args {}, acct args {}".format(app_args, acct_args))
     # create unsigned transaction
     txn = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args)
 
@@ -73,15 +74,16 @@ def main():
     _, dapp_address = generate_algorand_keypair(False, "sndr-secret.txt")
     app_args = [
         str.encode("verify"),
-        # str.encode(DAPP_NAME),
-        str.encode("Karol"),
+        str.encode(DAPP_NAME)
     ]
     acct_args = [
-        # dapp_address
-        "5OQOYHJ6BYPWFBUTFTN4JA5GJEAJUNA2P65DPNTN5OUGSFFO47NHRZR6HU"
+        dapp_address
     ]
     algod_client = get_algod_client(SC_CREATOR_KEY, SC_CREATOR_ADDR)
-    call_app(algod_client, SC_CREATOR_KEY, APP_ID, app_args, acct_args)
+    try:
+        call_app(algod_client, SC_CREATOR_KEY, APP_ID, app_args, acct_args)
+    except Exception as err:
+        print("app call failed", err)
 
     print("Global state:", read_global_state(algod_client, APP_ID))
 

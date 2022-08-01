@@ -141,7 +141,7 @@ def is_verified():
 
 
 @Subroutine(TealType.uint64)
-def is_valid_dapp_addr_for_verify():
+def verify_dapp_addr():
     val = App.globalGet(Txn.application_args[1])
     return Seq([
         Assert(
@@ -151,6 +151,28 @@ def is_valid_dapp_addr_for_verify():
                     Extract(val, Int(33), Int(32)), Txn.accounts[1]
                 )
             )
+        ),
+        Approve()
+    ])
+
+
+@Subroutine(TealType.uint64)
+def mark_dapp_verified():
+    val = ScratchVar(TealType.bytes)
+    return Seq([
+        val.store(App.globalGet(Txn.application_args[1])),
+        If(Neq(is_verified(), Int(1)))
+        .Then(
+            Seq([
+                App.globalDel(Txn.application_args[1]),
+                App.globalPut(Txn.application_args[1],
+                              Concat(
+                                  val.load(), Bytes(":v"),
+                              )
+                              ),
+                Approve()
+            ])
+
         ),
         Approve()
     ])
@@ -171,20 +193,15 @@ verify_dapp = Seq([
             App.optedIn(Txn.accounts[1], app_id),
             # called by creator?
             is_creator(),
+            # value should be at least 65 bytes long
+            Ge(Len(App.globalGet(Txn.application_args[1])), Int(65)),
             # dapp lsig address present in global state against dapp name?
-            is_valid_dapp_addr_for_verify()
+            Eq(
+                Extract(App.globalGet(Txn.application_args[1]), Int(33), Int(32)), Txn.accounts[1]
+            )
         )
     ),
-    If(Neq(is_verified(), Int(1)))
-    .Then(
-        App.globalPut(Txn.application_args[1],
-                      Concat(
-                          # App.globalGet(Txn.application_args[1]), Bytes(":v"),
-                          Extract(App.globalGet(Txn.application_args[1]), Int(0), Int(65)), Bytes(":v")
-                      )
-                      )
-    ),
-    Approve()
+    Return(mark_dapp_verified())
 ])
 
 '''
@@ -260,8 +277,8 @@ handle_deleteapp = Seq([
 # application calls
 handle_noop = Seq([
     Cond(
-        [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
-        [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
+        # [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
+        # [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
         [Txn.application_args[0] == Bytes("verify"), verify_dapp]
     )
 ])
