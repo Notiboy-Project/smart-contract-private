@@ -67,15 +67,16 @@ def is_valid_notification():
 @Subroutine(TealType.uint64)
 def register_dapp():
     return Seq([
+        val := App.globalGetEx(app_id, Gtxn[1].application_args[1]),
+        # check if dapp name is already registered
+        # Client should take care of case sensitivity
+        Assert(Not(val.hasValue())),
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(2),
                 Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
                 # amt is >= optin fee
-                Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
-                # check if dapp name is already registered
-                # Client should take care of case sensitivity
-                App.globalGet(Gtxn[1].application_args[1]) == Int(0)
+                Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE))
             )
         ),
         App.globalPut(Gtxn[1].application_args[1], Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender())),
@@ -161,7 +162,7 @@ def mark_dapp_verified():
     val = ScratchVar(TealType.bytes)
     return Seq([
         val.store(App.globalGet(Txn.application_args[1])),
-        If(Neq(is_verified(), Int(1)))
+        If(Not(is_verified()))
         .Then(
             Seq([
                 App.globalDel(Txn.application_args[1]),
@@ -172,7 +173,6 @@ def mark_dapp_verified():
                               ),
                 Approve()
             ])
-
         ),
         Approve()
     ])
@@ -277,8 +277,8 @@ handle_deleteapp = Seq([
 # application calls
 handle_noop = Seq([
     Cond(
-        # [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
-        # [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
+        [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
+        [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
         [Txn.application_args[0] == Bytes("verify"), verify_dapp]
     )
 ])

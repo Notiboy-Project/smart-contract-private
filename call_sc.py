@@ -1,3 +1,5 @@
+import sys
+
 import ipdb
 
 from datetime import datetime
@@ -112,6 +114,9 @@ def generate_algorand_keypair(overwrite, fname):
 
     print("My address: {}".format(address))
     print("My private key: {}".format(private_key))
+
+    if overwrite:
+        sys.exit()
 
     return private_key, address
 

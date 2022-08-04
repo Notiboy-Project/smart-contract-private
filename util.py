@@ -2,8 +2,7 @@ import base64
 
 from algosdk import encoding
 
-DAPP_NAME = "mydapp2"
-# DAPP_NAME = "Karol"
+DAPP_NAME = "mydapp3"
 APP_ID = 100343195
 
 
