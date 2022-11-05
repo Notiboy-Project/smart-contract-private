@@ -348,6 +348,7 @@ handle_deleteapp = Seq([
 # application calls
 handle_noop = Seq([
     Cond(
+        [Txn.application_args.length() == Int(0), Approve()],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
         [Txn.application_args[0] == Bytes("verify"), verify_dapp]
