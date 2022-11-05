@@ -43,9 +43,9 @@ def opt_in(client, private_key, index, dapp_name):
 
     # create unsigned transaction
     txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, boxes=boxes)
-    txn3 = transaction.ApplicationNoOpTxn(sender, params, index, boxes=boxes)
-    txn4 = transaction.ApplicationNoOpTxn(sender, params, index, boxes=boxes)
-    txn5 = transaction.ApplicationNoOpTxn(sender, params, index, boxes=boxes)
+    txn3 = transaction.ApplicationNoOpTxn(sender, params, index, note="txn3", boxes=boxes)
+    txn4 = transaction.ApplicationNoOpTxn(sender, params, index, note="txn4", boxes=boxes)
+    txn5 = transaction.ApplicationNoOpTxn(sender, params, index, note="txn5", boxes=boxes)
 
     # pay 1 algo
     txn1 = transaction.PaymentTxn(sender, params, "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA",
