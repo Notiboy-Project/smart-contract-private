@@ -1,9 +1,10 @@
 import base64
+import pdb
 
 from algosdk import encoding
 
-DAPP_NAME = "mydapp3"
-APP_ID = 100343195
+DAPP_NAME = "mydapp"
+APP_ID = 18
 
 
 # read user local state
@@ -60,11 +61,11 @@ def format_global_state(state):
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if formatted_key == "Creator":
-                formatted_value = byte_value.decode()
+            if formatted_key == "dappcount":
+                byte_value = base64.b64decode(value['bytes'])
+                formatted_value = int.from_bytes(byte_value, "big")
             else:
                 try:
-                    import ipdb;
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + encoding.encode_address(
                         byte_value[33:65])
                     print("Total length of value is ", len(byte_value))

@@ -1,6 +1,7 @@
 from algosdk.future import transaction
 from algosdk.v2client import algod
 from pyteal import *
+from algosdk.dryrun_results import DryrunResponse, StackPrinterConfig
 from algosdk import account, mnemonic, logic
 
 import base64
@@ -8,22 +9,31 @@ import base64
 from sc import approval_program, clear_state_program
 from util import read_local_state, read_global_state, APP_ID
 
+DEBUG = False
 
+
+# ./sandbox/sandbox goal account list
+# ./sandbox/sandbox goal account export -a ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY
 def generate_algorand_keypair():
     # private_key, address = account.generate_account()
     # print("My address: {}".format(address))
     # print("My private key: {}".format(private_key))
     # print("My passphrase: {}".format(mnemonic.from_private_key(private_key)))
 
-    private_key = "9DyHfbCbo/ZZ+bG8/VGOlyikLm0bhf5u0/tpik6u74ugEC3cEXrSvwa+s8eHxzZFKrCVECPurvA/VxRbcuUjsg=="
-    address = "UAIC3XARPLJL6BV6WPDYPRZWIUVLBFIQEPXK54B7K4KFW4XFEOZNSSUKZI"
+    private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
+    mnemonic_string = "simple vocal hard wall gravity tide surface eight pull oil fruit basic word assist answer still bright prevent coil speak loan clean wild able minimum"
+    if mnemonic_string != "":
+        private_key = mnemonic.to_private_key(mnemonic_string)
+    address = "ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY"
 
     return private_key, address
 
 
 def get_algod_client(private_key, my_address):
-    # algod_address = "http://localhost:4001"
-    algod_address = "https://node.testnet.algoexplorerapi.io"
+    # sandbox
+    algod_address = "http://localhost:4001"
+    # algo-explorer
+    # algod_address = "https://node.testnet.algoexplorerapi.io"
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
@@ -55,6 +65,14 @@ def create_app(client, private_key, approval_program, clear_program, global_sche
     # sign transaction
     signed_txn = txn.sign(private_key)
     tx_id = signed_txn.transaction.get_txid()
+
+    # debug
+    if DEBUG:
+        drr = transaction.create_dryrun(client, [signed_txn])
+        dryrun_result = DryrunResponse(client.dryrun(drr))
+        for txn in dryrun_result.txns:
+            if txn.app_call_rejected():
+                print(txn.app_trace(StackPrinterConfig(max_value_width=0)))
 
     # send transaction
     client.send_transactions([signed_txn])

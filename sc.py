@@ -2,7 +2,9 @@ from pyteal import *
 
 OPTIN_TYPE_DAPP = "dapp"
 OPTIN_TYPE_USER = "user"
-INDEX_KEY = "index"
+DAPP_COUNT = Bytes("dappcount")
+INDEX_KEY = Bytes("index")
+MAX_BOX_SIZE = Int(32768)
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 # 1 algo
@@ -31,9 +33,18 @@ def is_valid_optin():
     return And(
         Eq(Gtxn[0].rekey_to(), Global.zero_address()),
         Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(2)),
+        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(5)),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
+        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[0].type_enum(), TxnType.Payment),
         Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR))
     )
@@ -62,26 +73,72 @@ def is_valid_notification():
 
 # invoked as part of dapp opt-in
 # arg: "dapp" dapp_name
-# global registry will have | dapp_name | <-> | sender_addr : dapp_lsig_addr | mapping
+# global registry will have | dapp_name | <-> | sender_addr : dapp_count | mapping
+# dapp_count acts as dap index
 # grp txn - txn1 is payment, txn2 is app call
-@Subroutine(TealType.uint64)
+# Stores 64 128B key value pairs ( 1 reserved for dapp count)
+@Subroutine(TealType.none)
 def register_dapp():
-    return Seq([
-        val := App.globalGetEx(app_id, Gtxn[1].application_args[1]),
+    name = ScratchVar(TealType.bytes)
+    next_dapp_idx = ScratchVar(TealType.bytes)
+    dapp_count = ScratchVar(TealType.uint64)
+    return Seq(
+        # dapp name
+        name.store(Gtxn[1].application_args[1]),
+        val := App.globalGetEx(app_id, name.load()),
         # check if dapp name is already registered
         # Client should take care of case sensitivity
         Assert(Not(val.hasValue())),
+        dapp_count.store(Btoi(App.globalGet(DAPP_COUNT))),
+        next_dapp_idx.store(Itob(Add(dapp_count.load(), Int(1)))),
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(2),
                 Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
                 # amt is >= optin fee
-                Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE))
+                Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
             )
         ),
-        App.globalPut(Gtxn[1].application_args[1], Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender())),
+        App.globalPut(name.load(), Concat(Gtxn[0].sender(), Bytes(":"), next_dapp_idx.load())),
+        # update dapp count
+        App.globalPut(DAPP_COUNT, next_dapp_idx.load()),
+        # create box
+        Assert(App.box_create(name.load(), MAX_BOX_SIZE)),
+        Approve()
+    )
+
+
+# single txn from dapp creator
+# 1. remove entry from global state
+# 2. remove boxes
+@Subroutine(TealType.uint64)
+def deregister_dapp():
+    return Seq([
+        # dapp name
+        val := App.globalGetEx(app_id, Txn.application_args[1]),
+        If(
+            And(
+                val.hasValue(),
+                Eq(
+                    # extract sender address from global state for the given dapp name
+                    Extract(val, Int(0), Int(32)),
+                    Txn.sender()
+                ),
+            )
+        )
+        .Then(
+            And(
+                App.globalDel(Txn.application_args[1]),
+                App.box_delete(Txn.application_args[1])
+            )
+        ),
         Approve()
     ])
+
+
+@Subroutine(TealType.uint64)
+def deregister_user():
+    Approve()
 
 
 # invoked as part of user opt-in
@@ -107,12 +164,12 @@ def load_index():
     # working range is 1 to 15
     # The 0th slot is used for storing index
     # index points to the latest txn
-    index_val = App.localGetEx(Txn.sender(), app_id, Bytes(INDEX_KEY))
+    index_val = App.localGetEx(Txn.sender(), app_id, INDEX_KEY)
     return Seq([
         index_val,
         If(Not(index_val.hasValue()))
-        .Then(App.localPut(Txn.sender(), Bytes(INDEX_KEY), Itob(Int(0)))),
-        App.localGet(Txn.sender(), Bytes(INDEX_KEY))
+        .Then(App.localPut(Txn.sender(), INDEX_KEY, Itob(Int(0)))),
+        App.localGet(Txn.sender(), INDEX_KEY)
     ])
 
 
@@ -235,13 +292,13 @@ public_notify = Seq([
     .Then(next_index.store(Itob(Int(1)))),
     App.localDel(Txn.sender(), next_index.load()),
     App.localPut(Txn.sender(), next_index.load(), Txn.tx_id()),
-    App.localPut(Txn.sender(), Bytes(INDEX_KEY), next_index.load()),
+    App.localPut(Txn.sender(), INDEX_KEY, next_index.load()),
     Approve()
 ])
 
 handle_creation = Seq([
     Assert(is_valid()),
-    App.globalPut(Bytes("Creator"), Bytes("Deepak")),
+    App.globalPut(DAPP_COUNT, Itob(Int(0))),
     Approve()
 ])
 
@@ -254,10 +311,24 @@ handle_optin = Seq([
             Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
         )
     )
-    .Then(Pop(register_dapp()))
+    .Then(register_dapp())
     .Else(Pop(register_user())),
     Approve()
 ])
+
+# args: user/dapp <dapp_name if arg1 is dapp>
+handle_clear = Seq([
+    If(
+        And(
+            Eq(Gtxn[1].application_args.length(), Int(2)),
+            Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
+        )
+    )
+    .Then(Pop(deregister_dapp()))
+    .Else(Pop(deregister_user())),
+    Approve()
+])
+
 # no txn should clear the local state
 handle_closeout = Seq([
     Assert(is_valid()),
@@ -294,9 +365,9 @@ def approval_program():
         [Txn.on_completion() == OnComplete.NoOp, handle_noop]
     )
 
-    return compileTeal(program, Mode.Application, version=6)
+    return compileTeal(program, Mode.Application, version=8)
 
 
 def clear_state_program():
     program = Return(Int(1))
-    return compileTeal(program, Mode.Application, version=6)
+    return compileTeal(program, Mode.Application, version=8)

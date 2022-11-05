@@ -1,4 +1,4 @@
-#pragma version 6
+#pragma version 8
 txn ApplicationID
 int 0
 ==
@@ -157,13 +157,13 @@ int 1
 return
 main_l22:
 callsub registerdapp_4
-pop
 b main_l21
 main_l23:
 callsub isvalid_1
 assert
-byte "Creator"
-byte "Deepak"
+byte "dappcount"
+int 0
+itob
 app_global_put
 int 1
 return
@@ -191,8 +191,20 @@ gtxn 1 RekeyTo
 global ZeroAddress
 ==
 &&
+gtxn 2 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 3 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 4 RekeyTo
+global ZeroAddress
+==
+&&
 global GroupSize
-int 2
+int 5
 ==
 &&
 gtxn 1 TypeEnum
@@ -201,6 +213,30 @@ int appl
 &&
 gtxn 1 OnCompletion
 int OptIn
+==
+&&
+gtxn 2 TypeEnum
+int appl
+==
+&&
+gtxn 2 OnCompletion
+int NoOp
+==
+&&
+gtxn 3 TypeEnum
+int appl
+==
+&&
+gtxn 3 OnCompletion
+int NoOp
+==
+&&
+gtxn 4 TypeEnum
+int appl
+==
+&&
+gtxn 4 OnCompletion
+int NoOp
 ==
 &&
 gtxn 0 TypeEnum
@@ -265,14 +301,25 @@ retsub
 
 // register_dapp
 registerdapp_4:
-global CurrentApplicationID
 gtxna 1 ApplicationArgs 1
-app_global_get_ex
-store 2
 store 1
-load 2
+global CurrentApplicationID
+load 1
+app_global_get_ex
+store 5
+store 4
+load 5
 !
 assert
+byte "dappcount"
+app_global_get
+btoi
+store 3
+load 3
+int 1
++
+itob
+store 2
 gtxn 1 NumAppArgs
 int 2
 ==
@@ -285,13 +332,20 @@ int 1000000
 >=
 &&
 assert
-gtxna 1 ApplicationArgs 1
+load 1
 gtxn 0 Sender
 byte ":"
 concat
-gtxn 1 Sender
+load 2
 concat
 app_global_put
+byte "dappcount"
+load 2
+app_global_put
+load 1
+int 32768
+box_create
+assert
 int 1
 return
 
@@ -318,9 +372,9 @@ txn Sender
 global CurrentApplicationID
 byte "index"
 app_local_get_ex
-store 4
-store 3
-load 4
+store 7
+store 6
+load 7
 !
 bz loadindex_6_l2
 txn Sender
@@ -368,14 +422,14 @@ retsub
 markdappverified_8:
 txna ApplicationArgs 1
 app_global_get
-store 5
+store 8
 callsub isverified_7
 !
 bz markdappverified_8_l2
 txna ApplicationArgs 1
 app_global_del
 txna ApplicationArgs 1
-load 5
+load 8
 byte ":v"
 concat
 app_global_put
