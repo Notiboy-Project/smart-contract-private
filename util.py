@@ -50,6 +50,11 @@ def format_local_state(state):
     return formatted
 
 
+def debug():
+    import ipdb;
+    return ipdb.set_trace
+
+
 # helper function that formats global state for printing
 def format_global_state(state):
     formatted = {}

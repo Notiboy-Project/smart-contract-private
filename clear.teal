@@ -1,3 +1,125 @@
 #pragma version 8
+txn OnCompletion
+int ClearState
+==
+bnz main_l2
+err
+main_l2:
+callsub isvalidoptout_0
+assert
+gtxn 0 NumAppArgs
+int 2
+==
+gtxna 0 ApplicationArgs 0
+byte "dapp"
+==
+&&
+bnz main_l4
+callsub deregisteruser_3
+b main_l5
+main_l4:
+callsub deregisterdapp_2
+main_l5:
+int 1
+return
+
+// is_valid_optout
+isvalidoptout_0:
+gtxn 0 RekeyTo
+global ZeroAddress
+==
+gtxn 1 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 2 RekeyTo
+global ZeroAddress
+==
+&&
+gtxn 3 RekeyTo
+global ZeroAddress
+==
+&&
+global GroupSize
+int 4
+==
+&&
+gtxn 0 TypeEnum
+int appl
+==
+&&
+gtxn 0 OnCompletion
+int CloseOut
+==
+&&
+gtxn 1 TypeEnum
+int appl
+==
+&&
+gtxn 1 OnCompletion
+int NoOp
+==
+&&
+gtxn 2 TypeEnum
+int appl
+==
+&&
+gtxn 2 OnCompletion
+int NoOp
+==
+&&
+gtxn 3 TypeEnum
+int appl
+==
+&&
+gtxn 3 OnCompletion
+int NoOp
+==
+&&
+retsub
+
+// dapp_name
+dappname_1:
+store 3
+load 3
+len
+int 10
+>
+bnz dappname_1_l2
+load 3
+b dappname_1_l3
+dappname_1_l2:
+load 3
+extract 0 10
+dappname_1_l3:
+retsub
+
+// deregister_dapp
+deregisterdapp_2:
+gtxna 0 ApplicationArgs 1
+callsub dappname_1
+store 0
+global CurrentApplicationID
+load 0
+app_global_get_ex
+store 2
+store 1
+load 2
+load 1
+extract 0 32
+txn Sender
+==
+&&
+bz deregisterdapp_2_l2
+load 0
+app_global_del
+load 0
+box_del
+pop
+deregisterdapp_2_l2:
+retsub
+
+// deregister_user
+deregisteruser_3:
 int 1
 return

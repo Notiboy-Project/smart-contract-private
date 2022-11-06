@@ -1,8 +1,9 @@
 from pyteal import *
 
-OPTIN_TYPE_DAPP = "dapp"
-OPTIN_TYPE_USER = "user"
+TYPE_DAPP = Bytes("dapp")
+TYPE_USER = Bytes("user")
 DAPP_COUNT = Bytes("dappcount")
+DAPP_NAME_MAX_LEN = Int(10)
 INDEX_KEY = Bytes("index")
 MAX_BOX_SIZE = Int(32768)
 # dummy address that belongs to algo dispenser source account
@@ -25,6 +26,25 @@ def is_creator():
 def is_valid():
     return And(
         Eq(Txn.rekey_to(), Global.zero_address())
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_optout():
+    return And(
+        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(4)),
+        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
+        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[3].on_completion(), OnComplete.NoOp)
     )
 
 
@@ -94,7 +114,7 @@ def register_dapp():
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(2),
-                Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
+                Gtxn[1].application_args[0] == TYPE_DAPP,
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
             )
@@ -108,48 +128,62 @@ def register_dapp():
     )
 
 
+@Subroutine(TealType.bytes)
+def dapp_name(name):
+    return (
+        If(
+            Len(name) > DAPP_NAME_MAX_LEN
+        )
+        .Then(
+            Extract(name, Int(0), DAPP_NAME_MAX_LEN)
+        )
+        .Else(name)
+    )
+
+
 # single txn from dapp creator
 # 1. remove entry from global state
 # 2. remove boxes
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.none)
 def deregister_dapp():
+    name = ScratchVar(TealType.bytes)
     return Seq([
         # dapp name
-        val := App.globalGetEx(app_id, Txn.application_args[1]),
+        name.store(dapp_name(Gtxn[0].application_args[1])),
+        val := App.globalGetEx(app_id, name.load()),
         If(
             And(
                 val.hasValue(),
                 Eq(
                     # extract sender address from global state for the given dapp name
-                    Extract(val, Int(0), Int(32)),
+                    Extract(val.value(), Int(0), Int(32)),
                     Txn.sender()
                 ),
             )
         )
         .Then(
-            And(
-                App.globalDel(Txn.application_args[1]),
-                App.box_delete(Txn.application_args[1])
+            Seq(
+                App.globalDel(name.load()),
+                Pop(App.box_delete(name.load()))
             )
-        ),
-        Approve()
+        )
     ])
 
 
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.none)
 def deregister_user():
-    Approve()
+    return Seq(Approve())
 
 
 # invoked as part of user opt-in
 # arg: "user"
-@Subroutine(TealType.uint64)
+@Subroutine(TealType.none)
 def register_user():
     return Seq([
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(1),
-                Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_USER),
+                Gtxn[1].application_args[0] == TYPE_USER,
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(USER_OPTIN_FEE))
             )
@@ -308,32 +342,28 @@ handle_optin = Seq([
     If(
         And(
             Eq(Gtxn[1].application_args.length(), Int(2)),
-            Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
+            Gtxn[1].application_args[0] == TYPE_DAPP,
         )
     )
     .Then(register_dapp())
-    .Else(Pop(register_user())),
+    .Else(register_user()),
     Approve()
 ])
 
 # args: user/dapp <dapp_name if arg1 is dapp>
-handle_clear = Seq([
+handle_optout = Seq([
+    Assert(is_valid_optout()),
     If(
         And(
-            Eq(Gtxn[1].application_args.length(), Int(2)),
-            Gtxn[1].application_args[0] == Bytes(OPTIN_TYPE_DAPP),
+            Eq(Gtxn[0].application_args.length(), Int(2)),
+            Gtxn[0].application_args[0] == TYPE_DAPP,
         )
     )
-    .Then(Pop(deregister_dapp()))
-    .Else(Pop(deregister_user())),
+    .Then(deregister_dapp())
+    .Else(deregister_user()),
     Approve()
 ])
 
-# no txn should clear the local state
-handle_closeout = Seq([
-    Assert(is_valid()),
-    Reject()
-])
 # txn can update the app only if initiated by creator
 handle_updateapp = Seq([
     Assert(is_valid()),
@@ -348,6 +378,7 @@ handle_deleteapp = Seq([
 # application calls
 handle_noop = Seq([
     Cond(
+        # this is for dummy box budget txns
         [Txn.application_args.length() == Int(0), Approve()],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
@@ -360,7 +391,7 @@ def approval_program():
     program = Cond(
         [Txn.application_id() == Int(0), handle_creation],
         [Txn.on_completion() == OnComplete.OptIn, handle_optin],
-        [Txn.on_completion() == OnComplete.CloseOut, handle_closeout],
+        [Txn.on_completion() == OnComplete.CloseOut, handle_optout],
         [Txn.on_completion() == OnComplete.UpdateApplication, handle_updateapp],
         [Txn.on_completion() == OnComplete.DeleteApplication, handle_deleteapp],
         [Txn.on_completion() == OnComplete.NoOp, handle_noop]
@@ -370,5 +401,7 @@ def approval_program():
 
 
 def clear_state_program():
-    program = Return(Int(1))
+    program = Cond(
+        [Txn.on_completion() == OnComplete.ClearState, handle_optout]
+    )
     return compileTeal(program, Mode.Application, version=8)
