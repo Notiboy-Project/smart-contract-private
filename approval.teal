@@ -71,10 +71,10 @@ txna Accounts 1
 ==
 &&
 assert
-callsub markdappverified_12
+callsub markdappverified_14
 return
 main_l13:
-callsub isvalidnotification_4
+callsub isvalidnotification_5
 assert
 gtxn 1 NumAccounts
 int 1
@@ -94,9 +94,9 @@ app_local_put
 int 1
 return
 main_l14:
-callsub isvalidnotification_4
+callsub isvalidpublicnotification_6
 assert
-callsub loadindex_10
+callsub loadindex_12
 btoi
 int 1
 +
@@ -142,7 +142,7 @@ assert
 callsub iscreator_0
 return
 main_l20:
-callsub isvalidoptout_2
+callsub isvalidoptout_3
 assert
 gtxn 0 NumAppArgs
 int 2
@@ -152,15 +152,15 @@ byte "dapp"
 ==
 &&
 bnz main_l23
-callsub deregisteruser_8
+callsub deregisteruser_10
 main_l22:
 int 1
 return
 main_l23:
-callsub deregisterdapp_7
+callsub deregisterdapp_9
 b main_l22
 main_l24:
-callsub isvalidoptin_3
+callsub isvalidoptin_4
 assert
 gtxn 1 NumAppArgs
 int 2
@@ -170,12 +170,12 @@ byte "dapp"
 ==
 &&
 bnz main_l27
-callsub registeruser_9
+callsub registeruser_11
 main_l26:
 int 1
 return
 main_l27:
-callsub registerdapp_5
+callsub registerdapp_7
 b main_l26
 main_l28:
 callsub isvalid_1
@@ -201,8 +201,16 @@ global ZeroAddress
 ==
 retsub
 
+// sender_from_gstate
+senderfromgstate_2:
+store 1
+load 1
+app_global_get
+extract 0 32
+retsub
+
 // is_valid_optout
-isvalidoptout_2:
+isvalidoptout_3:
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -257,7 +265,7 @@ int NoOp
 retsub
 
 // is_valid_optin
-isvalidoptin_3:
+isvalidoptin_4:
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -324,7 +332,7 @@ addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
 retsub
 
 // is_valid_notification
-isvalidnotification_4:
+isvalidnotification_5:
 gtxn 1 NumAppArgs
 int 2
 ==
@@ -373,27 +381,62 @@ int 1
 &&
 retsub
 
-// register_dapp
-registerdapp_5:
-gtxna 1 ApplicationArgs 1
-store 1
+// is_valid_public_notification
+isvalidpublicnotification_6:
+global GroupSize
+int 1
+==
+txn NumAppArgs
+int 2
+==
+&&
+txn RekeyTo
+global ZeroAddress
+==
+&&
+txn TypeEnum
+int appl
+==
+&&
+txn OnCompletion
+int NoOp
+==
+&&
+txn Sender
+txna ApplicationArgs 1
+callsub senderfromgstate_2
+==
+&&
+txn Sender
 global CurrentApplicationID
-load 1
+app_opted_in
+int 1
+==
+&&
+retsub
+
+// register_dapp
+registerdapp_7:
+gtxna 1 ApplicationArgs 1
+callsub dappname_8
+store 2
+global CurrentApplicationID
+load 2
 app_global_get_ex
+store 6
 store 5
-store 4
-load 5
+load 6
 !
 assert
 byte "dappcount"
 app_global_get
 btoi
-store 3
-load 3
+store 4
+load 4
 int 1
 +
 itob
-store 2
+store 3
 gtxn 1 NumAppArgs
 int 2
 ==
@@ -406,17 +449,17 @@ int 1000000
 >=
 &&
 assert
-load 1
+load 2
 gtxn 0 Sender
 byte ":"
 concat
-load 2
+load 3
 concat
 app_global_put
 byte "dappcount"
-load 2
+load 3
 app_global_put
-load 1
+load 2
 int 32768
 box_create
 assert
@@ -424,53 +467,53 @@ int 1
 return
 
 // dapp_name
-dappname_6:
-store 9
-load 9
+dappname_8:
+store 7
+load 7
 len
 int 10
 >
-bnz dappname_6_l2
-load 9
-b dappname_6_l3
-dappname_6_l2:
-load 9
+bnz dappname_8_l2
+load 7
+b dappname_8_l3
+dappname_8_l2:
+load 7
 extract 0 10
-dappname_6_l3:
+dappname_8_l3:
 retsub
 
 // deregister_dapp
-deregisterdapp_7:
+deregisterdapp_9:
 gtxna 0 ApplicationArgs 1
-callsub dappname_6
-store 6
-global CurrentApplicationID
-load 6
-app_global_get_ex
+callsub dappname_8
 store 8
-store 7
+global CurrentApplicationID
 load 8
-load 7
+app_global_get_ex
+store 10
+store 9
+load 10
+load 9
 extract 0 32
 txn Sender
 ==
 &&
-bz deregisterdapp_7_l2
-load 6
+bz deregisterdapp_9_l2
+load 8
 app_global_del
-load 6
+load 8
 box_del
 pop
-deregisterdapp_7_l2:
+deregisterdapp_9_l2:
 retsub
 
 // deregister_user
-deregisteruser_8:
+deregisteruser_10:
 int 1
 return
 
 // register_user
-registeruser_9:
+registeruser_11:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -487,35 +530,35 @@ int 1
 return
 
 // load_index
-loadindex_10:
+loadindex_12:
 txn Sender
 global CurrentApplicationID
 byte "index"
 app_local_get_ex
+store 12
 store 11
-store 10
-load 11
+load 12
 !
-bz loadindex_10_l2
+bz loadindex_12_l2
 txn Sender
 byte "index"
 int 0
 itob
 app_local_put
-loadindex_10_l2:
+loadindex_12_l2:
 txn Sender
 byte "index"
 app_local_get
 retsub
 
 // is_verified
-isverified_11:
+isverified_13:
 txna ApplicationArgs 1
 app_global_get
 len
 int 65
 ==
-bnz isverified_11_l4
+bnz isverified_13_l4
 txna ApplicationArgs 1
 app_global_get
 len
@@ -527,34 +570,34 @@ extract 66 1
 byte "v"
 ==
 &&
-bnz isverified_11_l3
+bnz isverified_13_l3
 int 0
-b isverified_11_l5
-isverified_11_l3:
+b isverified_13_l5
+isverified_13_l3:
 int 1
-b isverified_11_l5
-isverified_11_l4:
+b isverified_13_l5
+isverified_13_l4:
 int 0
-isverified_11_l5:
+isverified_13_l5:
 retsub
 
 // mark_dapp_verified
-markdappverified_12:
+markdappverified_14:
 txna ApplicationArgs 1
 app_global_get
-store 12
-callsub isverified_11
+store 13
+callsub isverified_13
 !
-bz markdappverified_12_l2
+bz markdappverified_14_l2
 txna ApplicationArgs 1
 app_global_del
 txna ApplicationArgs 1
-load 12
+load 13
 byte ":v"
 concat
 app_global_put
 int 1
 return
-markdappverified_12_l2:
+markdappverified_14_l2:
 int 1
 return

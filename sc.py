@@ -6,6 +6,7 @@ DAPP_COUNT = Bytes("dappcount")
 DAPP_NAME_MAX_LEN = Int(10)
 INDEX_KEY = Bytes("index")
 MAX_BOX_SIZE = Int(32768)
+MAX_LSTATE_SIZE = Int(16)
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 # 1 algo
@@ -26,6 +27,13 @@ def is_creator():
 def is_valid():
     return And(
         Eq(Txn.rekey_to(), Global.zero_address())
+    )
+
+
+@Subroutine(TealType.bytes)
+def sender_from_gstate(dapp_name):
+    return Extract(
+        App.globalGet(dapp_name), Int(0), Int(32)
     )
 
 
@@ -84,10 +92,31 @@ def is_valid_notification():
         Eq(
             # verify dapp name belongs to sender
             # <txn1 sender>:<txn2 sender> == dapp_name in global state
-            Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender()), App.globalGet(Gtxn[1].application_args[1])
+            Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender()),
+            App.globalGet(Gtxn[1].application_args[1])
         ),
         # dapp opted in?
         Eq(App.optedIn(Gtxn[1].sender(), app_id), Int(1)),
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_public_notification():
+    return And(
+        # should contain just 1 txn
+        Eq(Global.group_size(), Int(1)),
+        Eq(Txn.application_args.length(), Int(2)),
+        Eq(Txn.rekey_to(), Global.zero_address()),
+        Eq(Txn.type_enum(), TxnType.ApplicationCall),
+        Eq(Txn.on_completion(), OnComplete.NoOp),
+        Eq(
+            # verify dapp name belongs to sender
+            # <txn sender> == <gstate sender> in global state
+            Txn.sender(),
+            sender_from_gstate(Txn.application_args[1]),
+        ),
+        # dapp opted in?
+        Eq(App.optedIn(Txn.sender(), app_id), Int(1)),
     )
 
 
@@ -104,7 +133,7 @@ def register_dapp():
     dapp_count = ScratchVar(TealType.uint64)
     return Seq(
         # dapp name
-        name.store(Gtxn[1].application_args[1]),
+        name.store(dapp_name(Gtxn[1].application_args[1])),
         val := App.globalGetEx(app_id, name.load()),
         # check if dapp name is already registered
         # Client should take care of case sensitivity
@@ -318,9 +347,9 @@ next_index = ScratchVar(TealType.bytes)
 app_args: pub_notify dapp_name
 '''
 public_notify = Seq([
-    Assert(is_valid_notification()),
+    Assert(is_valid_public_notification()),
     next_index.store(Itob(
-        (Btoi(load_index()) + Int(1)) % Int(16)
+        (Btoi(load_index()) + Int(1)) % MAX_LSTATE_SIZE
     )),
     If(Btoi(next_index.load()) == Int(0))
     .Then(next_index.store(Itob(Int(1)))),
@@ -379,6 +408,7 @@ handle_deleteapp = Seq([
 handle_noop = Seq([
     Cond(
         # this is for dummy box budget txns
+        # TODO: add rekeying checks here
         [Txn.application_args.length() == Int(0), Approve()],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],

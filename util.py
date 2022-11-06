@@ -33,8 +33,6 @@ def format_local_state(state):
             # in case of user's local state
             formatted_key = byte_key.decode()
         else:
-            # import ipdb;
-            # ipdb.set_trace()
             formatted_key = int.from_bytes(byte_key, "big")
         if value['type'] == 1:
             # byte string
@@ -42,7 +40,10 @@ def format_local_state(state):
             if byte_key.decode() == "index":
                 formatted_value = int.from_bytes(byte_value, "big")
             else:
-                formatted_value = encoding.encode_address(byte_value)
+                try:
+                    formatted_value = encoding.encode_address(byte_value)
+                except Exception:
+                    formatted_value = byte_value.decode()
             formatted[formatted_key] = formatted_value
         else:
             # integer

@@ -13,6 +13,8 @@ from algosdk.encoding import decode_address
 
 from util import read_local_state, read_global_state, DAPP_NAME, APP_ID, debug
 
+NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
+
 
 def opt_out(client, private_key, index, dapp_name):
     # declare sender
@@ -106,7 +108,7 @@ def opt_in(client, private_key, index, dapp_name):
     txn5 = transaction.ApplicationNoOpTxn(sender, params, index, note="txn5", boxes=boxes)
 
     # pay 1 algo
-    txn1 = transaction.PaymentTxn(sender, params, "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA",
+    txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR,
                                   1000000)
 
     gid = transaction.calculate_group_id([txn1, txn2, txn3, txn4, txn5])
@@ -152,8 +154,7 @@ def call_app(client, private_key, index, msg, app_args, acct_args):
     txn2 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, note=str.encode(msg))
 
     # pay 0 algo
-    txn1 = transaction.PaymentTxn(sender, params, "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA",
-                                  0)
+    txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 0)
 
     gid = transaction.calculate_group_id([txn1, txn2])
     transaction.assign_group_id([txn1, txn2])
@@ -164,6 +165,32 @@ def call_app(client, private_key, index, msg, app_args, acct_args):
     signed_txn1 = txn1.sign(private_key)
     signed_txn2 = txn2.sign(private_key)
     signed_group = [signed_txn1, signed_txn2]
+
+    # send transaction
+    tx_id = client.send_transactions(signed_group)
+
+    # await confirmation
+    transaction.wait_for_confirmation(client, tx_id)
+    print("Transaction ID:", tx_id)
+
+
+def send_public_notification(client, private_key, index, msg, app_args, acct_args):
+    # declare sender
+    sender = account.address_from_private_key(private_key)
+    print("Call from account:", sender)
+
+    # get node suggested parameters
+    params = client.suggested_params()
+    # comment out the next two (2) lines to use suggested fees
+    params.flat_fee = True
+    params.fee = 1000
+
+    # create unsigned transaction
+    txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, note=str.encode(msg))
+
+    # sign transaction
+    signed_txn1 = txn1.sign(private_key)
+    signed_group = [signed_txn1]
 
     # send transaction
     tx_id = client.send_transactions(signed_group)
@@ -260,7 +287,7 @@ def main():
 
     try:
         pass
-        opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
+        # opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
@@ -277,7 +304,7 @@ def main():
             str.encode("pub_notify"),
             str.encode(DAPP_NAME),
         ]
-        # call_app(algod_client, pvt_key, APP_ID, msg, app_args, [])
+        send_public_notification(algod_client, pvt_key, APP_ID, msg, app_args, [])
     except Exception as err:
         print("error calling app, err: {}".format(err))
 
