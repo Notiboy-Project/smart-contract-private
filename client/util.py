@@ -1,8 +1,10 @@
 import base64
-import pdb
-
+import sys
+from algosdk import account, mnemonic, logic
 from algosdk import encoding
+from algosdk.v2client import algod
 
+NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 DAPP_NAME = "mydapp"
 APP_ID = 18
 
@@ -95,3 +97,45 @@ def read_global_state(client, app_id):
     app = client.application_info(app_id)
     global_state = app['params']['global-state'] if "global-state" in app['params'] else []
     return format_global_state(global_state)
+
+
+def generate_algorand_keypair(overwrite, fname, sandbox):
+    if sandbox:
+        private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
+        mnemonic_string = "simple vocal hard wall gravity tide surface eight pull oil fruit basic word assist answer still bright prevent coil speak loan clean wild able minimum"
+        if mnemonic_string != "":
+            private_key = mnemonic.to_private_key(mnemonic_string)
+        address = "ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY"
+
+        return private_key, address
+
+    if overwrite:
+        private_key, address = account.generate_account()
+        with open(fname, "w") as f:
+            f.write('{}\n{}\n'.format(address, private_key))
+    else:
+        with open(fname, "r") as f:
+            lns = f.readlines()
+            address = lns[0].rstrip('\n')
+            private_key = lns[1].rstrip('\n')
+
+    print("My address: {}".format(address))
+    print("My private key: {}".format(private_key))
+
+    if overwrite:
+        sys.exit()
+
+    return private_key, address
+
+
+def get_algod_client(private_key, my_address):
+    # sandbox
+    algod_address = "http://localhost:4001"
+    # algo-explorer
+    # algod_address = "https://node.testnet.algoexplorerapi.io"
+    algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    algod_client = algod.AlgodClient(algod_token, algod_address)
+    account_info = algod_client.account_info(my_address)
+    print("Account balance: {} microAlgos\n".format(account_info.get('amount')))
+
+    return algod_client

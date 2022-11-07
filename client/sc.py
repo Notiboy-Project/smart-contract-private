@@ -65,6 +65,8 @@ def is_valid_optin():
         Eq(Gtxn[3].rekey_to(), Global.zero_address()),
         Eq(Gtxn[4].rekey_to(), Global.zero_address()),
         Eq(Global.group_size(), Int(5)),
+        Eq(Gtxn[0].type_enum(), TxnType.Payment),
+        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
         Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
@@ -72,9 +74,7 @@ def is_valid_optin():
         Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[0].type_enum(), TxnType.Payment),
-        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR))
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
     )
 
 
@@ -120,6 +120,19 @@ def is_valid_public_notification():
     )
 
 
+@Subroutine(TealType.bytes)
+def dapp_name(name):
+    return (
+        If(
+            Len(name) > DAPP_NAME_MAX_LEN
+        )
+        .Then(
+            Extract(name, Int(0), DAPP_NAME_MAX_LEN)
+        )
+        .Else(name)
+    )
+
+
 # invoked as part of dapp opt-in
 # arg: "dapp" dapp_name
 # global registry will have | dapp_name | <-> | sender_addr : dapp_count | mapping
@@ -157,19 +170,6 @@ def register_dapp():
     )
 
 
-@Subroutine(TealType.bytes)
-def dapp_name(name):
-    return (
-        If(
-            Len(name) > DAPP_NAME_MAX_LEN
-        )
-        .Then(
-            Extract(name, Int(0), DAPP_NAME_MAX_LEN)
-        )
-        .Else(name)
-    )
-
-
 # single txn from dapp creator
 # 1. remove entry from global state
 # 2. remove boxes
@@ -201,7 +201,10 @@ def deregister_dapp():
 
 @Subroutine(TealType.none)
 def deregister_user():
-    return Seq(Approve())
+    return Seq(
+        Assert(App.box_delete(Gtxn[0].sender())),
+        Approve()
+    )
 
 
 # invoked as part of user opt-in
@@ -217,12 +220,14 @@ def register_user():
                 Ge(Gtxn[0].amount(), Int(USER_OPTIN_FEE))
             )
         ),
+        # create box with name as sender's 32B address
+        Assert(App.box_create(Gtxn[0].sender(), MAX_BOX_SIZE)),
         Approve()
     ])
 
 
 @Subroutine(TealType.bytes)
-def load_index():
+def load_dapp_lstate_index():
     # initialise index to 0
     # working range is 1 to 15
     # The 0th slot is used for storing index
@@ -330,6 +335,9 @@ acct_args: rcvr_addr
 '''
 private_notify = Seq([
     Assert(is_valid_notification()),
+    # DO THIS sync.Once()
+    # set up the index for notifications in box in user's lstate
+    # App.localPut(Txn.sender(), INDEX_KEY, Int(0)),
     # is rcvr address passed?
     Assert(Eq(Gtxn[1].accounts.length(), Int(1))),
     # rcvr opted in?
@@ -341,21 +349,21 @@ private_notify = Seq([
     Approve()
 ])
 
-next_index = ScratchVar(TealType.bytes)
+next_dapp_lstate_index = ScratchVar(TealType.bytes)
 
 '''
 app_args: pub_notify dapp_name
 '''
 public_notify = Seq([
     Assert(is_valid_public_notification()),
-    next_index.store(Itob(
-        (Btoi(load_index()) + Int(1)) % MAX_LSTATE_SIZE
+    next_dapp_lstate_index.store(Itob(
+        (Btoi(load_dapp_lstate_index()) + Int(1)) % MAX_LSTATE_SIZE
     )),
-    If(Btoi(next_index.load()) == Int(0))
-    .Then(next_index.store(Itob(Int(1)))),
-    App.localDel(Txn.sender(), next_index.load()),
-    App.localPut(Txn.sender(), next_index.load(), Txn.tx_id()),
-    App.localPut(Txn.sender(), INDEX_KEY, next_index.load()),
+    If(Btoi(next_dapp_lstate_index.load()) == Int(0))
+    .Then(next_dapp_lstate_index.store(Itob(Int(1)))),
+    App.localDel(Txn.sender(), next_dapp_lstate_index.load()),
+    App.localPut(Txn.sender(), next_dapp_lstate_index.load(), Txn.tx_id()),
+    App.localPut(Txn.sender(), INDEX_KEY, next_dapp_lstate_index.load()),
     Approve()
 ])
 

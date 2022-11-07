@@ -266,15 +266,9 @@ retsub
 
 // is_valid_optin
 isvalidoptin_4:
-txn Sender
-global CurrentApplicationID
-app_opted_in
-int 1
-!=
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
-&&
 gtxn 1 RekeyTo
 global ZeroAddress
 ==
@@ -515,6 +509,9 @@ retsub
 
 // deregister_user
 deregisteruser_10:
+gtxn 0 Sender
+box_del
+assert
 int 1
 return
 
@@ -532,11 +529,7 @@ int 1000000
 >=
 &&
 assert
-txn Sender
-byte "index"
-int 0
-app_local_put
-txn Sender
+gtxn 0 Sender
 int 32768
 box_create
 assert
