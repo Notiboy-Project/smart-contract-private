@@ -29,17 +29,14 @@ def format_local_state(state):
         key = item['key']
         value = item['value']
         byte_key = base64.b64decode(key)
-        if byte_key.decode() == "index":
-            formatted_key = byte_key.decode()
-        elif byte_key.decode() == DAPP_NAME:
-            # in case of user's local state
+        if byte_key.decode() in ["index", DAPP_NAME, "msgcount"]:
             formatted_key = byte_key.decode()
         else:
             formatted_key = int.from_bytes(byte_key, "big")
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if byte_key.decode() == "index":
+            if byte_key.decode() in ["index", "msgcount"]:
                 formatted_value = int.from_bytes(byte_value, "big")
             else:
                 try:

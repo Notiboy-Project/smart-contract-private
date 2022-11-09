@@ -4,9 +4,11 @@ TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")
 DAPP_COUNT = Bytes("dappcount")
 DAPP_NAME_MAX_LEN = Int(10)
+MSG_COUNT = Bytes("msgcount")
 INDEX_KEY = Bytes("index")
 MAX_BOX_SIZE = Int(32768)
 MAX_LSTATE_SIZE = Int(16)
+MAX_BOX_SIZE = Int(32)
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 # 1 algo
@@ -34,6 +36,13 @@ def is_valid():
 def sender_from_gstate(dapp_name):
     return Extract(
         App.globalGet(dapp_name), Int(0), Int(32)
+    )
+
+
+@Subroutine(TealType.bytes)
+def index_from_gstate(dapp_name):
+    return Extract(
+        App.globalGet(dapp_name), Int(33), Int(3)
     )
 
 
@@ -79,24 +88,33 @@ def is_valid_optin():
 
 
 @Subroutine(TealType.uint64)
-def is_valid_notification():
+def is_valid_private_notification():
     return And(
-        Eq(Gtxn[1].application_args.length(), Int(2)),
         Eq(Gtxn[0].rekey_to(), Global.zero_address()),
         Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(2)),
+        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[0].application_args.length(), Int(2)),
+        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[0].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[0].type_enum(), TxnType.Payment),
-        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
+        Eq(Global.group_size(), Int(5)),
         Eq(
             # verify dapp name belongs to sender
-            # <txn1 sender>:<txn2 sender> == dapp_name in global state
-            Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender()),
-            App.globalGet(Gtxn[1].application_args[1])
+            # <txn sender> == dapp_name's acct addr in global state
+            Gtxn[0].sender(),
+            sender_from_gstate(Gtxn[0].application_args[1])
         ),
         # dapp opted in?
-        Eq(App.optedIn(Gtxn[1].sender(), app_id), Int(1)),
+        Eq(App.optedIn(Gtxn[0].sender(), app_id), Int(1)),
     )
 
 
@@ -226,21 +244,6 @@ def register_user():
     ])
 
 
-@Subroutine(TealType.bytes)
-def load_dapp_lstate_index():
-    # initialise index to 0
-    # working range is 1 to 15
-    # The 0th slot is used for storing index
-    # index points to the latest txn
-    index_val = App.localGetEx(Txn.sender(), app_id, INDEX_KEY)
-    return Seq([
-        index_val,
-        If(Not(index_val.hasValue()))
-        .Then(App.localPut(Txn.sender(), INDEX_KEY, Itob(Int(0)))),
-        App.localGet(Txn.sender(), INDEX_KEY)
-    ])
-
-
 @Subroutine(TealType.uint64)
 def is_verified():
     val = App.globalGet(Txn.application_args[1])
@@ -329,47 +332,142 @@ verify_dapp = Seq([
     Return(mark_dapp_verified())
 ])
 
+
+@Subroutine(TealType.none)
+def inc_msg_count(addr):
+    return Seq([
+        count_val := App.localGetEx(addr, app_id, MSG_COUNT),
+        If(Not(count_val.hasValue()))
+        .Then(App.localPut(addr, MSG_COUNT, Itob(Int(0)))),
+        App.localPut(addr, MSG_COUNT, Itob(
+            Add(
+                Btoi(App.localGet(addr, MSG_COUNT)), Int(1)
+            )
+        ))
+    ])
+
+
+# initialise index to 0
+@Subroutine(TealType.bytes)
+def load_idx_from_lstate(addr):
+    index_val = App.localGetEx(addr, app_id, INDEX_KEY)
+    return Seq([
+        index_val,
+        If(Not(index_val.hasValue()))
+        .Then(App.localPut(addr, INDEX_KEY, Itob(Int(0)))),
+        App.localGet(addr, INDEX_KEY)
+    ])
+
+
+@Subroutine(TealType.bytes)
+def construct_msg():
+    return Concat(
+        Gtxn[0].note(),
+        Itob(Global.latest_timestamp()),
+        Gtxn[0].application_args[1],
+    )
+
+
+@Subroutine(TealType.none)
+def write_msg(idx, msg):
+    return Seq(
+        (start_byte := ScratchVar(TealType.uint64)).store(Mul(idx, Int(1024))),
+        App.box_replace(Txn.accounts[1], start_byte.load(), msg)
+    )
+
+
+@Subroutine(TealType.none)
+def user_optin_dapp(dapp_idx):
+    return Seq(
+        is_apps_set := App.localGetEx(Gtxn[0].accounts[1], app_id, Bytes("apps")),
+        If(
+            Eq(
+                is_apps_set.hasValue(), Int(0)
+            )
+        )
+        .Then(App.localPut(Gtxn[0].accounts[1], Bytes("apps"), Itob(dapp_idx)))
+        .Else(
+            (found := ScratchVar(TealType.uint64)).store(Int(0)),
+            (app_list := ScratchVar(TealType.bytes)).store(App.localGet(Gtxn[0].accounts[1], Bytes("apps"))),
+            For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
+                start_idx.load() < Len(app_list.load()),
+                start_idx.store(start_idx.load() + Int(3))
+                ).Do(
+                If(
+                    Eq(
+                        Btoi(Extract(app_list.load(), start_idx.load(), Int(3))),
+                        dapp_idx
+                    )
+                )
+                .Then(
+                    found.store(Int(1)),
+                    Break()
+                )
+            ),
+            If(
+                Neq(
+                    found.load(),
+                    Int(1)
+                )
+            )
+            .Then(
+                app_list.store(
+                    Concat(app_list.load(), Itob(dapp_idx))
+                )
+            )
+        )
+    )
+
+
 '''
 app_args: pvt_notify dapp_name
 acct_args: rcvr_addr
 '''
 private_notify = Seq([
-    Assert(is_valid_notification()),
-    # DO THIS sync.Once()
-    # set up the index for notifications in box in user's lstate
-    # App.localPut(Txn.sender(), INDEX_KEY, Int(0)),
+    Assert(is_valid_private_notification()),
     # is rcvr address passed?
-    Assert(Eq(Gtxn[1].accounts.length(), Int(1))),
+    Assert(Eq(Gtxn[0].accounts.length(), Int(1))),
     # rcvr opted in?
     Assert(App.optedIn(Txn.accounts[1], app_id)),
-    # delete existing pvt notification, key as dapp_name
-    App.localDel(Txn.accounts[1], Txn.application_args[1]),
-    # key dapp_name, value as txn_id
-    App.localPut(Txn.accounts[1], Txn.application_args[1], Txn.tx_id()),
+
+    # this ranges from 0 to 31
+    (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
+        (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_BOX_SIZE
+    )),
+    App.localDel(Txn.accounts[1], next_lstate_index.load()),
+    # set index key
+    App.localPut(Txn.accounts[1], INDEX_KEY, next_lstate_index.load()),
+    # increase 'sent' msg count of dapp
+    inc_msg_count(Txn.sender()),
+    # increase 'received' msg count of rcvr
+    inc_msg_count(Txn.accounts[1]),
+    (data := ScratchVar(TealType.bytes)).store(construct_msg()),
+    # write_msg(next_lstate_index.load(), data.load()),
+    # user_optin_dapp(index_from_gstate(Gtxn[0].application_args[1])),
     Approve()
 ])
-
-next_dapp_lstate_index = ScratchVar(TealType.bytes)
 
 '''
 app_args: pub_notify dapp_name
 '''
 public_notify = Seq([
     Assert(is_valid_public_notification()),
-    next_dapp_lstate_index.store(Itob(
-        (Btoi(load_dapp_lstate_index()) + Int(1)) % MAX_LSTATE_SIZE
+    # ranges from 0 to 15, but we don't 0th location as we store this index there
+    (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
+        (Btoi(load_idx_from_lstate(Txn.sender())) + Int(1)) % MAX_LSTATE_SIZE
     )),
-    If(Btoi(next_dapp_lstate_index.load()) == Int(0))
-    .Then(next_dapp_lstate_index.store(Itob(Int(1)))),
-    App.localDel(Txn.sender(), next_dapp_lstate_index.load()),
-    App.localPut(Txn.sender(), next_dapp_lstate_index.load(), Txn.tx_id()),
-    App.localPut(Txn.sender(), INDEX_KEY, next_dapp_lstate_index.load()),
+    If(Btoi(next_lstate_index.load()) == Int(0))
+    .Then(next_lstate_index.store(Itob(Int(1)))),
+    App.localDel(Txn.sender(), next_lstate_index.load()),
+    # set index key
+    App.localPut(Txn.sender(), INDEX_KEY, next_lstate_index.load()),
+    App.localPut(Txn.sender(), next_lstate_index.load(), Txn.tx_id()),
     Approve()
 ])
 
 handle_creation = Seq([
     Assert(is_valid()),
-    App.globalPut(DAPP_COUNT, Itob(Int(0))),
+    App.globalPut(DAPP_COUNT, Itob(Int(100))),
     Approve()
 ])
 
