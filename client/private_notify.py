@@ -9,7 +9,8 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.encoding import decode_address
 
-from util import read_local_state, get_algod_client, DAPP_NAME, APP_ID, generate_algorand_keypair, NOTIBOY_ADDR, debug
+from util import read_local_state, read_global_state, get_algod_client, DAPP_NAME, APP_ID, generate_algorand_keypair, \
+    NOTIBOY_ADDR, debug
 
 
 def opt_out(client, private_key, index, dapp_name):
@@ -156,7 +157,7 @@ def call_app(client, private_key, index, msg, app_args, acct_args):
     params.fee = 1000
     boxes = [
         # use public key as box name
-        [0, encoding.decode_address(sender)],
+        [0, encoding.decode_address(acct_args[0])],
         [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""]
     ]
     # create unsigned transaction
@@ -201,7 +202,7 @@ def pvt_notify():
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
-    msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
+    msg = "hello, my name is Deepak"
     print("Sending private notification --> {}".format(msg))
 
     try:
@@ -224,6 +225,8 @@ def pvt_notify():
 
     for k, v in local_state.items():
         print("{} --> {}".format(k, v))
+
+    print("Global state:", read_global_state(algod_client, APP_ID))
 
 
 def main():

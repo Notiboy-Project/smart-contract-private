@@ -204,8 +204,8 @@ def main():
     algod_client = get_algod_client(pvt_key, address)
 
     try:
-        pass
-        # opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
+        # pass
+        opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
     except Exception as err:
         print("error opting in, err: {}".format(err))
 

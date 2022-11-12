@@ -121,5 +121,8 @@ retsub
 
 // deregister_user
 deregisteruser_3:
+gtxn 0 Sender
+box_del
+assert
 int 1
 return

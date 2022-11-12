@@ -1,13 +1,12 @@
 from algosdk.future import transaction
 from algosdk.v2client import algod
-from pyteal import *
 from algosdk.dryrun_results import DryrunResponse, StackPrinterConfig
-from algosdk import account, mnemonic, logic
+from algosdk import account, mnemonic
 
 import base64
 
 from sc import approval_program, clear_state_program
-from util import read_local_state, read_global_state, APP_ID
+from util import read_global_state, APP_ID
 
 DEBUG = False
 
@@ -60,7 +59,7 @@ def create_app(client, private_key, approval_program, clear_program, global_sche
 
     # create unsigned transaction
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete, approval_program, clear_program, global_schema,
-                                           local_schema)
+                                           local_schema, extra_pages=1)
 
     # sign transaction
     signed_txn = txn.sign(private_key)

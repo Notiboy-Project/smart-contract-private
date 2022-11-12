@@ -2,3 +2,6 @@ Send from one acct to another
 
 ./sandbox/sandbox goal clerk send -a 103212100 -t C5ISN6HJJAU2YL5F53EOZWW3AR77KJK2VQJSX7KL2M5ZTLN3AYVN27YXAU -f ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY
 
+Get box content
+./sandbox/sandbox goal app box info --name "b64:sbdFk0yRdX5fzZIs+UeRVElOiwZi1CaNCy4jBudgeBI=" --app-id 18
+

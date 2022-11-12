@@ -6,7 +6,7 @@ from algosdk.v2client import algod
 
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 DAPP_NAME = "mydapp"
-APP_ID = 18
+APP_ID = 940
 
 
 # read user local state
@@ -29,14 +29,14 @@ def format_local_state(state):
         key = item['key']
         value = item['value']
         byte_key = base64.b64decode(key)
-        if byte_key.decode() in ["index", DAPP_NAME, "msgcount"]:
+        if byte_key.decode() in ["index", DAPP_NAME, "msgcount", "apps"]:
             formatted_key = byte_key.decode()
         else:
             formatted_key = int.from_bytes(byte_key, "big")
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if byte_key.decode() in ["index", "msgcount"]:
+            if byte_key.decode() in ["index", "msgcount", "apps"]:
                 formatted_value = int.from_bytes(byte_value, "big")
             else:
                 try:
@@ -71,8 +71,6 @@ def format_global_state(state):
                 formatted_value = int.from_bytes(byte_value, "big")
             else:
                 try:
-                    import ipdb;
-                    # ipdb.set_trace()
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + str(int.from_bytes(
                         byte_value[33:], "big"))
                     print("Total length of value is ", len(byte_value))

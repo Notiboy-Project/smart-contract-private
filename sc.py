@@ -8,9 +8,11 @@ MSG_COUNT = Bytes("msgcount")
 INDEX_KEY = Bytes("index")
 MAX_BOX_SIZE = Int(32768)
 MAX_LSTATE_SIZE = Int(16)
-MAX_BOX_SIZE = Int(32)
+MAX_BOX_LEN = Int(32)
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
+ERASE_BYTES = Bytes(
+    "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 # 1 algo
 DAPP_OPTIN_FEE = 1000000
 # 1 algo
@@ -41,8 +43,11 @@ def sender_from_gstate(dapp_name):
 
 @Subroutine(TealType.bytes)
 def index_from_gstate(dapp_name):
-    return Extract(
-        App.globalGet(dapp_name), Int(33), Int(3)
+    return Seq(
+        (idx := ScratchVar(TealType.bytes)).store(Extract(
+            App.globalGet(dapp_name), Int(33), Int(1)
+        )),
+        idx.load()
     )
 
 
@@ -359,20 +364,36 @@ def load_idx_from_lstate(addr):
     ])
 
 
+@Subroutine(TealType.uint64)
+def min_val(x, y):
+    return Seq(
+        If(Gt(x, y))
+        .Then(
+            y
+        )
+        .Else(
+            x
+        )
+    )
+
+
 @Subroutine(TealType.bytes)
 def construct_msg():
+    # return Itob(Global.latest_timestamp())
     return Concat(
-        Gtxn[0].note(),
         Itob(Global.latest_timestamp()),
         Gtxn[0].application_args[1],
+        Bytes(":"),
+        Extract(Gtxn[0].note(), Int(0), min_val(Int(1008), Len(Gtxn[0].note()))),
     )
 
 
 @Subroutine(TealType.none)
 def write_msg(idx, msg):
     return Seq(
-        (start_byte := ScratchVar(TealType.uint64)).store(Mul(idx, Int(1024))),
-        App.box_replace(Txn.accounts[1], start_byte.load(), msg)
+        (start_byte := ScratchVar(TealType.uint64)).store(Mul(Btoi(idx), Int(1024))),
+        App.box_replace(Gtxn[0].accounts[1], start_byte.load(), Extract(ERASE_BYTES, Int(0), Len(ERASE_BYTES))),
+        App.box_replace(Gtxn[0].accounts[1], start_byte.load(), msg)
     )
 
 
@@ -381,11 +402,16 @@ def user_optin_dapp(dapp_idx):
     return Seq(
         is_apps_set := App.localGetEx(Gtxn[0].accounts[1], app_id, Bytes("apps")),
         If(
-            Eq(
-                is_apps_set.hasValue(), Int(0)
+            And(
+                Eq(
+                    is_apps_set.hasValue(), Int(0)
+                ),
+                Eq(
+                    Btoi(is_apps_set.value()), Int(0)
+                )
             )
         )
-        .Then(App.localPut(Gtxn[0].accounts[1], Bytes("apps"), Itob(dapp_idx)))
+        .Then(App.localPut(Gtxn[0].accounts[1], Bytes("apps"), dapp_idx))
         .Else(
             (found := ScratchVar(TealType.uint64)).store(Int(0)),
             (app_list := ScratchVar(TealType.bytes)).store(App.localGet(Gtxn[0].accounts[1], Bytes("apps"))),
@@ -395,7 +421,7 @@ def user_optin_dapp(dapp_idx):
                 ).Do(
                 If(
                     Eq(
-                        Btoi(Extract(app_list.load(), start_idx.load(), Int(3))),
+                        Extract(app_list.load(), start_idx.load(), Int(3)),
                         dapp_idx
                     )
                 )
@@ -412,7 +438,7 @@ def user_optin_dapp(dapp_idx):
             )
             .Then(
                 app_list.store(
-                    Concat(app_list.load(), Itob(dapp_idx))
+                    Concat(app_list.load(), dapp_idx)
                 )
             )
         )
@@ -432,7 +458,7 @@ private_notify = Seq([
 
     # this ranges from 0 to 31
     (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
-        (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_BOX_SIZE
+        (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_BOX_LEN
     )),
     App.localDel(Txn.accounts[1], next_lstate_index.load()),
     # set index key
@@ -442,7 +468,7 @@ private_notify = Seq([
     # increase 'received' msg count of rcvr
     inc_msg_count(Txn.accounts[1]),
     (data := ScratchVar(TealType.bytes)).store(construct_msg()),
-    # write_msg(next_lstate_index.load(), data.load()),
+    write_msg(next_lstate_index.load(), data.load()),
     # user_optin_dapp(index_from_gstate(Gtxn[0].application_args[1])),
     Approve()
 ])
