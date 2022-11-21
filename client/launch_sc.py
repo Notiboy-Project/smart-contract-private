@@ -5,7 +5,7 @@ from algosdk import account, mnemonic
 
 import base64
 
-from sc import approval_program, clear_state_program
+from creator_sc import approval_program, clear_state_program
 from util import read_global_state, APP_ID
 
 DEBUG = False
