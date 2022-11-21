@@ -139,12 +139,12 @@ def pvt_notify():
     algod_client = get_algod_client(pvt_key, rcvr_address)
 
     try:
-        # pass
-        opt_in(algod_client, pvt_key, APP_ID, "")
+        pass
+        # opt_in(algod_client, pvt_key, APP_ID, "")
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
-    msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
+    msg = "This is my personal msg at" + datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending private notification --> {}".format(msg))
 
     try:
@@ -178,19 +178,19 @@ def main():
     algod_client = get_algod_client(pvt_key, address)
 
     try:
-        # pass
-        opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
+        pass
+        # opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
     except Exception as err:
         print("error opting in, err: {}".format(err))
 
-    msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
+    msg = "This is my public msg at" + datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
     print("Sending notification --> {}".format(msg))
     try:
         app_args = [
             str.encode("pub_notify"),
             str.encode(DAPP_NAME),
         ]
-        call_app(algod_client, pvt_key, APP_ID, msg, app_args, [])
+        # call_app(algod_client, pvt_key, APP_ID, msg, app_args, [])
     except Exception as err:
         print("error calling app, err: {}".format(err))
 
@@ -202,7 +202,7 @@ def main():
     for k, v in local_state.items():
         print("{} --> {}".format(k, v))
 
-    # pvt_notify()
+    pvt_notify()
 
 
 main()

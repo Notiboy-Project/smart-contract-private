@@ -53,7 +53,8 @@ def is_valid_notification():
         Eq(
             # verify dapp name belongs to sender
             # <txn1 sender>:<txn2 sender> == dapp_name in global state
-            Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender()), App.globalGet(Gtxn[1].application_args[1])
+            Concat(Gtxn[0].sender(), Bytes(":"), Gtxn[1].sender()),
+            Extract(App.globalGet(Gtxn[1].application_args[1]), Int(0), Int(65))
         ),
         # dapp opted in?
         Eq(App.optedIn(Gtxn[1].sender(), app_id), Int(1)),
@@ -102,17 +103,16 @@ def register_user():
 
 
 @Subroutine(TealType.bytes)
-def load_index():
+def load_index(addr):
     # initialise index to 0
     # working range is 1 to 15
-    # The 0th slot is used for storing index
+    # The 0th slot is used for storing index.
     # index points to the latest txn
-    index_val = App.localGetEx(Txn.sender(), app_id, Bytes(INDEX_KEY))
     return Seq([
-        index_val,
+        index_val := App.localGetEx(addr, app_id, Bytes(INDEX_KEY)),
         If(Not(index_val.hasValue()))
-        .Then(App.localPut(Txn.sender(), Bytes(INDEX_KEY), Itob(Int(0)))),
-        App.localGet(Txn.sender(), Bytes(INDEX_KEY))
+        .Then(App.localPut(addr, Bytes(INDEX_KEY), Itob(Int(0)))),
+        App.localGet(addr, Bytes(INDEX_KEY))
     ])
 
 
@@ -204,6 +204,8 @@ verify_dapp = Seq([
     Return(mark_dapp_verified())
 ])
 
+next_index = ScratchVar(TealType.bytes)
+
 '''
 app_args: pvt_notify dapp_name
 acct_args: rcvr_addr
@@ -214,14 +216,18 @@ private_notify = Seq([
     Assert(Eq(Gtxn[1].accounts.length(), Int(1))),
     # rcvr opted in?
     Assert(App.optedIn(Txn.accounts[1], app_id)),
-    # delete existing pvt notification, key as dapp_name
-    App.localDel(Txn.accounts[1], Txn.application_args[1]),
-    # key dapp_name, value as txn_id
-    App.localPut(Txn.accounts[1], Txn.application_args[1], Txn.tx_id()),
+    next_index.store(Itob(
+        (Btoi(load_index(Txn.accounts[1])) + Int(1)) % Int(16)
+    )),
+    If(Btoi(next_index.load()) == Int(0))
+    .Then(next_index.store(Itob(Int(1)))),
+    App.localDel(Txn.accounts[1], next_index.load()),
+    App.localPut(Txn.accounts[1], next_index.load(),
+                 Concat(Txn.tx_id(), Txn.application_args[1])
+                 ),
+    App.localPut(Txn.accounts[1], Bytes(INDEX_KEY), next_index.load()),
     Approve()
 ])
-
-next_index = ScratchVar(TealType.bytes)
 
 '''
 app_args: pub_notify dapp_name
@@ -229,7 +235,7 @@ app_args: pub_notify dapp_name
 public_notify = Seq([
     Assert(is_valid_notification()),
     next_index.store(Itob(
-        (Btoi(load_index()) + Int(1)) % Int(16)
+        (Btoi(load_index(Txn.sender())) + Int(1)) % Int(16)
     )),
     If(Btoi(next_index.load()) == Int(0))
     .Then(next_index.store(Itob(Int(1)))),

@@ -2,8 +2,8 @@ import base64
 
 from algosdk import encoding
 
-DAPP_NAME = "mydapp3"
-APP_ID = 100343195
+DAPP_NAME = "angrypenguins"
+APP_ID = 144113274
 
 
 # read user local state
@@ -32,16 +32,21 @@ def format_local_state(state):
             # in case of user's local state
             formatted_key = byte_key.decode()
         else:
-            # import ipdb;
-            # ipdb.set_trace()
             formatted_key = int.from_bytes(byte_key, "big")
+        import ipdb;
+
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
             if byte_key.decode() == "index":
                 formatted_value = int.from_bytes(byte_value, "big")
             else:
-                formatted_value = encoding.encode_address(byte_value)
+                # ipdb.set_trace()
+                try:
+                    formatted_value = encoding.encode_address(byte_value)
+                except:
+                    byte_value = base64.b64decode(value['bytes'])
+                    formatted_value = encoding.encode_address(byte_value[:32]) + " " + byte_value[32:].decode()
             formatted[formatted_key] = formatted_value
         else:
             # integer

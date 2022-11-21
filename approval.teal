@@ -2,23 +2,23 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l23
+bnz main_l25
 txn OnCompletion
 int OptIn
 ==
-bnz main_l19
+bnz main_l21
 txn OnCompletion
 int CloseOut
 ==
-bnz main_l18
+bnz main_l20
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l17
+bnz main_l19
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l16
+bnz main_l18
 txn OnCompletion
 int NoOp
 ==
@@ -28,7 +28,7 @@ main_l7:
 txna ApplicationArgs 0
 byte "pub_notify"
 ==
-bnz main_l13
+bnz main_l15
 txna ApplicationArgs 0
 byte "pvt_notify"
 ==
@@ -81,17 +81,6 @@ global CurrentApplicationID
 app_opted_in
 assert
 txna Accounts 1
-txna ApplicationArgs 1
-app_local_del
-txna Accounts 1
-txna ApplicationArgs 1
-txn TxID
-app_local_put
-int 1
-return
-main_l13:
-callsub isvalidnotification_3
-assert
 callsub loadindex_6
 btoi
 int 1
@@ -104,8 +93,46 @@ load 0
 btoi
 int 0
 ==
-bnz main_l15
+bnz main_l14
+main_l13:
+txna Accounts 1
+load 0
+app_local_del
+txna Accounts 1
+load 0
+txn TxID
+txna ApplicationArgs 1
+concat
+app_local_put
+txna Accounts 1
+byte "index"
+load 0
+app_local_put
+int 1
+return
 main_l14:
+int 1
+itob
+store 0
+b main_l13
+main_l15:
+callsub isvalidnotification_3
+assert
+txn Sender
+callsub loadindex_6
+btoi
+int 1
++
+int 16
+%
+itob
+store 0
+load 0
+btoi
+int 0
+==
+bnz main_l17
+main_l16:
 txn Sender
 load 0
 app_local_del
@@ -119,27 +146,27 @@ load 0
 app_local_put
 int 1
 return
-main_l15:
+main_l17:
 int 1
 itob
 store 0
-b main_l14
-main_l16:
-callsub isvalid_1
-assert
-callsub iscreator_0
-return
-main_l17:
-callsub isvalid_1
-assert
-callsub iscreator_0
-return
+b main_l16
 main_l18:
+callsub isvalid_1
+assert
+callsub iscreator_0
+return
+main_l19:
+callsub isvalid_1
+assert
+callsub iscreator_0
+return
+main_l20:
 callsub isvalid_1
 assert
 int 0
 return
-main_l19:
+main_l21:
 callsub isvalidoptin_2
 assert
 gtxn 1 NumAppArgs
@@ -149,17 +176,17 @@ gtxna 1 ApplicationArgs 0
 byte "dapp"
 ==
 &&
-bnz main_l22
+bnz main_l24
 callsub registeruser_5
 pop
-main_l21:
+main_l23:
 int 1
 return
-main_l22:
+main_l24:
 callsub registerdapp_4
 pop
-b main_l21
-main_l23:
+b main_l23
+main_l25:
 callsub isvalid_1
 assert
 byte "Creator"
@@ -253,6 +280,7 @@ gtxn 1 Sender
 concat
 gtxna 1 ApplicationArgs 1
 app_global_get
+extract 0 65
 ==
 &&
 gtxn 1 Sender
@@ -314,22 +342,23 @@ return
 
 // load_index
 loadindex_6:
-txn Sender
+store 3
+load 3
 global CurrentApplicationID
 byte "index"
 app_local_get_ex
+store 5
 store 4
-store 3
-load 4
+load 5
 !
 bz loadindex_6_l2
-txn Sender
+load 3
 byte "index"
 int 0
 itob
 app_local_put
 loadindex_6_l2:
-txn Sender
+load 3
 byte "index"
 app_local_get
 retsub
@@ -368,14 +397,14 @@ retsub
 markdappverified_8:
 txna ApplicationArgs 1
 app_global_get
-store 5
+store 6
 callsub isverified_7
 !
 bz markdappverified_8_l2
 txna ApplicationArgs 1
 app_global_del
 txna ApplicationArgs 1
-load 5
+load 6
 byte ":v"
 concat
 app_global_put
