@@ -25,7 +25,7 @@ MAX_USER_BOX_LEN = Int(32)
 MAX_MAIN_BOX_LEN = Int(1365)
 MAX_MAIN_BOX_MSG_SIZE = Int(24)
 # dummy address that belongs to algo dispenser source account
-NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
+NOTIBOY_ADDR = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
 ERASE_BYTES = Bytes(
     "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 # 1 algo
@@ -93,7 +93,8 @@ def is_valid_optin():
         Eq(Gtxn[2].rekey_to(), Global.zero_address()),
         Eq(Gtxn[3].rekey_to(), Global.zero_address()),
         Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(5)),
+        Eq(Gtxn[5].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(6)),
         Eq(Gtxn[0].type_enum(), TxnType.Payment),
         Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
@@ -103,7 +104,9 @@ def is_valid_optin():
         Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
     )
 
 
@@ -190,24 +193,25 @@ def register_dapp():
     return Seq(
         # dapp name
         name.store(dapp_name(Gtxn[1].application_args[1])),
-        name_from_gstate := App.globalGetEx(app_id, name.load()),
-        app_id_creator := AppParam.creator(Int(2)),
+        # name_from_gstate := App.globalGetEx(app_id, name.load()),
+        app_id_creator := AppParam.creator(Int(1)),
 
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(3),
                 Gtxn[1].application_args[0] == TYPE_DAPP,
                 # if app_id belongs to sender
-                Eq(
-                    app_id_creator.value(),
-                    Gtxn[1].sender()
-                ),
+                app_id_creator.hasValue(),
+                # Eq(
+                #     app_id_creator.value(),
+                #     Gtxn[5].sender()
+                # ),
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
             ),
             # Check if dapp name is already registered
             # Client should take care of case sensitivity
-            Not(name_from_gstate.hasValue())
+            # Not(name_from_gstate.hasValue())
         ),
 
         # ************* START *************
@@ -248,28 +252,29 @@ def register_dapp():
 # 2. remove boxes
 @Subroutine(TealType.none)
 def deregister_dapp():
-    name = ScratchVar(TealType.bytes)
-    return Seq([
-        # dapp name
-        name.store(dapp_name(Gtxn[0].application_args[1])),
-        val := App.globalGetEx(app_id, name.load()),
-        If(
-            And(
-                val.hasValue(),
-                Eq(
-                    # extract sender address from global state for the given dapp name
-                    Extract(val.value(), Int(0), Int(32)),
-                    Txn.sender()
-                ),
-            )
-        )
-        .Then(
-            Seq(
-                App.globalDel(name.load()),
-                Pop(App.box_delete(name.load()))
-            )
-        )
-    ])
+    Approve()
+    # name = ScratchVar(TealType.bytes)
+    # return Seq([
+    #     # dapp name
+    #     name.store(dapp_name(Gtxn[0].application_args[1])),
+    #     val := App.globalGetEx(app_id, name.load()),
+    #     If(
+    #         And(
+    #             val.hasValue(),
+    #             Eq(
+    #                 # extract sender address from global state for the given dapp name
+    #                 Extract(val.value(), Int(0), Int(32)),
+    #                 Txn.sender()
+    #             ),
+    #         )
+    #     )
+    #     .Then(
+    #         Seq(
+    #             App.globalDel(name.load()),
+    #             Pop(App.box_delete(name.load()))
+    #         )
+    #     )
+    # ])
 
 
 @Subroutine(TealType.none)
@@ -600,7 +605,8 @@ handle_optin = Seq([
     Assert(is_valid_optin()),
     If(
         And(
-            Eq(Gtxn[1].application_args.length(), Int(2)),
+            Eq(Gtxn[1].application_args.length(), Int(3)),
+            Eq(Gtxn[5].applications.length(), Int(1)),
             Gtxn[1].application_args[0] == TYPE_DAPP,
         )
     )
@@ -611,15 +617,15 @@ handle_optin = Seq([
 
 # args: user/dapp <dapp_name if arg1 is dapp>
 handle_optout = Seq([
-    Assert(is_valid_optout()),
-    If(
-        And(
-            Eq(Gtxn[0].application_args.length(), Int(2)),
-            Gtxn[0].application_args[0] == TYPE_DAPP,
-        )
-    )
-    .Then(deregister_dapp())
-    .Else(deregister_user()),
+    # Assert(is_valid_optout()),
+    # If(
+    #     And(
+    #         Eq(Gtxn[0].application_args.length(), Int(2)),
+    #         Gtxn[0].application_args[0] == TYPE_DAPP,
+    #     )
+    # )
+    # .Then(deregister_dapp())
+    # .Else(deregister_user()),
     Approve()
 ])
 

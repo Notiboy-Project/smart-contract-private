@@ -1,14 +1,8 @@
-import ipdb
-
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
 from algosdk import account
 from algosdk.future import transaction
 from algosdk.v2client import algod
-from algosdk.encoding import decode_address
 
-from util import read_local_state, read_global_state, DAPP_NAME, APP_ID
+from client.lib.util import read_global_state, DAPP_NAME, APP_ID
 
 SC_CREATOR_KEY = "9DyHfbCbo/ZZ+bG8/VGOlyikLm0bhf5u0/tpik6u74ugEC3cEXrSvwa+s8eHxzZFKrCVECPurvA/VxRbcuUjsg=="
 SC_CREATOR_ADDR = "UAIC3XARPLJL6BV6WPDYPRZWIUVLBFIQEPXK54B7K4KFW4XFEOZNSSUKZI"

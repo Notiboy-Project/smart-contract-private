@@ -1,16 +1,10 @@
-import base64
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-from algosdk import account, mnemonic, logic
 from algosdk import account
 from algosdk import encoding
 from algosdk.future import transaction
-from algosdk.v2client import algod
-from algosdk.encoding import decode_address
 
-from util import read_local_state, read_global_state, get_algod_client, DAPP_NAME, APP_ID, generate_algorand_keypair, \
-    NOTIBOY_ADDR, debug
+from client.lib.util import read_local_state, read_global_state, get_algod_client, DAPP_NAME, APP_ID, \
+    generate_algorand_keypair, \
+    NOTIBOY_ADDR
 
 
 def opt_out(client, private_key, index, dapp_name):

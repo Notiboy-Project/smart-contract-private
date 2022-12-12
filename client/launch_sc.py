@@ -6,7 +6,7 @@ from algosdk import account, mnemonic
 import base64
 
 from global_sc import approval_program, clear_state_program
-from util import read_global_state, APP_ID, MAIN_BOX
+from client.lib.util import read_global_state, APP_ID, MAIN_BOX
 
 DEBUG = False
 
@@ -20,10 +20,10 @@ def generate_algorand_keypair():
     # print("My passphrase: {}".format(mnemonic.from_private_key(private_key)))
 
     private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
-    mnemonic_string = "simple vocal hard wall gravity tide surface eight pull oil fruit basic word assist answer still bright prevent coil speak loan clean wild able minimum"
+    mnemonic_string = "image such scheme erase ethics else coach ensure fox goose skin share mutual fury elevator dice snap outer purpose forward possible tree reunion above topic"
     if mnemonic_string != "":
         private_key = mnemonic.to_private_key(mnemonic_string)
-    address = "ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY"
+    address = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
 
     return private_key, address
 
@@ -65,13 +65,13 @@ def bootstrap_app(client, private_key, app_id):
     ]
 
     # create unsigned transactions
-    txn1 = transaction.ApplicationNoOpTxn(sender, params, app_id, app_args=app_args, boxes=boxes)
+    txn1 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn1", app_args=app_args, boxes=boxes)
     txn2 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn2", boxes=boxes)
     txn3 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn3", boxes=boxes)
     txn4 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn4", boxes=boxes)
 
     gid = transaction.calculate_group_id([txn1, txn2, txn3, txn4])
-    transaction.assign_group_id([txn1, txn2, txn3, txn4])
+    transaction.assign_group_id([txn1, txn2, txn3, txn4], sender)
     txn1.gid = gid
     txn2.gid = gid
     txn3.gid = gid
@@ -85,22 +85,25 @@ def bootstrap_app(client, private_key, app_id):
     signed_group = [signed_txn1, signed_txn2, signed_txn3, signed_txn4]
 
     # send transaction
+    # debug()()
     tx_id = client.send_transactions(signed_group)
 
     # wait for confirmation
     try:
-        transaction_response = transaction.wait_for_confirmation(client, tx_id, 4)
-        print("TXID: ", tx_id)
-        print("Result confirmed in round: {}".format(transaction_response['confirmed-round']))
+        transaction_response = transaction.wait_for_confirmation(client, tx_id)
+        # print("TXID: ", tx_id)
+        # print("Result confirmed in round: {}".format(transaction_response['confirmed-round']))
 
     except Exception as err:
         print(err)
         return
 
+    print("Transaction ID:", tx_id)
+
     # display results
-    transaction_response = client.pending_transaction_info(tx_id)
-    app_id = transaction_response.get('txn').get('txn').get('apid')
-    print("Updated app-id:", app_id)
+    # transaction_response = client.pending_transaction_info(tx_id)
+    # app_id = transaction_response.get('txn').get('txn').get('apid')
+    # print("Updated app-id:", app_id)
 
     return app_id
 
@@ -223,12 +226,15 @@ def main():
     print("Deploying Counter application......")
 
     # create new application
-    app_id = create_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled,
-                        global_schema, local_schema)
+    # app_id = create_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled,
+    #                     global_schema, local_schema)
 
-    # app_id = APP_ID
+    # FUND SC acct after creation for bootstrap to work
+    # ./sandbox goal app info --app-id 1
+
+    app_id = APP_ID
     # bootstrap_app(algod_client, pvt_key, app_id)
-    # update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
+    update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
 

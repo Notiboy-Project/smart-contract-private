@@ -1,16 +1,8 @@
-import ipdb
-
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
 from algosdk import account
-from algosdk.future import transaction
 from algosdk.v2client import algod
 
 import base64
 from algosdk.future.transaction import LogicSigAccount
-
-from util import read_local_state, read_global_state
 
 
 def generate_algorand_keypair(overwrite):
@@ -47,7 +39,6 @@ def main():
     pvt_key, address = generate_algorand_keypair(gen_new_address)
     algod_client = get_algod_client(pvt_key, address)
 
-    import ipdb;
     # ipdb.set_trace()
     # compile program to TEAL assembly
     # with open("./lsig.teal", "w") as f:

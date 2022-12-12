@@ -2,11 +2,11 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l30
+bnz main_l27
 txn OnCompletion
 int OptIn
 ==
-bnz main_l26
+bnz main_l23
 txn OnCompletion
 int CloseOut
 ==
@@ -75,10 +75,10 @@ txna Accounts 1
 ==
 &&
 assert
-callsub markdappverified_13
+callsub markdappverified_10
 return
 main_l14:
-callsub isvalidprivatenotification_5
+callsub isvalidprivatenotification_4
 assert
 gtxn 0 NumAccounts
 int 1
@@ -89,7 +89,7 @@ global CurrentApplicationID
 app_opted_in
 assert
 txna Accounts 1
-callsub loadidxfromlstate_15
+callsub loadidxfromlstate_12
 btoi
 int 1
 +
@@ -105,21 +105,21 @@ byte "index"
 load 0
 app_local_put
 txn Sender
-callsub incmsgcount_14
+callsub incmsgcount_11
 txna Accounts 1
-callsub incmsgcount_14
-callsub constructmsg_19
+callsub incmsgcount_11
+callsub constructmsg_16
 store 1
 load 0
 load 1
-callsub writemsg_20
+callsub writemsg_17
 int 1
 return
 main_l15:
-callsub isvalidpublicnotification_6
+callsub isvalidpublicnotification_5
 assert
 txn Sender
-callsub loadidxfromlstate_15
+callsub loadidxfromlstate_12
 btoi
 int 1
 +
@@ -180,42 +180,31 @@ assert
 callsub iscreator_0
 return
 main_l22:
-callsub isvalidoptout_3
-assert
-gtxn 0 NumAppArgs
-int 2
-==
-gtxna 0 ApplicationArgs 0
-byte "dapp"
-==
-&&
-bnz main_l25
-callsub deregisteruser_10
-main_l24:
 int 1
 return
-main_l25:
-callsub deregisterdapp_9
-b main_l24
-main_l26:
-callsub isvalidoptin_4
+main_l23:
+callsub isvalidoptin_3
 assert
 gtxn 1 NumAppArgs
-int 2
+int 3
 ==
+gtxn 5 NumApplications
+int 1
+==
+&&
 gtxna 1 ApplicationArgs 0
 byte "dapp"
 ==
 &&
-bnz main_l29
-callsub registeruser_11
-main_l28:
+bnz main_l26
+callsub registeruser_8
+main_l25:
 int 1
 return
-main_l29:
-callsub registerdapp_8
-b main_l28
-main_l30:
+main_l26:
+callsub registerdapp_7
+b main_l25
+main_l27:
 callsub isvalid_1
 assert
 int 1
@@ -243,63 +232,8 @@ app_global_get
 extract 0 32
 retsub
 
-// is_valid_optout
-isvalidoptout_3:
-gtxn 0 RekeyTo
-global ZeroAddress
-==
-gtxn 1 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 2 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 3 RekeyTo
-global ZeroAddress
-==
-&&
-global GroupSize
-int 4
-==
-&&
-gtxn 0 TypeEnum
-int appl
-==
-&&
-gtxn 0 OnCompletion
-int CloseOut
-==
-&&
-gtxn 1 TypeEnum
-int appl
-==
-&&
-gtxn 1 OnCompletion
-int NoOp
-==
-&&
-gtxn 2 TypeEnum
-int appl
-==
-&&
-gtxn 2 OnCompletion
-int NoOp
-==
-&&
-gtxn 3 TypeEnum
-int appl
-==
-&&
-gtxn 3 OnCompletion
-int NoOp
-==
-&&
-retsub
-
 // is_valid_optin
-isvalidoptin_4:
+isvalidoptin_3:
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -319,8 +253,12 @@ gtxn 4 RekeyTo
 global ZeroAddress
 ==
 &&
+gtxn 5 RekeyTo
+global ZeroAddress
+==
+&&
 global GroupSize
-int 5
+int 6
 ==
 &&
 gtxn 0 TypeEnum
@@ -328,7 +266,7 @@ int pay
 ==
 &&
 gtxn 0 Receiver
-addr HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA
+addr 3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI
 ==
 &&
 gtxn 1 TypeEnum
@@ -363,10 +301,18 @@ gtxn 4 OnCompletion
 int NoOp
 ==
 &&
+gtxn 5 TypeEnum
+int appl
+==
+&&
+gtxn 5 OnCompletion
+int NoOp
+==
+&&
 retsub
 
 // is_valid_private_notification
-isvalidprivatenotification_5:
+isvalidprivatenotification_4:
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -448,7 +394,7 @@ int 1
 retsub
 
 // is_valid_public_notification
-isvalidpublicnotification_6:
+isvalidpublicnotification_5:
 global GroupSize
 int 1
 ==
@@ -482,35 +428,30 @@ int 1
 retsub
 
 // dapp_name
-dappname_7:
-store 13
-load 13
+dappname_6:
+store 11
+load 11
 len
 int 10
 >
-bnz dappname_7_l2
-load 13
-b dappname_7_l3
-dappname_7_l2:
-load 13
+bnz dappname_6_l2
+load 11
+b dappname_6_l3
+dappname_6_l2:
+load 11
 extract 0 10
-dappname_7_l3:
+dappname_6_l3:
 retsub
 
 // register_dapp
-registerdapp_8:
+registerdapp_7:
 gtxna 1 ApplicationArgs 1
-callsub dappname_7
+callsub dappname_6
 store 4
-global CurrentApplicationID
-load 4
-app_global_get_ex
+int 1
+app_params_get AppCreator
 store 8
 store 7
-int 2
-app_params_get AppCreator
-store 10
-store 9
 gtxn 1 NumAppArgs
 int 3
 ==
@@ -518,17 +459,12 @@ gtxna 1 ApplicationArgs 0
 byte "dapp"
 ==
 &&
-load 9
-gtxn 1 Sender
-==
+load 8
 &&
 gtxn 0 Amount
 int 1000000
 >=
 &&
-assert
-load 8
-!
 assert
 byte "dappcount"
 app_global_get
@@ -542,16 +478,16 @@ store 5
 byte "dappcount"
 load 5
 app_global_put
-callsub loadidxgstate_16
+callsub loadidxgstate_13
 btoi
 int 1
 +
 int 1365
 %
 itob
-store 11
-load 11
-callsub setidxgstate_17
+store 9
+load 9
+callsub setidxgstate_14
 load 4
 byte ":"
 concat
@@ -561,12 +497,12 @@ byte ":"
 concat
 load 5
 concat
-store 12
+store 10
 byte "notiboy"
-load 11
-load 12
+load 9
+load 10
 int 24
-callsub writetobox_21
+callsub writetobox_18
 load 4
 gtxn 0 Sender
 byte ":"
@@ -577,41 +513,8 @@ app_global_put
 int 1
 return
 
-// deregister_dapp
-deregisterdapp_9:
-gtxna 0 ApplicationArgs 1
-callsub dappname_7
-store 22
-global CurrentApplicationID
-load 22
-app_global_get_ex
-store 24
-store 23
-load 24
-load 23
-extract 0 32
-txn Sender
-==
-&&
-bz deregisterdapp_9_l2
-load 22
-app_global_del
-load 22
-box_del
-pop
-deregisterdapp_9_l2:
-retsub
-
-// deregister_user
-deregisteruser_10:
-gtxn 0 Sender
-box_del
-assert
-int 1
-return
-
 // register_user
-registeruser_11:
+registeruser_8:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -632,13 +535,13 @@ int 1
 return
 
 // is_verified
-isverified_12:
+isverified_9:
 txna ApplicationArgs 1
 app_global_get
 len
 int 65
 ==
-bnz isverified_12_l4
+bnz isverified_9_l4
 txna ApplicationArgs 1
 app_global_get
 len
@@ -650,59 +553,59 @@ extract 66 1
 byte "v"
 ==
 &&
-bnz isverified_12_l3
+bnz isverified_9_l3
 int 0
-b isverified_12_l5
-isverified_12_l3:
+b isverified_9_l5
+isverified_9_l3:
 int 1
-b isverified_12_l5
-isverified_12_l4:
+b isverified_9_l5
+isverified_9_l4:
 int 0
-isverified_12_l5:
+isverified_9_l5:
 retsub
 
 // mark_dapp_verified
-markdappverified_13:
+markdappverified_10:
 txna ApplicationArgs 1
 app_global_get
-store 25
-callsub isverified_12
+store 20
+callsub isverified_9
 !
-bz markdappverified_13_l2
+bz markdappverified_10_l2
 txna ApplicationArgs 1
 app_global_del
 txna ApplicationArgs 1
-load 25
+load 20
 byte ":v"
 concat
 app_global_put
 int 1
 return
-markdappverified_13_l2:
+markdappverified_10_l2:
 int 1
 return
 
 // inc_msg_count
-incmsgcount_14:
-store 26
-load 26
+incmsgcount_11:
+store 21
+load 21
 global CurrentApplicationID
 byte "msgcount"
 app_local_get_ex
-store 28
-store 27
-load 28
+store 23
+store 22
+load 23
 !
-bz incmsgcount_14_l2
-load 26
+bz incmsgcount_11_l2
+load 21
 byte "msgcount"
 int 0
 itob
 app_local_put
-incmsgcount_14_l2:
-load 26
+incmsgcount_11_l2:
+load 21
 byte "msgcount"
-load 26
+load 21
 byte "msgcount"
 app_local_get
 btoi
@@ -713,72 +616,72 @@ app_local_put
 retsub
 
 // load_idx_from_lstate
-loadidxfromlstate_15:
-store 29
-load 29
+loadidxfromlstate_12:
+store 24
+load 24
 global CurrentApplicationID
 byte "index"
 app_local_get_ex
-store 31
-store 30
-load 31
+store 26
+store 25
+load 26
 !
-bz loadidxfromlstate_15_l2
-load 29
+bz loadidxfromlstate_12_l2
+load 24
 byte "index"
 int 0
 itob
 app_local_put
-loadidxfromlstate_15_l2:
-load 29
+loadidxfromlstate_12_l2:
+load 24
 byte "index"
 app_local_get
 retsub
 
 // load_idx_gstate
-loadidxgstate_16:
+loadidxgstate_13:
 global CurrentApplicationID
 byte "index"
 app_global_get_ex
-store 15
-store 14
-load 15
+store 13
+store 12
+load 13
 !
-bz loadidxgstate_16_l2
+bz loadidxgstate_13_l2
 byte "index"
 int 0
 itob
 app_global_put
-loadidxgstate_16_l2:
+loadidxgstate_13_l2:
 byte "index"
 app_global_get
 retsub
 
 // set_idx_gstate
-setidxgstate_17:
-store 16
+setidxgstate_14:
+store 14
 byte "index"
-load 16
+load 14
 app_global_put
 retsub
 
 // min_val
-minval_18:
-store 33
-store 32
-load 32
-load 33
+minval_15:
+store 28
+store 27
+load 27
+load 28
 >
-bnz minval_18_l2
-load 32
-b minval_18_l3
-minval_18_l2:
-load 33
-minval_18_l3:
+bnz minval_15_l2
+load 27
+b minval_15_l3
+minval_15_l2:
+load 28
+minval_15_l3:
 retsub
 
 // construct_msg
-constructmsg_19:
+constructmsg_16:
 global LatestTimestamp
 itob
 gtxna 0 ApplicationArgs 1
@@ -790,22 +693,22 @@ int 0
 int 1008
 gtxn 0 Note
 len
-callsub minval_18
+callsub minval_15
 extract3
 concat
 retsub
 
 // write_msg
-writemsg_20:
-store 35
-store 34
-load 34
+writemsg_17:
+store 30
+store 29
+load 29
 btoi
 int 1024
 *
-store 36
+store 31
 gtxna 0 Accounts 1
-load 36
+load 31
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 int 0
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -813,31 +716,31 @@ len
 extract3
 box_replace
 gtxna 0 Accounts 1
-load 36
-load 35
+load 31
+load 30
 box_replace
 retsub
 
 // write_to_box
-writetobox_21:
-store 20
-store 19
+writetobox_18:
 store 18
 store 17
-load 18
+store 16
+store 15
+load 16
 btoi
-load 20
+load 18
 *
-store 21
-load 17
-load 21
+store 19
+load 15
+load 19
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 int 0
-load 20
+load 18
 extract3
 box_replace
-load 17
-load 21
+load 15
 load 19
+load 17
 box_replace
 retsub
