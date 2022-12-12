@@ -6,7 +6,8 @@ from algosdk.v2client import algod
 
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 DAPP_NAME = "mydapp"
-APP_ID = 940
+APP_ID = 1505
+MAIN_BOX = "notiboy"
 
 
 # read user local state

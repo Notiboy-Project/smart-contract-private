@@ -14,12 +14,16 @@ During creator opt in
 TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")
 DAPP_COUNT = Bytes("dappcount")
-DAPP_NAME_MAX_LEN = Int(10)
+NOTIBOY_BOX = Bytes("notiboy")
 MSG_COUNT = Bytes("msgcount")
 INDEX_KEY = Bytes("index")
+DELIMITER = Bytes(":")
+DAPP_NAME_MAX_LEN = Int(10)
 MAX_BOX_SIZE = Int(32768)
 MAX_LSTATE_SIZE = Int(16)
-MAX_BOX_LEN = Int(32)
+MAX_USER_BOX_LEN = Int(32)
+MAX_MAIN_BOX_LEN = Int(1365)
+MAX_MAIN_BOX_MSG_SIZE = Int(24)
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "HZ57J3K46JIJXILONBBZOHX6BKPXEM2VVXNRFSUED6DKFD5ZD24PMJ3MVA"
 ERASE_BYTES = Bytes(
@@ -168,38 +172,73 @@ def dapp_name(name):
 
 
 # invoked as part of dapp opt-in
-# arg: "dapp" dapp_name
-# global registry will have | dapp_name | <-> | sender_addr : dapp_count | mapping
-# dapp_count acts as dap index
-# grp txn - txn1 is payment, txn2 is app call
-# Stores 64 128B key value pairs ( 1 reserved for dapp count)
+# arg: "dapp" dapp_name app_id
+# global registry will have
+# Key: dapp_name (max 10B)
+# Value: app_id (8B) : dapp_idx (4B)
+# App id is used to check if personal notification request comes from owner of app and
+# also to fetch public notification for a dapp.
+# Dapp_idx acts as dapp index aka replacement for dapp name for reference in personal msg box storage
+# Stores 1365 24B key value pairs i.e., 1365 dapps (1365*24=32760)
+# Stores dapp count in global state
 @Subroutine(TealType.none)
 def register_dapp():
     name = ScratchVar(TealType.bytes)
     next_dapp_idx = ScratchVar(TealType.bytes)
     dapp_count = ScratchVar(TealType.uint64)
+
     return Seq(
         # dapp name
         name.store(dapp_name(Gtxn[1].application_args[1])),
-        val := App.globalGetEx(app_id, name.load()),
-        # check if dapp name is already registered
-        # Client should take care of case sensitivity
-        Assert(Not(val.hasValue())),
-        dapp_count.store(Btoi(App.globalGet(DAPP_COUNT))),
-        next_dapp_idx.store(Itob(Add(dapp_count.load(), Int(1)))),
+        name_from_gstate := App.globalGetEx(app_id, name.load()),
+        app_id_creator := AppParam.creator(Int(2)),
+
         Assert(
             And(
-                Gtxn[1].application_args.length() == Int(2),
+                Gtxn[1].application_args.length() == Int(3),
                 Gtxn[1].application_args[0] == TYPE_DAPP,
+                # if app_id belongs to sender
+                Eq(
+                    app_id_creator.value(),
+                    Gtxn[1].sender()
+                ),
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
-            )
+            ),
+            # Check if dapp name is already registered
+            # Client should take care of case sensitivity
+            Not(name_from_gstate.hasValue())
         ),
-        App.globalPut(name.load(), Concat(Gtxn[0].sender(), Bytes(":"), next_dapp_idx.load())),
+
+        # ************* START *************
+        # dapp count process
+        dapp_count.store(Btoi(App.globalGet(DAPP_COUNT))),
+        next_dapp_idx.store(Itob(Add(dapp_count.load(), Int(1)))),
         # update dapp count
         App.globalPut(DAPP_COUNT, next_dapp_idx.load()),
-        # create box
-        Assert(App.box_create(name.load(), MAX_BOX_SIZE)),
+        # dapp count process
+        # ************* END *************
+
+        # ************* START *************
+        # write message
+        # this ranges from 0 to 1365
+        (next_gstate_index := ScratchVar(TealType.bytes)).store(Itob(
+            (Btoi(load_idx_gstate()) + Int(1)) % MAX_MAIN_BOX_LEN
+        )),
+        # update index
+        set_idx_gstate(next_gstate_index.load()),
+        (msg := ScratchVar(TealType.bytes)).store(
+            Concat(
+                # dapp name, app id, idx
+                name.load(), DELIMITER, Gtxn[1].application_args[2], DELIMITER, next_dapp_idx.load()
+            )
+        ),
+        write_to_box(NOTIBOY_BOX, next_gstate_index.load(), msg.load(), MAX_MAIN_BOX_MSG_SIZE),
+        # write message
+        # ************* END *************
+
+        App.globalPut(name.load(), Concat(Gtxn[0].sender(), Bytes(":"), next_dapp_idx.load())),
+
         Approve()
     )
 
@@ -242,6 +281,7 @@ def deregister_user():
 
 
 # invoked as part of user opt-in
+# Creates a box with 32B user's pkey as name
 # arg: "user"
 @Subroutine(TealType.none)
 def register_user():
@@ -375,6 +415,25 @@ def load_idx_from_lstate(addr):
     ])
 
 
+# initialise index to 0 for main box
+@Subroutine(TealType.bytes)
+def load_idx_gstate():
+    return Seq([
+        index_val := App.globalGetEx(app_id, INDEX_KEY),
+        If(Not(index_val.hasValue()))
+        .Then(App.globalPut(INDEX_KEY, Itob(Int(0)))),
+        App.globalGet(INDEX_KEY)
+    ])
+
+
+# initialise index to 0
+@Subroutine(TealType.none)
+def set_idx_gstate(idx):
+    return Seq([
+        App.globalPut(INDEX_KEY, idx)
+    ])
+
+
 @Subroutine(TealType.uint64)
 def min_val(x, y):
     return Seq(
@@ -408,6 +467,16 @@ def write_msg(idx, msg):
     )
 
 
+@Subroutine(TealType.none)
+def write_to_box(box_name, start_idx, msg, msg_len):
+    return Seq(
+        (start_byte := ScratchVar(TealType.uint64)).store(Mul(Btoi(start_idx), msg_len)),
+        App.box_replace(box_name, start_byte.load(), Extract(ERASE_BYTES, Int(0), msg_len)),
+        App.box_replace(box_name, start_byte.load(), msg)
+    )
+
+
+# to store list of dapps opted in by user
 @Subroutine(TealType.none)
 def user_optin_dapp(dapp_idx):
     return Seq(
@@ -469,7 +538,7 @@ private_notify = Seq([
 
     # this ranges from 0 to 31
     (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
-        (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_BOX_LEN
+        (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_USER_BOX_LEN
     )),
     App.localDel(Txn.accounts[1], next_lstate_index.load()),
     # set index key
@@ -502,13 +571,31 @@ public_notify = Seq([
     Approve()
 ])
 
-handle_creation = Seq([
-    Assert(is_valid()),
-    App.globalPut(DAPP_COUNT, Itob(Int(100))),
+# Bootstraps Notiboy SC
+# Stores dapp count in global state
+# Creates main box
+bootstrap = Seq([
+    Assert(
+        is_valid(),
+        is_creator()
+    ),
+    App.globalPut(DAPP_COUNT, Itob(Int(1000))),
+    # create box
+    Assert(App.box_create(NOTIBOY_BOX, MAX_BOX_SIZE)),
     Approve()
 ])
 
-# args: user/dapp <dapp_name if arg1 is dapp>
+# Creates Notiboy SC
+handle_creation = Seq([
+    Assert(is_valid()),
+    Approve()
+])
+
+# This is a group txn where first txn is payment and second is app call
+# args:
+# 1. user/dapp
+# 2. <dapp_name> if arg0 is dapp
+# 3. <app_id> if arg0 is dapp
 handle_optin = Seq([
     Assert(is_valid_optin()),
     If(
@@ -553,6 +640,7 @@ handle_noop = Seq([
         # this is for dummy box budget txns
         # TODO: add rekeying checks here
         [Txn.application_args.length() == Int(0), Approve()],
+        [Txn.application_args[0] == Bytes("bootstrap"), bootstrap],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
         [Txn.application_args[0] == Bytes("verify"), verify_dapp]
