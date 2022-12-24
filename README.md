@@ -17,3 +17,9 @@ Supports:
 - Public notification is written to the local state of dapp.
 - Private notification is written to the local state of user.
 - Verification updates the global state of the smart contract for the verified dapp.
+
+
+## To Develop
+1. Create venv `python3.10 -m venv env`
+2. For sandbox, pyteal and algosdk use only python3.10
+3. pip3.10 install py-algorand-sdk pyteal

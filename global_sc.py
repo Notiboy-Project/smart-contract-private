@@ -175,7 +175,8 @@ def dapp_name(name):
 
 
 # invoked as part of dapp opt-in
-# arg: "dapp" dapp_name app_id
+# app arg: "dapp" dapp_name
+# acct arg: app_id
 # global registry will have
 # Key: dapp_name (max 10B)
 # Value: app_id (8B) : dapp_idx (4B)
@@ -184,6 +185,9 @@ def dapp_name(name):
 # Dapp_idx acts as dapp index aka replacement for dapp name for reference in personal msg box storage
 # Stores 1365 24B key value pairs i.e., 1365 dapps (1365*24=32760)
 # Stores dapp count in global state
+# We don't check if dapp name is duplicate
+#   1. what if someone claims the name prior to genuine party?
+#   2. verify should solve this issue
 @Subroutine(TealType.none)
 def register_dapp():
     name = ScratchVar(TealType.bytes)
@@ -193,25 +197,21 @@ def register_dapp():
     return Seq(
         # dapp name
         name.store(dapp_name(Gtxn[1].application_args[1])),
-        # name_from_gstate := App.globalGetEx(app_id, name.load()),
-        app_id_creator := AppParam.creator(Int(1)),
-
+        app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(3),
+                Gtxn[5].applications.length() == Int(1),
                 Gtxn[1].application_args[0] == TYPE_DAPP,
                 # if app_id belongs to sender
                 app_id_creator.hasValue(),
-                # Eq(
-                #     app_id_creator.value(),
-                #     Gtxn[5].sender()
-                # ),
+                Eq(
+                    app_id_creator.value(),
+                    Gtxn[5].sender(),
+                ),
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
             ),
-            # Check if dapp name is already registered
-            # Client should take care of case sensitivity
-            # Not(name_from_gstate.hasValue())
         ),
 
         # ************* START *************
@@ -234,15 +234,16 @@ def register_dapp():
         (msg := ScratchVar(TealType.bytes)).store(
             Concat(
                 # dapp name, app id, idx
-                name.load(), DELIMITER, Gtxn[1].application_args[2], DELIMITER, next_dapp_idx.load()
+                # TODO: This is a security risk app arg may be different from apps array
+                name.load(), DELIMITER, Gtxn[1].application_args[2], DELIMITER,
+                # we only use 4 bytes dapp index. The scratch slot is 8 bytes.
+                # E.g. 1004 is stored as 00001004
+                Extract(next_dapp_idx.load(), Int(4), Int(4))
             )
         ),
-        write_to_box(NOTIBOY_BOX, next_gstate_index.load(), msg.load(), MAX_MAIN_BOX_MSG_SIZE),
+        write_to_box(NOTIBOY_BOX, next_gstate_index.load(), msg.load(), MAX_MAIN_BOX_MSG_SIZE, Int(0)),
         # write message
         # ************* END *************
-
-        App.globalPut(name.load(), Concat(Gtxn[0].sender(), Bytes(":"), next_dapp_idx.load())),
-
         Approve()
     )
 
@@ -473,11 +474,21 @@ def write_msg(idx, msg):
 
 
 @Subroutine(TealType.none)
-def write_to_box(box_name, start_idx, msg, msg_len):
+def write_to_box(box_name, start_idx, msg, msg_len, overwrite):
     return Seq(
         (start_byte := ScratchVar(TealType.uint64)).store(Mul(Btoi(start_idx), msg_len)),
+        # if overwrite is disabled
+        If(Eq(overwrite, Int(0)))
+        .Then(
+            Assert(
+                Eq(
+                    App.box_extract(box_name, start_byte.load(), msg_len),
+                    Extract(ERASE_BYTES, Int(0), msg_len)
+                )
+            )
+        ),
         App.box_replace(box_name, start_byte.load(), Extract(ERASE_BYTES, Int(0), msg_len)),
-        App.box_replace(box_name, start_byte.load(), msg)
+        App.box_replace(box_name, start_byte.load(), Extract(msg, Int(0), min_val(msg_len, Len(msg))))
     )
 
 
@@ -590,6 +601,12 @@ bootstrap = Seq([
     Approve()
 ])
 
+# Note: used only for testing
+dev_test = Seq([
+    Pop(App.box_delete(NOTIBOY_BOX)),
+    Approve()
+])
+
 # Creates Notiboy SC
 handle_creation = Seq([
     Assert(is_valid()),
@@ -647,6 +664,7 @@ handle_noop = Seq([
         # TODO: add rekeying checks here
         [Txn.application_args.length() == Int(0), Approve()],
         [Txn.application_args[0] == Bytes("bootstrap"), bootstrap],
+        [Txn.application_args[0] == Bytes("test"), dev_test],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
         [Txn.application_args[0] == Bytes("verify"), verify_dapp]

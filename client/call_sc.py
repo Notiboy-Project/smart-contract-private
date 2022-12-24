@@ -83,8 +83,8 @@ def main():
         print("error opting in, err: {}".format(err))
 
     try:
-        pass
-        # opt_out(algod_client, pvt_key, APP_ID, DAPP_NAME)
+        # pass
+        opt_out(algod_client, pvt_key, APP_ID, DAPP_NAME)
     except Exception as err:
         print("error opting in, err: {}".format(err))
 

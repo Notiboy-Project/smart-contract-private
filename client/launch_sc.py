@@ -6,7 +6,7 @@ from algosdk import account, mnemonic
 import base64
 
 from global_sc import approval_program, clear_state_program
-from client.lib.util import read_global_state, APP_ID, MAIN_BOX
+from client.lib.util import read_global_state, APP_ID, MAIN_BOX, read_box
 
 DEBUG = False
 
@@ -44,6 +44,61 @@ def get_algod_client(private_key, my_address):
 def compile_program(client, source_code):
     compile_response = client.compile(source_code)
     return base64.b64decode(compile_response['result'])
+
+
+def dev_test(client, private_key, app_id):
+    # define sender as creator
+    sender = account.address_from_private_key(private_key)
+    print("bootstrapping app by sender", sender)
+
+    # get node suggested parameters
+    params = client.suggested_params()
+
+    app_args = [
+        str.encode("test"),
+    ]
+
+    boxes = [
+        [0, MAIN_BOX],
+        [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""]
+    ]
+
+    # create unsigned transactions
+    txn1 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn1", app_args=app_args, boxes=boxes)
+    txn2 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn2", boxes=boxes)
+    txn3 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn3", boxes=boxes)
+    txn4 = transaction.ApplicationNoOpTxn(sender, params, app_id, note="txn4", boxes=boxes)
+
+    gid = transaction.calculate_group_id([txn1, txn2, txn3, txn4])
+    transaction.assign_group_id([txn1, txn2, txn3, txn4], sender)
+    txn1.gid = gid
+    txn2.gid = gid
+    txn3.gid = gid
+    txn4.gid = gid
+
+    # sign transaction
+    signed_txn1 = txn1.sign(private_key)
+    signed_txn2 = txn2.sign(private_key)
+    signed_txn3 = txn3.sign(private_key)
+    signed_txn4 = txn4.sign(private_key)
+    signed_group = [signed_txn1, signed_txn2, signed_txn3, signed_txn4]
+
+    # send transaction
+    # debug()()
+    tx_id = client.send_transactions(signed_group)
+
+    # wait for confirmation
+    try:
+        transaction_response = transaction.wait_for_confirmation(client, tx_id)
+        # print("TXID: ", tx_id)
+        # print("Result confirmed in round: {}".format(transaction_response['confirmed-round']))
+
+    except Exception as err:
+        print(err)
+        return
+
+    print("Transaction ID:", tx_id)
+    return app_id
 
 
 # add main box
@@ -99,12 +154,6 @@ def bootstrap_app(client, private_key, app_id):
         return
 
     print("Transaction ID:", tx_id)
-
-    # display results
-    # transaction_response = client.pending_transaction_info(tx_id)
-    # app_id = transaction_response.get('txn').get('txn').get('apid')
-    # print("Updated app-id:", app_id)
-
     return app_id
 
 
@@ -234,9 +283,11 @@ def main():
 
     app_id = APP_ID
     # bootstrap_app(algod_client, pvt_key, app_id)
+    # dev_test(algod_client, pvt_key, app_id)
     update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
+    # read_box(algod_client, app_id, "notiboy")
 
 
 main()

@@ -2,6 +2,12 @@ Send from one acct to another
 
 ./sandbox/sandbox goal clerk send -a 103212100 -t C5ISN6HJJAU2YL5F53EOZWW3AR77KJK2VQJSX7KL2M5ZTLN3AYVN27YXAU -f ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY
 
+List boxes
+./sandbox goal app box list --app-id 1
+
 Get box content
-./sandbox/sandbox goal app box info --name "b64:sbdFk0yRdX5fzZIs+UeRVElOiwZi1CaNCy4jBudgeBI=" --app-id 18
+./sandbox goal app box info --name "str:notiboy" --app-id 1
+
+./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
+
 
