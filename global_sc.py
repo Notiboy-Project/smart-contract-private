@@ -229,7 +229,7 @@ def register_dapp():
         (next_gstate_index := ScratchVar(TealType.bytes)).store(Itob(
             (Btoi(load_idx_gstate()) + Int(1)) % MAX_MAIN_BOX_LEN
         )),
-        # update index
+        # update index (position in box storage)
         set_idx_gstate(next_gstate_index.load()),
         (msg := ScratchVar(TealType.bytes)).store(
             Concat(
@@ -487,6 +487,7 @@ def write_to_box(box_name, start_idx, msg, msg_len, overwrite):
                 )
             )
         ),
+        # Log(App.box_extract(box_name, start_byte.load(), msg_len)),
         App.box_replace(box_name, start_byte.load(), Extract(ERASE_BYTES, Int(0), msg_len)),
         App.box_replace(box_name, start_byte.load(), Extract(msg, Int(0), min_val(msg_len, Len(msg))))
     )
@@ -595,9 +596,17 @@ bootstrap = Seq([
         is_valid(),
         is_creator()
     ),
+    App.globalPut(INDEX_KEY, Itob(Int(0))),
     App.globalPut(DAPP_COUNT, Itob(Int(1000))),
     # create box
     Assert(App.box_create(NOTIBOY_BOX, MAX_BOX_SIZE)),
+    # setting zero value
+    For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
+        start_idx.load() < Int(32),
+        start_idx.store(start_idx.load() + Int(1))
+        ).Do(
+        App.box_replace(NOTIBOY_BOX, Mul(start_idx.load(), Int(1024)), Extract(ERASE_BYTES, Int(0), Int(1024))),
+    ),
     Approve()
 ])
 
