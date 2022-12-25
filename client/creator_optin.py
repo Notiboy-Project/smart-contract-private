@@ -14,7 +14,7 @@ def main():
     # ./sandbox copyTo test.teal
     # ./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
     # Pass created app id as arg
-    for idx in range(1400):
+    for idx in range(1):
         dapp_name = DAPP_NAME
         dapp_name = 'dapp' + str(idx)
         app_args = [
@@ -30,13 +30,18 @@ def main():
         try:
             pass
             opt_in(algod_client, pvt_key, APP_ID, dapp_name, MAIN_BOX, app_args, acct_args, foreign_apps)
-            # read_box(algod_client, APP_ID, "notiboy")
+            read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting in, err: {}".format(err))
 
+        app_args.append(
+            # index for preventing for loop in SC
+            (22).to_bytes(8, 'big')
+        )
         try:
             pass
-            opt_out(algod_client, pvt_key, APP_ID, DAPP_NAME)
+            opt_out(algod_client, pvt_key, APP_ID, dapp_name, MAIN_BOX, app_args, acct_args, foreign_apps)
+            read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting out, err: {}".format(err))
 

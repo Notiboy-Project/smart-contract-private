@@ -73,7 +73,9 @@ def is_valid_optout():
         Eq(Gtxn[1].rekey_to(), Global.zero_address()),
         Eq(Gtxn[2].rekey_to(), Global.zero_address()),
         Eq(Gtxn[3].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(4)),
+        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[5].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(6)),
         Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
@@ -81,7 +83,11 @@ def is_valid_optout():
         Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[3].on_completion(), OnComplete.NoOp)
+        Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
     )
 
 
@@ -175,7 +181,7 @@ def dapp_name(name):
 
 
 # invoked as part of dapp opt-in
-# app arg: "dapp" dapp_name
+# app arg: "dapp" dapp_name app_id
 # acct arg: app_id
 # global registry will have
 # Key: dapp_name (max 10B)
@@ -248,34 +254,67 @@ def register_dapp():
     )
 
 
-# single txn from dapp creator
+# invoked as part of dapp opt-in
+# app arg: "dapp" dapp_name app_id
+# acct arg: app_id
 # 1. remove entry from global state
-# 2. remove boxes
+# 2. decrement dapp count
+# TODO: 3. adjust index so that slot can be used (for reclaiming). A delete may happen in the middle of box. Reclamation can be a separate workflow
+# Fetch all filled slots, write to box in maintenance mode i.e., when opt in is disabled
+# MO: we check if app_id is owned by sender. If yes, we search box for dapp_name:app_id prefix and delete the entry
 @Subroutine(TealType.none)
 def deregister_dapp():
-    Approve()
-    # name = ScratchVar(TealType.bytes)
-    # return Seq([
-    #     # dapp name
-    #     name.store(dapp_name(Gtxn[0].application_args[1])),
-    #     val := App.globalGetEx(app_id, name.load()),
-    #     If(
-    #         And(
-    #             val.hasValue(),
-    #             Eq(
-    #                 # extract sender address from global state for the given dapp name
-    #                 Extract(val.value(), Int(0), Int(32)),
-    #                 Txn.sender()
-    #             ),
-    #         )
-    #     )
-    #     .Then(
-    #         Seq(
-    #             App.globalDel(name.load()),
-    #             Pop(App.box_delete(name.load()))
-    #         )
-    #     )
-    # ])
+    name = ScratchVar(TealType.bytes)
+    return Seq([
+        # ************* START *************
+        # decrement dapp count
+        App.globalPut(DAPP_COUNT, Itob(Minus(Btoi(App.globalGet(DAPP_COUNT)), Int(1)))),
+        # ************* END *************
+
+        app_id_creator := AppParam.creator(Txn.applications[1]),
+        Assert(
+            And(
+                Gtxn[0].application_args.length() == Int(4),
+                Gtxn[0].applications.length() == Int(1),
+                Gtxn[0].application_args[0] == TYPE_DAPP,
+                # if app_id belongs to sender
+                app_id_creator.hasValue(),
+                Eq(
+                    app_id_creator.value(),
+                    Txn.sender(),
+                ),
+            ),
+        ),
+
+        # dapp name
+        name.store(dapp_name(Gtxn[0].application_args[1])),
+        (prefix := ScratchVar(TealType.bytes)).store(
+            Concat(
+                # dapp name, app id
+                # TODO: This is a security risk app arg may be different from apps array
+                name.load(), DELIMITER, Gtxn[0].application_args[2], DELIMITER
+            )
+        ),
+        Pop(prefix.load()),
+        (start_idxx := ScratchVar(TealType.uint64)).store(
+            Mul(
+                Btoi(Gtxn[0].application_args[3]),
+                MAX_MAIN_BOX_MSG_SIZE
+            )
+        ),
+        If(
+            BytesEq(
+                App.box_extract(NOTIBOY_BOX, start_idxx.load(), Len(prefix.load())),
+                prefix.load()
+            )
+        )
+        .Then(
+            App.box_replace(NOTIBOY_BOX, start_idxx.load(),
+                            Extract(ERASE_BYTES, Int(0), MAX_MAIN_BOX_MSG_SIZE)),
+        )
+        # compulsorily delete else Channel List will display non-existent channel
+        .Else(Reject()),
+    ])
 
 
 @Subroutine(TealType.none)
@@ -487,7 +526,6 @@ def write_to_box(box_name, start_idx, msg, msg_len, overwrite):
                 )
             )
         ),
-        # Log(App.box_extract(box_name, start_byte.load(), msg_len)),
         App.box_replace(box_name, start_byte.load(), Extract(ERASE_BYTES, Int(0), msg_len)),
         App.box_replace(box_name, start_byte.load(), Extract(msg, Int(0), min_val(msg_len, Len(msg))))
     )
@@ -627,6 +665,8 @@ handle_creation = Seq([
 # 1. user/dapp
 # 2. <dapp_name> if arg0 is dapp
 # 3. <app_id> if arg0 is dapp
+# acct args:
+# 1. <app_id> if arg0 is dapp
 handle_optin = Seq([
     Assert(is_valid_optin()),
     If(
@@ -641,17 +681,23 @@ handle_optin = Seq([
     Approve()
 ])
 
-# args: user/dapp <dapp_name if arg1 is dapp>
+# args:
+# 1. user/dapp
+# 2. <dapp_name> if arg0 is dapp
+# 3. <app_id> if arg0 is dapp
+# acct args:
+# 1. <app_id> if arg0 is dapp
 handle_optout = Seq([
     # Assert(is_valid_optout()),
-    # If(
-    #     And(
-    #         Eq(Gtxn[0].application_args.length(), Int(2)),
-    #         Gtxn[0].application_args[0] == TYPE_DAPP,
-    #     )
-    # )
-    # .Then(deregister_dapp())
-    # .Else(deregister_user()),
+    If(
+        And(
+            Eq(Gtxn[0].application_args.length(), Int(4)),
+            Eq(Gtxn[0].applications.length(), Int(1)),
+            Gtxn[0].application_args[0] == TYPE_DAPP,
+        )
+    )
+    .Then(deregister_dapp())
+    .Else(deregister_user()),
     Approve()
 ])
 
