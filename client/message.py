@@ -1,13 +1,11 @@
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
+from collections import OrderedDict
 from algosdk import account
 from algosdk.future import transaction
 
-from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_ID, generate_algorand_keypair, \
+from client.lib.util import read_local_state, debug, generate_creator_algorand_keypair, \
     get_algod_client, \
-    NOTIBOY_ADDR
-from client.lib.opt import opt_in, opt_out
+    get_signed_grp_txn
+from client.lib.constants import *
 
 
 # call application
@@ -46,7 +44,7 @@ def call_app(client, private_key, index, msg, app_args, acct_args):
     print("Transaction ID:", tx_id)
 
 
-def send_public_notification(client, private_key, index, msg, app_args, acct_args):
+def send(client, private_key, index, msg, app_args, foreign_apps, acct_args):
     # declare sender
     sender = account.address_from_private_key(private_key)
     print("Call from account:", sender)
@@ -58,11 +56,11 @@ def send_public_notification(client, private_key, index, msg, app_args, acct_arg
     params.fee = 1000
 
     # create unsigned transaction
-    txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, note=str.encode(msg))
+    txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, foreign_apps=foreign_apps,
+                                          note=str.encode(msg))
 
     # sign transaction
-    signed_txn1 = txn1.sign(private_key)
-    signed_group = [signed_txn1]
+    signed_group = get_signed_grp_txn(txn1, private_key=private_key)
 
     # send transaction
     tx_id = client.send_transactions(signed_group)
@@ -72,40 +70,25 @@ def send_public_notification(client, private_key, index, msg, app_args, acct_arg
     print("Transaction ID:", tx_id)
 
 
-def main():
-    pvt_key, address = generate_algorand_keypair(overwrite=False, fname="sndr-secret.txt", sandbox=True)
+def send_public_notification():
+    pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
     algod_client = get_algod_client(pvt_key, address)
 
-    try:
-        # pass
-        opt_in(algod_client, pvt_key, APP_ID, DAPP_NAME)
-    except Exception as err:
-        print("error opting in, err: {}".format(err))
-
-    try:
-        # pass
-        opt_out(algod_client, pvt_key, APP_ID, DAPP_NAME)
-    except Exception as err:
-        print("error opting in, err: {}".format(err))
-
-    msg = datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%m/%d/%Y, %H:%M:%S")
-    print("Sending notification --> {}".format(msg))
-    try:
+    for idx in range(16):
+        idx += 1
         app_args = [
             str.encode("pub_notify"),
-            str.encode(DAPP_NAME),
         ]
-        # send_public_notification(algod_client, pvt_key, APP_ID, msg, app_args, [])
-    except Exception as err:
-        print("error calling app, err: {}".format(err))
+        foreign_apps = [
+            9
+        ]
 
-    print("Global state:", read_global_state(algod_client, APP_ID))
+        msg = "Hi Sending notification {} adding very very long msg. This will be trimmed to 120 chars. You won't see remaining messagexxxxxxxxxxxxxxxxxx".format(
+            idx)
+        try:
+            send(algod_client, pvt_key, APP_ID, msg, app_args, foreign_apps, [])
+        except Exception as err:
+            print("error calling app, err: {}".format(err))
 
-    print("Local state of DAPP")
-    local_state = read_local_state(algod_client, address, APP_ID)
-
-    for k, v in local_state.items():
-        print("{} --> {}".format(k, v))
-
-
-main()
+    print("LOCAL State:")
+    read_local_state(algod_client, address, APP_ID)

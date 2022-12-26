@@ -2,6 +2,8 @@ from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_
     get_algod_client, read_global_state_key, \
     MAIN_BOX, read_box
 from client.lib.opt import opt_in, opt_out
+from client.lib.constants import *
+from client.message import send_public_notification
 
 
 def main():
@@ -12,20 +14,21 @@ def main():
     # #pragma version 7
     # int 1
     # ./sandbox copyTo test.teal
+    # WARN: should be strictly 64 global byteslices and 16 local byteslices
     # ./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
     # Pass created app id as arg
-    for idx in range(10):
+    for idx in range(1):
         idx += 1
         num_noops = 4
         dapp_name = 'dapp' + str(idx)
         app_args = [
             str.encode("dapp"),
             str.encode(dapp_name),
-            str.encode("9")
+            str.encode("{}".format(CREATOR_APP_ID))
         ]
 
         foreign_apps = [
-            9
+            CREATOR_APP_ID
         ]
         acct_args = []
         try:
@@ -35,6 +38,11 @@ def main():
         except Exception as err:
             print("error opting in, err: {}".format(err))
 
+        # public message
+        print("\n*************PUBLIC MSG*************")
+        send_public_notification()
+
+        # OPT OUT
         nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
         app_args.append(
             # passing index to preventing for loop in SC

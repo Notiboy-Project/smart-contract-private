@@ -19,9 +19,12 @@ INDEX_KEY = Bytes("index")
 DELIMITER = Bytes(":")
 DAPP_NAME_MAX_LEN = Int(10)
 MAX_BOX_SIZE = Int(32768)
-MAX_LSTATE_SIZE = Int(16)
+MAX_LSTATE_SLOTS = Int(14)
+LSTATE_INDEX_SLOT = Int(16)
+LSTATE_COUNTER_SLOT = Int(16)
 MAX_USER_BOX_LEN = Int(32)
 MAX_MAIN_BOX_MSG_SIZE = Int(26)
+MAX_LSTATE_MSG_SIZE = Int(120)
 MAX_MAIN_BOX_NUM_CHUNKS = Div(MAX_BOX_SIZE, MAX_MAIN_BOX_MSG_SIZE)
 
 # dummy address that belongs to algo dispenser source account
@@ -170,36 +173,64 @@ def is_valid_private_notification():
     )
 
 
+@Subroutine(TealType.bytes)
+def trim_string(name, max_size):
+    return (
+        If(
+            Len(name) > max_size
+        )
+        .Then(
+            Extract(name, Int(0), max_size)
+        )
+        .Else(name)
+    )
+
+
 @Subroutine(TealType.uint64)
 def is_valid_public_notification():
     return And(
         # should contain just 1 txn
         Eq(Global.group_size(), Int(1)),
-        Eq(Txn.application_args.length(), Int(2)),
+        Eq(Txn.application_args.length(), Int(1)),
+        Eq(Txn.applications.length(), Int(1)),
         Eq(Txn.rekey_to(), Global.zero_address()),
         Eq(Txn.type_enum(), TxnType.ApplicationCall),
         Eq(Txn.on_completion(), OnComplete.NoOp),
-        Eq(
-            # verify dapp name belongs to sender
-            # <txn sender> == <gstate sender> in global state
-            Txn.sender(),
-            sender_from_gstate(Txn.application_args[1]),
-        ),
-        # dapp opted in?
-        Eq(App.optedIn(Txn.sender(), app_id), Int(1)),
     )
 
 
-@Subroutine(TealType.bytes)
-def dapp_name(name):
-    return (
-        If(
-            Len(name) > DAPP_NAME_MAX_LEN
-        )
-        .Then(
-            Extract(name, Int(0), DAPP_NAME_MAX_LEN)
-        )
-        .Else(name)
+# app arg: "pub_notify" dapp_name app_id index_position
+# acct arg: app_id
+# We don't have to care even if user impersonates a creator because all the writes to local state of user goes in vain
+# as we display local states of only channels listed in main box.
+# Checking this requires extra 4 txns for box read budget
+@Subroutine(TealType.none)
+def send_public_msg():
+    return Seq(
+        app_id_creator := AppParam.creator(Txn.applications[1]),
+        Assert(
+            And(
+                # if app_id belongs to sender
+                app_id_creator.hasValue(),
+                Eq(
+                    app_id_creator.value(),
+                    Txn.sender(),
+                ),
+                # creator opted in?
+                App.optedIn(Txn.sender(), app_id),
+            ),
+        ),
+        # ranges from 0 to 15, but we don't 0th location as we store this index there
+        (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
+            (Btoi(load_idx_from_lstate(Txn.sender())) + Int(1)) % MAX_LSTATE_SLOTS
+        )),
+        App.localDel(Txn.sender(), next_lstate_index.load()),
+        # set index key
+        App.localPut(Txn.sender(), INDEX_KEY, next_lstate_index.load()),
+        # increment msg count
+        inc_msg_count(Txn.sender()),
+        # write message
+        App.localPut(Txn.sender(), next_lstate_index.load(), trim_string(Txn.note(), MAX_LSTATE_MSG_SIZE)),
     )
 
 
@@ -223,7 +254,7 @@ def register_dapp():
 
     return Seq(
         # dapp name
-        name.store(dapp_name(Gtxn[1].application_args[1])),
+        name.store(trim_string(Gtxn[1].application_args[1], DAPP_NAME_MAX_LEN)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
@@ -268,8 +299,26 @@ def register_dapp():
     )
 
 
+@Subroutine(TealType.uint64)
+def is_creator_onboarded(name, start_idx, app_id):
+    return Seq(
+        (prefix := ScratchVar(TealType.bytes)).store(
+            Concat(
+                # dapp name, app id
+                # TODO: This is a security risk app arg may be different from apps array
+                name, DELIMITER, app_id, DELIMITER
+            )
+        ),
+        Pop(prefix.load()),
+        BytesEq(
+            App.box_extract(NOTIBOY_BOX, start_idx, Len(prefix.load())),
+            prefix.load()
+        )
+    )
+
+
 # invoked as part of dapp opt-in
-# app arg: "dapp" dapp_name app_id
+# app arg: "dapp" dapp_name app_id index_position
 # acct arg: app_id
 # 1. remove entry from global state
 # 2. decrement dapp count
@@ -284,9 +333,9 @@ def deregister_dapp():
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
-                Gtxn[0].application_args.length() == Int(4),
-                Gtxn[0].applications.length() == Int(1),
-                Gtxn[0].application_args[0] == TYPE_DAPP,
+                Txn.application_args.length() == Int(4),
+                Txn.applications.length() == Int(1),
+                Txn.application_args[0] == TYPE_DAPP,
                 # if app_id belongs to sender
                 app_id_creator.hasValue(),
                 Eq(
@@ -295,29 +344,15 @@ def deregister_dapp():
                 ),
             ),
         ),
-
         # dapp name
-        name.store(dapp_name(Gtxn[0].application_args[1])),
-        (prefix := ScratchVar(TealType.bytes)).store(
-            Concat(
-                # dapp name, app id
-                # TODO: This is a security risk app arg may be different from apps array
-                name.load(), DELIMITER, Gtxn[0].application_args[2], DELIMITER
-            )
-        ),
-        Pop(prefix.load()),
+        name.store(trim_string(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
         (start_idx := ScratchVar(TealType.uint64)).store(
             Mul(
-                Btoi(Gtxn[0].application_args[3]),
+                Btoi(Txn.application_args[3]),
                 MAX_MAIN_BOX_MSG_SIZE
             )
         ),
-        If(
-            BytesEq(
-                App.box_extract(NOTIBOY_BOX, start_idx.load(), Len(prefix.load())),
-                prefix.load()
-            )
-        )
+        If(is_creator_onboarded(name.load(), start_idx.load(), Txn.application_args[2]))
         .Then(
             App.box_replace(NOTIBOY_BOX, start_idx.load(),
                             Extract(ERASE_BYTES, Int(0), MAX_MAIN_BOX_MSG_SIZE)),
@@ -352,6 +387,8 @@ def register_user():
         ),
         # create box with name as sender's 32B address
         Assert(App.box_create(Gtxn[0].sender(), MAX_BOX_SIZE)),
+        App.localPut(Txn.sender(), MSG_COUNT, Itob(Int(0))),
+        App.localPut(Txn.sender(), INDEX_KEY, Itob(Int(0))),
         Approve()
     ])
 
@@ -462,9 +499,8 @@ def inc_msg_count(addr):
 # initialise index to 0
 @Subroutine(TealType.bytes)
 def load_idx_from_lstate(addr):
-    index_val = App.localGetEx(addr, app_id, INDEX_KEY)
     return Seq([
-        index_val,
+        index_val := App.localGetEx(addr, app_id, INDEX_KEY),
         If(Not(index_val.hasValue()))
         .Then(App.localPut(addr, INDEX_KEY, Itob(Int(0)))),
         App.localGet(addr, INDEX_KEY)
@@ -624,16 +660,7 @@ app_args: pub_notify dapp_name
 '''
 public_notify = Seq([
     Assert(is_valid_public_notification()),
-    # ranges from 0 to 15, but we don't 0th location as we store this index there
-    (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
-        (Btoi(load_idx_from_lstate(Txn.sender())) + Int(1)) % MAX_LSTATE_SIZE
-    )),
-    If(Btoi(next_lstate_index.load()) == Int(0))
-    .Then(next_lstate_index.store(Itob(Int(1)))),
-    App.localDel(Txn.sender(), next_lstate_index.load()),
-    # set index key
-    App.localPut(Txn.sender(), INDEX_KEY, next_lstate_index.load()),
-    App.localPut(Txn.sender(), next_lstate_index.load(), Txn.tx_id()),
+    send_public_msg(),
     Approve()
 ])
 

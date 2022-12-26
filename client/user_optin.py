@@ -5,6 +5,7 @@ from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_
     get_algod_client, \
     debug, read_box
 from client.lib.opt import opt_in, opt_out
+from client.lib.constants import *
 
 
 def main():
@@ -25,14 +26,14 @@ def main():
         try:
             print("\n*************OPT-IN*************")
             opt_in(algod_client, pvt_key, APP_ID, box_name, app_args, acct_args, foreign_apps, num_noops)
-            read_box(algod_client, APP_ID, "notiboy")
+            print("LOCAL State:", read_local_state(algod_client, address, APP_ID))
         except Exception as err:
             print("error opting in, err: {}".format(err))
 
         try:
             print("\n*************OPT-OUT*************")
             opt_out(algod_client, pvt_key, APP_ID, box_name, app_args, acct_args, foreign_apps, num_noops)
-            read_box(algod_client, APP_ID, "notiboy")
+            print("LOCAL State:", read_local_state(algod_client, address, APP_ID))
         except Exception as err:
             print("error opting out, err: {}".format(err))
 
