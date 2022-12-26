@@ -14,9 +14,9 @@ def main():
     # ./sandbox copyTo test.teal
     # ./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
     # Pass created app id as arg
-    for idx in range(1259):
+    for idx in range(10):
         idx += 1
-        dapp_name = DAPP_NAME
+        num_noops = 4
         dapp_name = 'dapp' + str(idx)
         app_args = [
             str.encode("dapp"),
@@ -29,8 +29,8 @@ def main():
         ]
         acct_args = []
         try:
-            pass
-            opt_in(algod_client, pvt_key, APP_ID, dapp_name, MAIN_BOX, app_args, acct_args, foreign_apps)
+            print("\n*************OPT-IN*************")
+            opt_in(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
             read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting in, err: {}".format(err))
@@ -41,8 +41,8 @@ def main():
             (nxt_idx).to_bytes(8, 'big')
         )
         try:
-            pass
-            opt_out(algod_client, pvt_key, APP_ID, dapp_name, MAIN_BOX, app_args, acct_args, foreign_apps)
+            print("\n*************OPT-OUT*************")
+            opt_out(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
             read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting out, err: {}".format(err))

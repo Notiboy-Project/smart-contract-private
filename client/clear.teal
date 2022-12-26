@@ -5,7 +5,7 @@ int ClearState
 bnz main_l2
 err
 main_l2:
-callsub isvalidoptout_0
+callsub isvalidbaseoptout_0
 assert
 gtxn 0 NumAppArgs
 int 4
@@ -19,16 +19,20 @@ byte "dapp"
 ==
 &&
 bnz main_l4
-callsub deregisteruser_3
+callsub isvaliduseroptout_1
+assert
+callsub deregisteruser_5
 b main_l5
 main_l4:
-callsub deregisterdapp_2
+callsub isvalidcreatoroptout_2
+assert
+callsub deregisterdapp_4
 main_l5:
 int 1
 return
 
-// is_valid_optout
-isvalidoptout_0:
+// is_valid_base_optout
+isvalidbaseoptout_0:
 gtxn 0 RekeyTo
 global ZeroAddress
 ==
@@ -42,14 +46,6 @@ global ZeroAddress
 &&
 gtxn 3 RekeyTo
 global ZeroAddress
-==
-&&
-gtxn 4 RekeyTo
-global ZeroAddress
-==
-&&
-global GroupSize
-int 5
 ==
 &&
 gtxn 0 TypeEnum
@@ -84,6 +80,24 @@ gtxn 3 OnCompletion
 int NoOp
 ==
 &&
+retsub
+
+// is_valid_user_optout
+isvaliduseroptout_1:
+global GroupSize
+int 4
+==
+retsub
+
+// is_valid_creator_optout
+isvalidcreatoroptout_2:
+gtxn 4 RekeyTo
+global ZeroAddress
+==
+global GroupSize
+int 5
+==
+&&
 gtxn 4 TypeEnum
 int appl
 ==
@@ -95,23 +109,23 @@ int NoOp
 retsub
 
 // dapp_name
-dappname_1:
+dappname_3:
 store 0
 load 0
 len
 int 10
 >
-bnz dappname_1_l2
+bnz dappname_3_l2
 load 0
-b dappname_1_l3
-dappname_1_l2:
+b dappname_3_l3
+dappname_3_l2:
 load 0
 extract 0 10
-dappname_1_l3:
+dappname_3_l3:
 retsub
 
 // deregister_dapp
-deregisterdapp_2:
+deregisterdapp_4:
 txna Applications 1
 app_params_get AppCreator
 store 3
@@ -135,7 +149,7 @@ txn Sender
 &&
 assert
 gtxna 0 ApplicationArgs 1
-callsub dappname_1
+callsub dappname_3
 store 1
 load 1
 byte ":"
@@ -159,10 +173,10 @@ len
 box_extract
 load 4
 b==
-bnz deregisterdapp_2_l2
+bnz deregisterdapp_4_l2
 int 0
 return
-deregisterdapp_2_l2:
+deregisterdapp_4_l2:
 byte "notiboy"
 load 5
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -171,7 +185,7 @@ box_replace
 retsub
 
 // deregister_user
-deregisteruser_3:
+deregisteruser_5:
 gtxn 0 Sender
 box_del
 assert

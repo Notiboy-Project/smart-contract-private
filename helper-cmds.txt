@@ -1,6 +1,6 @@
 Send from one acct to another
 
-./sandbox/sandbox goal clerk send -a 103212100 -t C5ISN6HJJAU2YL5F53EOZWW3AR77KJK2VQJSX7KL2M5ZTLN3AYVN27YXAU -f ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY
+./sandbox goal clerk send -a 103212100 -t C5ISN6HJJAU2YL5F53EOZWW3AR77KJK2VQJSX7KL2M5ZTLN3AYVN27YXAU -f ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY
 
 List boxes
 ./sandbox goal app box list --app-id 1
@@ -8,6 +8,11 @@ List boxes
 Get box content
 ./sandbox goal app box info --name "str:notiboy" --app-id 1
 
+Create SC
 ./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
 
+List Accounts
+./sandbox goal account list
 
+Show Mnemonic of Account
+./sandbox goal account export -a AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA

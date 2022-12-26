@@ -67,18 +67,52 @@ def index_from_gstate(dapp_name):
 
 
 @Subroutine(TealType.uint64)
-def is_valid_optout():
+def is_valid_base_optout():
+    return And(
+        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
+        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
+        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[3].on_completion(), OnComplete.NoOp)
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_user_optout():
+    return And(
+        Eq(Global.group_size(), Int(4)),
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_creator_optout():
+    return And(
+        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(5)),
+        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_base_optin():
     return And(
         Eq(Gtxn[0].rekey_to(), Global.zero_address()),
         Eq(Gtxn[1].rekey_to(), Global.zero_address()),
         Eq(Gtxn[2].rekey_to(), Global.zero_address()),
         Eq(Gtxn[3].rekey_to(), Global.zero_address()),
         Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(5)),
-        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
+        Eq(Gtxn[0].type_enum(), TxnType.Payment),
+        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
+        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
         Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
@@ -89,25 +123,17 @@ def is_valid_optout():
 
 
 @Subroutine(TealType.uint64)
-def is_valid_optin():
+def is_valid_user_optin():
     return And(
-        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
+        Eq(Global.group_size(), Int(5)),
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_valid_creator_optin():
+    return And(
         Eq(Gtxn[5].rekey_to(), Global.zero_address()),
         Eq(Global.group_size(), Int(6)),
-        Eq(Gtxn[0].type_enum(), TxnType.Payment),
-        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
-        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
-        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
     )
@@ -301,6 +327,7 @@ def deregister_dapp():
     ])
 
 
+# arg: "user"
 @Subroutine(TealType.none)
 def deregister_user():
     return Seq(
@@ -310,7 +337,7 @@ def deregister_user():
 
 
 # invoked as part of user opt-in
-# Creates a box with 32B user's pkey as name
+# Creates a box with 32B user's public key as name
 # arg: "user"
 @Subroutine(TealType.none)
 def register_user():
@@ -651,7 +678,7 @@ handle_creation = Seq([
 # acct args:
 # 1. <app_id> if arg0 is dapp
 handle_optin = Seq([
-    Assert(is_valid_optin()),
+    Assert(is_valid_base_optin()),
     If(
         And(
             Eq(Gtxn[1].application_args.length(), Int(3)),
@@ -659,8 +686,14 @@ handle_optin = Seq([
             Gtxn[1].application_args[0] == TYPE_DAPP,
         )
     )
-    .Then(register_dapp())
-    .Else(register_user()),
+    .Then(
+        Assert(is_valid_creator_optin()),
+        register_dapp()
+    )
+    .Else(
+        Assert(is_valid_user_optin()),
+        register_user()
+    ),
     Approve()
 ])
 
@@ -671,7 +704,7 @@ handle_optin = Seq([
 # acct args:
 # 1. <app_id> if arg0 is dapp
 handle_optout = Seq([
-    Assert(is_valid_optout()),
+    Assert(is_valid_base_optout()),
     If(
         And(
             Eq(Gtxn[0].application_args.length(), Int(4)),
@@ -679,8 +712,14 @@ handle_optout = Seq([
             Gtxn[0].application_args[0] == TYPE_DAPP,
         )
     )
-    .Then(deregister_dapp())
-    .Else(deregister_user()),
+    .Then(
+        Assert(is_valid_creator_optout()),
+        deregister_dapp()
+    )
+    .Else(
+        Assert(is_valid_user_optout()),
+        deregister_user()
+    ),
     Approve()
 ])
 
