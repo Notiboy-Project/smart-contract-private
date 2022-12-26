@@ -13,7 +13,6 @@ During creator opt in
 '''
 TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")
-DAPP_COUNT = Bytes("dappcount")
 NOTIBOY_BOX = Bytes("notiboy")
 MSG_COUNT = Bytes("msgcount")
 INDEX_KEY = Bytes("index")
@@ -75,8 +74,7 @@ def is_valid_optout():
         Eq(Gtxn[2].rekey_to(), Global.zero_address()),
         Eq(Gtxn[3].rekey_to(), Global.zero_address()),
         Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[5].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(6)),
+        Eq(Global.group_size(), Int(5)),
         Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
@@ -86,9 +84,7 @@ def is_valid_optout():
         Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
         Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
+        Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
     )
 
 
@@ -198,8 +194,6 @@ def dapp_name(name):
 @Subroutine(TealType.none)
 def register_dapp():
     name = ScratchVar(TealType.bytes)
-    next_dapp_idx = ScratchVar(TealType.bytes)
-    dapp_count = ScratchVar(TealType.uint64)
 
     return Seq(
         # dapp name
@@ -222,15 +216,6 @@ def register_dapp():
         ),
 
         # ************* START *************
-        # dapp count process
-        dapp_count.store(Btoi(App.globalGet(DAPP_COUNT))),
-        next_dapp_idx.store(Itob(Add(dapp_count.load(), Int(1)))),
-        # update dapp count
-        App.globalPut(DAPP_COUNT, next_dapp_idx.load()),
-        # dapp count process
-        # ************* END *************
-
-        # ************* START *************
         # write message
         # this ranges from 0 to MAX_MAIN_BOX_NUM_CHUNKS
         (next_gstate_index := ScratchVar(TealType.bytes)).store(Itob(
@@ -245,7 +230,7 @@ def register_dapp():
                 name.load(), DELIMITER, Gtxn[1].application_args[2], DELIMITER,
                 # we only use 4 bytes dapp index. The scratch slot is 8 bytes.
                 # E.g. 1004 is stored as 00001004
-                Extract(next_dapp_idx.load(), Int(4), Int(4)), DELIMITER,
+                Extract(next_gstate_index.load(), Int(4), Int(4)), DELIMITER,
                 # unverified
                 Bytes("u")
             )
@@ -269,10 +254,6 @@ def register_dapp():
 def deregister_dapp():
     name = ScratchVar(TealType.bytes)
     return Seq([
-        # ************* START *************
-        # decrement dapp count
-        App.globalPut(DAPP_COUNT, Itob(Minus(Btoi(App.globalGet(DAPP_COUNT)), Int(1)))),
-        # ************* END *************
 
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
@@ -299,7 +280,7 @@ def deregister_dapp():
             )
         ),
         Pop(prefix.load()),
-        (start_idxx := ScratchVar(TealType.uint64)).store(
+        (start_idx := ScratchVar(TealType.uint64)).store(
             Mul(
                 Btoi(Gtxn[0].application_args[3]),
                 MAX_MAIN_BOX_MSG_SIZE
@@ -307,12 +288,12 @@ def deregister_dapp():
         ),
         If(
             BytesEq(
-                App.box_extract(NOTIBOY_BOX, start_idxx.load(), Len(prefix.load())),
+                App.box_extract(NOTIBOY_BOX, start_idx.load(), Len(prefix.load())),
                 prefix.load()
             )
         )
         .Then(
-            App.box_replace(NOTIBOY_BOX, start_idxx.load(),
+            App.box_replace(NOTIBOY_BOX, start_idx.load(),
                             Extract(ERASE_BYTES, Int(0), MAX_MAIN_BOX_MSG_SIZE)),
         )
         # compulsorily delete else Channel List will display non-existent channel
@@ -638,7 +619,6 @@ bootstrap = Seq([
         is_creator()
     ),
     App.globalPut(INDEX_KEY, Itob(Int(0))),
-    App.globalPut(DAPP_COUNT, Itob(Int(1000))),
     # create box
     Assert(App.box_create(NOTIBOY_BOX, MAX_BOX_SIZE)),
     # setting zero value
@@ -691,7 +671,7 @@ handle_optin = Seq([
 # acct args:
 # 1. <app_id> if arg0 is dapp
 handle_optout = Seq([
-    # Assert(is_valid_optout()),
+    Assert(is_valid_optout()),
     If(
         And(
             Eq(Gtxn[0].application_args.length(), Int(4)),

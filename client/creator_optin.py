@@ -14,7 +14,8 @@ def main():
     # ./sandbox copyTo test.teal
     # ./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
     # Pass created app id as arg
-    for idx in range(1):
+    for idx in range(1259):
+        idx += 1
         dapp_name = DAPP_NAME
         dapp_name = 'dapp' + str(idx)
         app_args = [
@@ -45,6 +46,8 @@ def main():
             read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting out, err: {}".format(err))
+
+    print("Global state:", read_global_state(algod_client, APP_ID))
 
 
 if __name__ == '__main__':
