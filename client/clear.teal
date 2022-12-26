@@ -112,14 +112,6 @@ retsub
 
 // deregister_dapp
 deregisterdapp_2:
-byte "dappcount"
-byte "dappcount"
-app_global_get
-btoi
-int 1
--
-itob
-app_global_put
 txna Applications 1
 app_params_get AppCreator
 store 3
