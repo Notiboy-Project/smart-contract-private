@@ -49,7 +49,7 @@ def compile_program(client, source_code):
 def dev_test(client, private_key, app_id):
     # define sender as creator
     sender = account.address_from_private_key(private_key)
-    print("bootstrapping app by sender", sender)
+    print("resetting app by sender", sender)
 
     # get node suggested parameters
     params = client.suggested_params()
@@ -241,7 +241,7 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
     return app_id
 
 
-def main():
+def main(reset):
     pvt_key, address = generate_algorand_keypair()
     algod_client = get_algod_client(pvt_key, address)
 
@@ -282,12 +282,13 @@ def main():
     # ./sandbox goal app info --app-id 1
 
     app_id = APP_ID
-    # dev_test(algod_client, pvt_key, app_id)
-    # bootstrap_app(algod_client, pvt_key, app_id)
+    if reset:
+        dev_test(algod_client, pvt_key, app_id)
+        bootstrap_app(algod_client, pvt_key, app_id)
     update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
     read_box(algod_client, app_id, "notiboy")
 
 
-main()
+main(reset=True)

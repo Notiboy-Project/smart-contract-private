@@ -1,5 +1,5 @@
 from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_ID, generate_creator_algorand_keypair, \
-    get_algod_client, \
+    get_algod_client, read_global_state_key, \
     MAIN_BOX, read_box
 from client.lib.opt import opt_in, opt_out
 
@@ -34,9 +34,10 @@ def main():
         except Exception as err:
             print("error opting in, err: {}".format(err))
 
+        nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
         app_args.append(
-            # index for preventing for loop in SC
-            (22).to_bytes(8, 'big')
+            # passing index to preventing for loop in SC
+            (nxt_idx).to_bytes(8, 'big')
         )
         try:
             pass

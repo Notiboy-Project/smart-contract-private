@@ -22,8 +22,9 @@ DAPP_NAME_MAX_LEN = Int(10)
 MAX_BOX_SIZE = Int(32768)
 MAX_LSTATE_SIZE = Int(16)
 MAX_USER_BOX_LEN = Int(32)
-MAX_MAIN_BOX_LEN = Int(1365)
-MAX_MAIN_BOX_MSG_SIZE = Int(24)
+MAX_MAIN_BOX_MSG_SIZE = Int(26)
+MAX_MAIN_BOX_NUM_CHUNKS = Div(MAX_BOX_SIZE, MAX_MAIN_BOX_MSG_SIZE)
+
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
 ERASE_BYTES = Bytes(
@@ -189,7 +190,7 @@ def dapp_name(name):
 # App id is used to check if personal notification request comes from owner of app and
 # also to fetch public notification for a dapp.
 # Dapp_idx acts as dapp index aka replacement for dapp name for reference in personal msg box storage
-# Stores 1365 24B key value pairs i.e., 1365 dapps (1365*24=32760)
+# Stores MAX_MAIN_BOX_NUM_CHUNKS 26B key value pairs i.e., MAX_MAIN_BOX_NUM_CHUNKS dapps (MAX_MAIN_BOX_NUM_CHUNKS*26=32760)
 # Stores dapp count in global state
 # We don't check if dapp name is duplicate
 #   1. what if someone claims the name prior to genuine party?
@@ -207,13 +208,13 @@ def register_dapp():
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(3),
-                Gtxn[5].applications.length() == Int(1),
+                Gtxn[1].applications.length() == Int(1),
                 Gtxn[1].application_args[0] == TYPE_DAPP,
                 # if app_id belongs to sender
                 app_id_creator.hasValue(),
                 Eq(
                     app_id_creator.value(),
-                    Gtxn[5].sender(),
+                    Gtxn[1].sender(),
                 ),
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
@@ -231,9 +232,9 @@ def register_dapp():
 
         # ************* START *************
         # write message
-        # this ranges from 0 to 1365
+        # this ranges from 0 to MAX_MAIN_BOX_NUM_CHUNKS
         (next_gstate_index := ScratchVar(TealType.bytes)).store(Itob(
-            (Btoi(load_idx_gstate()) + Int(1)) % MAX_MAIN_BOX_LEN
+            (Btoi(load_idx_gstate()) + Int(1)) % MAX_MAIN_BOX_NUM_CHUNKS
         )),
         # update index (position in box storage)
         set_idx_gstate(next_gstate_index.load()),
@@ -244,7 +245,9 @@ def register_dapp():
                 name.load(), DELIMITER, Gtxn[1].application_args[2], DELIMITER,
                 # we only use 4 bytes dapp index. The scratch slot is 8 bytes.
                 # E.g. 1004 is stored as 00001004
-                Extract(next_dapp_idx.load(), Int(4), Int(4))
+                Extract(next_dapp_idx.load(), Int(4), Int(4)), DELIMITER,
+                # unverified
+                Bytes("u")
             )
         ),
         write_to_box(NOTIBOY_BOX, next_gstate_index.load(), msg.load(), MAX_MAIN_BOX_MSG_SIZE, Int(0)),
@@ -672,7 +675,7 @@ handle_optin = Seq([
     If(
         And(
             Eq(Gtxn[1].application_args.length(), Int(3)),
-            Eq(Gtxn[5].applications.length(), Int(1)),
+            Eq(Gtxn[1].applications.length(), Int(1)),
             Gtxn[1].application_args[0] == TYPE_DAPP,
         )
     )
