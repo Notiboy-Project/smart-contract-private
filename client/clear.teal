@@ -21,12 +21,12 @@ byte "dapp"
 bnz main_l4
 callsub isvaliduseroptout_1
 assert
-callsub deregisteruser_6
+callsub deregisteruser_7
 b main_l5
 main_l4:
 callsub isvalidcreatoroptout_2
 assert
-callsub deregisterdapp_5
+callsub deregisterdapp_6
 main_l5:
 int 1
 return
@@ -108,55 +108,78 @@ int NoOp
 &&
 retsub
 
+// sanitize_dapp_name
+sanitizedappname_3:
+store 3
+store 2
+load 2
+load 3
+callsub trimstring_4
+store 4
+load 4
+len
+int 10
+<
+bz sanitizedappname_3_l2
+byte "::::::::::"
+int 0
+int 10
+load 4
+len
+-
+extract3
+load 4
+concat
+store 4
+sanitizedappname_3_l2:
+load 4
+retsub
+
 // trim_string
-trimstring_3:
+trimstring_4:
 store 1
 store 0
 load 0
 len
 load 1
 >
-bnz trimstring_3_l2
+bnz trimstring_4_l2
 load 0
-b trimstring_3_l3
-trimstring_3_l2:
+b trimstring_4_l3
+trimstring_4_l2:
 load 0
 int 0
 load 1
 extract3
-trimstring_3_l3:
+trimstring_4_l3:
 retsub
 
 // is_creator_onboarded
-iscreatoronboarded_4:
-store 8
-store 7
-store 6
-load 6
-byte ":"
-concat
-load 8
-concat
-byte ":"
-concat
+iscreatoronboarded_5:
+store 11
+store 10
 store 9
 load 9
+load 11
+concat
+store 12
+load 12
 pop
 byte "notiboy"
-load 7
-load 9
+load 10
+load 12
 len
 box_extract
-load 9
+load 12
 b==
 retsub
 
 // deregister_dapp
-deregisterdapp_5:
+deregisterdapp_6:
 txna Applications 1
 app_params_get AppCreator
-store 4
-store 3
+store 7
+store 6
 txn NumAppArgs
 int 4
 ==
@@ -168,39 +191,40 @@ txna ApplicationArgs 0
 byte "dapp"
 ==
 &&
-load 4
+load 7
 &&
-load 3
+load 6
 txn Sender
 ==
 &&
 assert
 txna ApplicationArgs 1
 int 10
-callsub trimstring_3
-store 2
+callsub sanitizedappname_3
+store 5
 txna ApplicationArgs 3
 btoi
-int 26
+int 23
 *
-store 5
-load 2
+store 8
 load 5
-txna ApplicationArgs 2
-callsub iscreatoronboarded_4
-bnz deregisterdapp_5_l2
+load 8
+txna Applications 1
+itob
+callsub iscreatoronboarded_5
+bnz deregisterdapp_6_l2
 int 0
 return
-deregisterdapp_5_l2:
+deregisterdapp_6_l2:
 byte "notiboy"
-load 5
+load 8
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-extract 0 26
+extract 0 23
 box_replace
 retsub
 
 // deregister_user
-deregisteruser_6:
+deregisteruser_7:
 gtxn 0 Sender
 box_del
 assert

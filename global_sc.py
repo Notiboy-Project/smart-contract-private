@@ -23,12 +23,14 @@ MAX_LSTATE_SLOTS = Int(14)
 LSTATE_INDEX_SLOT = Int(16)
 LSTATE_COUNTER_SLOT = Int(16)
 MAX_USER_BOX_LEN = Int(32)
-MAX_MAIN_BOX_MSG_SIZE = Int(26)
+MAX_MAIN_BOX_MSG_SIZE = Int(23)
 MAX_LSTATE_MSG_SIZE = Int(120)
 MAX_MAIN_BOX_NUM_CHUNKS = Div(MAX_BOX_SIZE, MAX_MAIN_BOX_MSG_SIZE)
 
 # dummy address that belongs to algo dispenser source account
 NOTIBOY_ADDR = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
+# DAPP_NAME_MAX_LEN long
+DAPP_NAME_PADDING = Bytes("::::::::::")
 ERASE_BYTES = Bytes(
     "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
 # 1 algo
@@ -174,6 +176,21 @@ def is_valid_private_notification():
 
 
 @Subroutine(TealType.bytes)
+def sanitize_dapp_name(name, max_size):
+    return Seq(
+        (dapp_name := ScratchVar(TealType.bytes)).store(trim_string(name, max_size)),
+        If(Len(dapp_name.load()) < DAPP_NAME_MAX_LEN)
+        .Then(
+            dapp_name.store(Concat(
+                Extract(DAPP_NAME_PADDING, Int(0), (DAPP_NAME_MAX_LEN - Len(dapp_name.load()))),
+                dapp_name.load()
+            ))
+        ),
+        dapp_name.load()
+    )
+
+
+@Subroutine(TealType.bytes)
 def trim_string(name, max_size):
     return (
         If(
@@ -239,11 +256,11 @@ def send_public_msg():
 # acct arg: app_id
 # global registry will have
 # Key: dapp_name (max 10B)
-# Value: app_id (8B) : dapp_idx (4B)
+# Value: app_id (8B)  dapp_idx (4B) verified (1B)
 # App id is used to check if personal notification request comes from owner of app and
 # also to fetch public notification for a dapp.
 # Dapp_idx acts as dapp index aka replacement for dapp name for reference in personal msg box storage
-# Stores MAX_MAIN_BOX_NUM_CHUNKS 26B key value pairs i.e., MAX_MAIN_BOX_NUM_CHUNKS dapps (MAX_MAIN_BOX_NUM_CHUNKS*26=32760)
+# Stores MAX_MAIN_BOX_NUM_CHUNKS 23B key value pairs i.e., MAX_MAIN_BOX_NUM_CHUNKS dapps (MAX_MAIN_BOX_NUM_CHUNKS*23=32760)
 # Stores dapp count in global state
 # We don't check if dapp name is duplicate
 #   1. what if someone claims the name prior to genuine party?
@@ -254,9 +271,8 @@ def register_dapp():
 
     return Seq(
         # dapp name
-        name.store(trim_string(Gtxn[1].application_args[1], DAPP_NAME_MAX_LEN)),
+        name.store(sanitize_dapp_name(Gtxn[1].application_args[1], DAPP_NAME_MAX_LEN)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
-        Log(Itob(Btoi(Itob(Txn.applications[1])))),
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(3),
@@ -284,11 +300,10 @@ def register_dapp():
         (msg := ScratchVar(TealType.bytes)).store(
             Concat(
                 # dapp name, app id, idx
-                # TODO: This is a security risk app arg may be different from apps array
-                name.load(), DELIMITER, Gtxn[1].application_args[2], DELIMITER,
+                name.load(), Itob(Txn.applications[1]),
                 # we only use 4 bytes dapp index. The scratch slot is 8 bytes.
                 # E.g. 1004 is stored as 00001004
-                Extract(next_gstate_index.load(), Int(4), Int(4)), DELIMITER,
+                Extract(next_gstate_index.load(), Int(4), Int(4)),
                 # unverified
                 Bytes("u")
             )
@@ -306,8 +321,7 @@ def is_creator_onboarded(name, start_idx, app_id):
         (prefix := ScratchVar(TealType.bytes)).store(
             Concat(
                 # dapp name, app id
-                # TODO: This is a security risk app arg may be different from apps array
-                name, DELIMITER, app_id, DELIMITER
+                name, app_id,
             )
         ),
         Pop(prefix.load()),
@@ -346,14 +360,14 @@ def deregister_dapp():
             ),
         ),
         # dapp name
-        name.store(trim_string(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
+        name.store(sanitize_dapp_name(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
         (start_idx := ScratchVar(TealType.uint64)).store(
             Mul(
                 Btoi(Txn.application_args[3]),
                 MAX_MAIN_BOX_MSG_SIZE
             )
         ),
-        If(is_creator_onboarded(name.load(), start_idx.load(), Txn.application_args[2]))
+        If(is_creator_onboarded(name.load(), start_idx.load(), Itob(Txn.applications[1])))
         .Then(
             App.box_replace(NOTIBOY_BOX, start_idx.load(),
                             Extract(ERASE_BYTES, Int(0), MAX_MAIN_BOX_MSG_SIZE)),
@@ -580,52 +594,52 @@ def write_to_box(box_name, start_idx, msg, msg_len, overwrite):
 
 
 # to store list of dapps opted in by user
-@Subroutine(TealType.none)
-def user_optin_dapp(dapp_idx):
-    return Seq(
-        is_apps_set := App.localGetEx(Gtxn[0].accounts[1], app_id, Bytes("apps")),
-        If(
-            And(
-                Eq(
-                    is_apps_set.hasValue(), Int(0)
-                ),
-                Eq(
-                    Btoi(is_apps_set.value()), Int(0)
-                )
-            )
-        )
-        .Then(App.localPut(Gtxn[0].accounts[1], Bytes("apps"), dapp_idx))
-        .Else(
-            (found := ScratchVar(TealType.uint64)).store(Int(0)),
-            (app_list := ScratchVar(TealType.bytes)).store(App.localGet(Gtxn[0].accounts[1], Bytes("apps"))),
-            For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
-                start_idx.load() < Len(app_list.load()),
-                start_idx.store(start_idx.load() + Int(3))
-                ).Do(
-                If(
-                    Eq(
-                        Extract(app_list.load(), start_idx.load(), Int(3)),
-                        dapp_idx
-                    )
-                )
-                .Then(
-                    found.store(Int(1)),
-                    Break()
-                )
-            ),
-            If(
-                Neq(
-                    found.load(),
-                    Int(1)
-                )
-            )
-            .Then(
-                app_list.store(
-                    Concat(app_list.load(), dapp_idx)
-                )
-            )
-        )
-    )
+# @Subroutine(TealType.none)
+# def user_optin_dapp(dapp_idx):
+#     return Seq(
+#         is_apps_set := App.localGetEx(Gtxn[0].accounts[1], app_id, Bytes("apps")),
+#         If(
+#             And(
+#                 Eq(
+#                     is_apps_set.hasValue(), Int(0)
+#                 ),
+#                 Eq(
+#                     Btoi(is_apps_set.value()), Int(0)
+#                 )
+#             )
+#         )
+#         .Then(App.localPut(Gtxn[0].accounts[1], Bytes("apps"), dapp_idx))
+#         .Else(
+#             (found := ScratchVar(TealType.uint64)).store(Int(0)),
+#             (app_list := ScratchVar(TealType.bytes)).store(App.localGet(Gtxn[0].accounts[1], Bytes("apps"))),
+#             For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
+#                 start_idx.load() < Len(app_list.load()),
+#                 start_idx.store(start_idx.load() + Int(3))
+#                 ).Do(
+#                 If(
+#                     Eq(
+#                         Extract(app_list.load(), start_idx.load(), Int(3)),
+#                         dapp_idx
+#                     )
+#                 )
+#                 .Then(
+#                     found.store(Int(1)),
+#                     Break()
+#                 )
+#             ),
+#             If(
+#                 Neq(
+#                     found.load(),
+#                     Int(1)
+#                 )
+#             )
+#             .Then(
+#                 app_list.store(
+#                     Concat(app_list.load(), dapp_idx)
+#                 )
+#             )
+#         )
+#     )
 
 
 '''
@@ -651,7 +665,7 @@ private_notify = Seq([
     # increase 'received' msg count of rcvr
     inc_msg_count(Txn.accounts[1]),
     (data := ScratchVar(TealType.bytes)).store(construct_msg()),
-    write_msg(next_lstate_index.load(), data.load()),
+    # write_msg(next_lstate_index.load(), data.load()),
     # user_optin_dapp(index_from_gstate(Gtxn[0].application_args[1])),
     Approve()
 ])

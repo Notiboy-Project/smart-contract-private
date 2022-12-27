@@ -47,7 +47,7 @@ def send_public_notification():
     pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
     algod_client = get_algod_client(pvt_key, address)
 
-    for idx in range(16):
+    for idx in range(1):
         idx += 1
         app_args = [
             str.encode("pub_notify"),
