@@ -45,7 +45,7 @@ def main():
         # OPT OUT
         nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
         app_args.append(
-            # passing index to preventing for loop in SC
+            # passing index to preventing for loop in SC in order to clear outmain box slot
             (nxt_idx).to_bytes(8, 'big')
         )
         try:

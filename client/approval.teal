@@ -607,6 +607,11 @@ txna Applications 1
 app_params_get AppCreator
 store 17
 store 16
+txna Applications 1
+itob
+btoi
+itob
+log
 gtxn 1 NumAppArgs
 int 3
 ==

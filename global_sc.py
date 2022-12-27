@@ -256,6 +256,7 @@ def register_dapp():
         # dapp name
         name.store(trim_string(Gtxn[1].application_args[1], DAPP_NAME_MAX_LEN)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
+        Log(Itob(Btoi(Itob(Txn.applications[1])))),
         Assert(
             And(
                 Gtxn[1].application_args.length() == Int(3),
