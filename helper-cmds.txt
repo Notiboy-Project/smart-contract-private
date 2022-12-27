@@ -16,3 +16,6 @@ List Accounts
 
 Show Mnemonic of Account
 ./sandbox goal account export -a AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA
+
+Optin to Creator App
+./sandbox goal app optin --app-id 9 -f AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA

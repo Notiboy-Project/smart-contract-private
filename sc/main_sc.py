@@ -83,7 +83,7 @@ app_args: pvt_notify dapp_name
 acct_args: rcvr_addr
 '''
 private_notify = Seq([
-    # Assert(is_valid_private_notification()),
+    Assert(is_valid_private_notification()),
     send_personal_msg(),
     Approve()
 ])

@@ -82,13 +82,15 @@ assert
 callsub markdappverified_24
 return
 main_l15:
-callsub sendpersonalmsg_27
+callsub isvalidprivatenotification_25
+assert
+callsub sendpersonalmsg_28
 int 1
 return
 main_l16:
-callsub isvalidpublicnotification_25
+callsub isvalidpublicnotification_26
 assert
-callsub sendpublicmsg_26
+callsub sendpublicmsg_27
 int 1
 return
 main_l17:
@@ -517,6 +519,17 @@ load 33
 load 35
 len
 box_extract
+log
+load 35
+log
+load 33
+itob
+log
+byte "notiboy"
+load 33
+load 35
+len
+box_extract
 load 35
 b==
 retsub
@@ -775,8 +788,45 @@ markdappverified_24_l2:
 int 1
 return
 
+// is_valid_private_notification
+isvalidprivatenotification_25:
+int 0
+int 4
+callsub validatenoops_4
+int 0
+int 4
+callsub validaterekeys_3
+txna Accounts 1
+global CurrentApplicationID
+app_opted_in
+txna Accounts 1
+txna Applications 1
+app_opted_in
+&&
+txn Sender
+global CurrentApplicationID
+app_opted_in
+&&
+txn NumAccounts
+int 1
+==
+&&
+txn NumAppArgs
+int 3
+==
+&&
+txn NumApplications
+int 1
+==
+&&
+global GroupSize
+int 5
+==
+&&
+retsub
+
 // is_valid_public_notification
-isvalidpublicnotification_25:
+isvalidpublicnotification_26:
 global GroupSize
 int 1
 ==
@@ -807,7 +857,7 @@ app_opted_in
 retsub
 
 // send_public_msg
-sendpublicmsg_26:
+sendpublicmsg_27:
 txna Applications 1
 app_params_get AppCreator
 store 38
@@ -845,7 +895,7 @@ app_local_put
 retsub
 
 // send_personal_msg
-sendpersonalmsg_27:
+sendpersonalmsg_28:
 txna Applications 1
 app_params_get AppCreator
 store 47

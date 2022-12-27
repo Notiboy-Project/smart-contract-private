@@ -163,6 +163,17 @@ load 16
 load 18
 len
 box_extract
+log
+load 18
+log
+load 16
+itob
+log
+byte "notiboy"
+load 16
+load 18
+len
+box_extract
 load 18
 b==
 retsub

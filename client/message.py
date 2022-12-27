@@ -4,7 +4,7 @@ from algosdk import encoding
 
 from client.lib.util import read_local_state, debug, generate_creator_algorand_keypair, \
     get_algod_client, generate_noop_txns, read_box, \
-    get_signed_grp_txn, read_global_state_key, read_user_box
+    get_signed_grp_txn, read_global_state_key, read_user_box, print_logs
 from client.lib.constants import *
 
 
@@ -41,6 +41,8 @@ def send(client, private_key, index, msg, app_args, foreign_apps, acct_args, num
     # await confirmation
     transaction.wait_for_confirmation(client, tx_id)
     print("Transaction ID:", tx_id)
+    transaction_response = client.pending_transaction_info(signed_group[0].get_txid())
+    print_logs(transaction_response)
 
 
 def send_public_notification():
@@ -102,6 +104,8 @@ def send_personal_notification():
               " This will be trimmed to 1008 chars.".format(
             idx)
         try:
+            # user has to opt in to creator's app before receiving message
+            # ./sandbox goal app optin --app-id 9 -f AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA
             send(algod_client, pvt_key, APP_ID, msg, app_args, foreign_apps, acct_args, num_noops, box_name)
         except Exception as err:
             print("error calling app, err: {}".format(err))

@@ -3,21 +3,25 @@ from message import send_personal_notification, send_public_notification
 from user_optin import user_optin, user_optout
 
 
-def run():
+def optin():
     creator_optin()
     user_optin()
+
+
+def msg():
     send_public_notification()
     send_personal_notification()
 
 
-def clean():
+def optout():
     user_optout()
     creator_optout()
 
 
 def main():
-    run()
-    clean()
+    optin()
+    msg()
+    optout()
 
 
 if __name__ == '__main__':
