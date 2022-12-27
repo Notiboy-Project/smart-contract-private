@@ -5,8 +5,8 @@ from algosdk import account, mnemonic
 
 import base64
 
-from global_sc import approval_program, clear_state_program
-from client.lib.util import read_global_state, APP_ID, MAIN_BOX, read_box
+from sc.main_sc import approval_program, clear_state_program
+from client.lib.util import read_global_state, read_box
 from client.lib.constants import *
 
 DEBUG = False

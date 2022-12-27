@@ -1,10 +1,9 @@
-from collections import OrderedDict
 from algosdk import account
 from algosdk.future import transaction
 
 from client.lib.util import read_local_state, debug, generate_creator_algorand_keypair, \
     get_algod_client, generate_noop_txns, \
-    get_signed_grp_txn
+    get_signed_grp_txn, read_global_state_key
 from client.lib.constants import *
 
 
@@ -79,13 +78,17 @@ def send_personal_notification():
         app_args = [
             str.encode("pvt_notify"),
             str.encode(dapp_name),
-            str.encode("{}".format(CREATOR_APP_ID))
         ]
 
         foreign_apps = [
             CREATOR_APP_ID
         ]
 
+        nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
+        app_args.append(
+            # passing index to preventing for loop in SC in order to verify if creator is present in box slot
+            (nxt_idx).to_bytes(8, 'big')
+        )
         msg = "Hi, sending a very very very long personal notification numbered {}." \
               " This will be trimmed to 120 chars. You won't see remaining messagexxxxxxxxxxxxxxxxxx".format(
             idx)

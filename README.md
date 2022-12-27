@@ -1,6 +1,6 @@
 # Notiboy Smart Contract
 
-Smart contract is written [here](creator_sc.py)
+Smart contract is written [here](sc/main_sc.py)
 
 Supports:
 
@@ -18,8 +18,8 @@ Supports:
 - Private notification is written to the local state of user.
 - Verification updates the global state of the smart contract for the verified dapp.
 
-
 ## To Develop
+
 1. Create venv `python3.10 -m venv env`
 2. For sandbox, pyteal and algosdk use only python3.10
 3. pip3.10 install py-algorand-sdk pyteal
