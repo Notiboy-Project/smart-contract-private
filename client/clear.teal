@@ -8,7 +8,7 @@ main_l2:
 callsub isvalidbaseoptout_0
 assert
 gtxn 0 NumAppArgs
-int 4
+int 3
 ==
 gtxn 0 NumApplications
 int 1
@@ -200,7 +200,7 @@ app_params_get AppCreator
 store 13
 store 12
 txn NumAppArgs
-int 4
+int 3
 ==
 txn NumApplications
 int 1
@@ -221,7 +221,7 @@ txna ApplicationArgs 1
 int 10
 callsub sanitizedappname_5
 store 11
-txna ApplicationArgs 3
+txna ApplicationArgs 2
 btoi
 int 23
 *

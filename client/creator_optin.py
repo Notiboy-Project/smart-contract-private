@@ -24,7 +24,6 @@ def main():
         app_args = [
             str.encode("dapp"),
             str.encode(dapp_name),
-            str.encode("{}".format(CREATOR_APP_ID))
         ]
 
         foreign_apps = [

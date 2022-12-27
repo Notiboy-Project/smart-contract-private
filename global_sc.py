@@ -261,7 +261,7 @@ def send_public_msg():
 
 
 # invoked as part of dapp opt-in
-# app arg: "dapp" dapp_name app_id
+# app arg: "dapp" dapp_name
 # acct arg: app_id
 # global registry will have
 # Key: dapp_name (max 10B)
@@ -280,18 +280,18 @@ def register_dapp():
 
     return Seq(
         # dapp name
-        name.store(sanitize_dapp_name(Gtxn[1].application_args[1], DAPP_NAME_MAX_LEN)),
+        name.store(sanitize_dapp_name(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
-                Gtxn[1].application_args.length() == Int(3),
-                Gtxn[1].applications.length() == Int(1),
-                Gtxn[1].application_args[0] == TYPE_DAPP,
+                Txn.application_args.length() == Int(2),
+                Txn.applications.length() == Int(1),
+                Txn.application_args[0] == TYPE_DAPP,
                 # if app_id belongs to sender
                 app_id_creator.hasValue(),
                 Eq(
                     app_id_creator.value(),
-                    Gtxn[1].sender(),
+                    Txn.sender(),
                 ),
                 # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
@@ -342,7 +342,7 @@ def is_creator_onboarded(name, start_idx, app_id):
 
 
 # invoked as part of dapp opt-in
-# app arg: "dapp" dapp_name app_id index_position
+# app arg: "dapp" dapp_name index_position
 # acct arg: app_id
 # 1. remove entry from global state
 # 2. decrement dapp count
@@ -357,7 +357,7 @@ def deregister_dapp():
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
-                Txn.application_args.length() == Int(4),
+                Txn.application_args.length() == Int(3),
                 Txn.applications.length() == Int(1),
                 Txn.application_args[0] == TYPE_DAPP,
                 # if app_id belongs to sender
@@ -372,7 +372,7 @@ def deregister_dapp():
         name.store(sanitize_dapp_name(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
         (start_idx := ScratchVar(TealType.uint64)).store(
             Mul(
-                Btoi(Txn.application_args[3]),
+                Btoi(Txn.application_args[2]),
                 MAX_MAIN_BOX_MSG_SIZE
             )
         ),
@@ -732,7 +732,7 @@ handle_optin = Seq([
     Assert(is_valid_base_optin()),
     If(
         And(
-            Eq(Gtxn[1].application_args.length(), Int(3)),
+            Eq(Gtxn[1].application_args.length(), Int(2)),
             Eq(Gtxn[1].applications.length(), Int(1)),
             Gtxn[1].application_args[0] == TYPE_DAPP,
         )
@@ -758,7 +758,7 @@ handle_optout = Seq([
     Assert(is_valid_base_optout()),
     If(
         And(
-            Eq(Gtxn[0].application_args.length(), Int(4)),
+            Eq(Gtxn[0].application_args.length(), Int(3)),
             Eq(Gtxn[0].applications.length(), Int(1)),
             Gtxn[0].application_args[0] == TYPE_DAPP,
         )
