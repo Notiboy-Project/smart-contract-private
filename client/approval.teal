@@ -79,18 +79,16 @@ txna Accounts 1
 ==
 &&
 assert
-callsub markdappverified_25
+callsub markdappverified_24
 return
 main_l15:
-callsub isvalidprivatenotification_26
-assert
-callsub sendpersonalmsg_29
+callsub sendpersonalmsg_27
 int 1
 return
 main_l16:
-callsub isvalidpublicnotification_27
+callsub isvalidpublicnotification_25
 assert
-callsub sendpublicmsg_28
+callsub sendpublicmsg_26
 int 1
 return
 main_l17:
@@ -164,16 +162,16 @@ byte "dapp"
 ==
 &&
 bnz main_l28
-callsub isvaliduseroptout_21
+callsub isvaliduseroptout_20
 assert
-callsub deregisteruser_22
+callsub deregisteruser_21
 main_l27:
 int 1
 return
 main_l28:
-callsub isvalidcreatoroptout_16
+callsub isvalidcreatoroptout_15
 assert
-callsub deregisterdapp_19
+callsub deregisterdapp_18
 b main_l27
 main_l29:
 callsub isvalidbaseoptin_5
@@ -190,16 +188,16 @@ byte "dapp"
 ==
 &&
 bnz main_l32
-callsub isvaliduseroptin_20
+callsub isvaliduseroptin_19
 assert
-callsub registeruser_23
+callsub registeruser_22
 main_l31:
 int 1
 return
 main_l32:
-callsub isvalidcreatoroptin_17
+callsub isvalidcreatoroptin_16
 assert
-callsub registerdapp_18
+callsub registerdapp_17
 b main_l31
 main_l33:
 callsub isvalid_1
@@ -457,26 +455,8 @@ itob
 app_local_put
 retsub
 
-// construct_msg
-constructmsg_13:
-global LatestTimestamp
-itob
-gtxna 0 ApplicationArgs 1
-concat
-byte ":"
-concat
-gtxn 0 Note
-int 0
-int 1008
-gtxn 0 Note
-len
-callsub minval_11
-extract3
-concat
-retsub
-
 // write_to_box
-writetobox_14:
+writetobox_13:
 store 24
 store 23
 store 22
@@ -490,7 +470,7 @@ store 25
 load 24
 int 0
 ==
-bz writetobox_14_l2
+bz writetobox_13_l2
 load 20
 load 25
 load 23
@@ -501,7 +481,7 @@ load 23
 extract3
 ==
 assert
-writetobox_14_l2:
+writetobox_13_l2:
 load 20
 load 25
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -522,7 +502,7 @@ box_replace
 retsub
 
 // is_creator_onboarded
-iscreatoronboarded_15:
+iscreatoronboarded_14:
 store 34
 store 33
 store 32
@@ -542,7 +522,7 @@ b==
 retsub
 
 // is_valid_creator_optout
-isvalidcreatoroptout_16:
+isvalidcreatoroptout_15:
 gtxn 4 RekeyTo
 global ZeroAddress
 ==
@@ -561,7 +541,7 @@ int NoOp
 retsub
 
 // is_valid_creator_optin
-isvalidcreatoroptin_17:
+isvalidcreatoroptin_16:
 gtxn 5 RekeyTo
 global ZeroAddress
 ==
@@ -580,7 +560,7 @@ int NoOp
 retsub
 
 // register_dapp
-registerdapp_18:
+registerdapp_17:
 txna ApplicationArgs 1
 int 10
 callsub sanitizedappname_6
@@ -638,12 +618,12 @@ load 10
 load 11
 int 23
 int 0
-callsub writetobox_14
+callsub writetobox_13
 int 1
 return
 
 // deregister_dapp
-deregisterdapp_19:
+deregisterdapp_18:
 txna Applications 1
 app_params_get AppCreator
 store 30
@@ -679,11 +659,11 @@ load 28
 load 31
 txna Applications 1
 itob
-callsub iscreatoronboarded_15
-bnz deregisterdapp_19_l2
+callsub iscreatoronboarded_14
+bnz deregisterdapp_18_l2
 int 0
 return
-deregisterdapp_19_l2:
+deregisterdapp_18_l2:
 byte "notiboy"
 load 31
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -692,21 +672,21 @@ box_replace
 retsub
 
 // is_valid_user_optin
-isvaliduseroptin_20:
+isvaliduseroptin_19:
 global GroupSize
 int 5
 ==
 retsub
 
 // is_valid_user_optout
-isvaliduseroptout_21:
+isvaliduseroptout_20:
 global GroupSize
 int 4
 ==
 retsub
 
 // deregister_user
-deregisteruser_22:
+deregisteruser_21:
 gtxn 0 Sender
 box_del
 assert
@@ -714,7 +694,7 @@ int 1
 return
 
 // register_user
-registeruser_23:
+registeruser_22:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -745,13 +725,13 @@ int 1
 return
 
 // is_verified
-isverified_24:
+isverified_23:
 txna ApplicationArgs 1
 app_global_get
 len
 int 65
 ==
-bnz isverified_24_l4
+bnz isverified_23_l4
 txna ApplicationArgs 1
 app_global_get
 len
@@ -763,25 +743,25 @@ extract 66 1
 byte "v"
 ==
 &&
-bnz isverified_24_l3
+bnz isverified_23_l3
 int 0
-b isverified_24_l5
-isverified_24_l3:
+b isverified_23_l5
+isverified_23_l3:
 int 1
-b isverified_24_l5
-isverified_24_l4:
+b isverified_23_l5
+isverified_23_l4:
 int 0
-isverified_24_l5:
+isverified_23_l5:
 retsub
 
 // mark_dapp_verified
-markdappverified_25:
+markdappverified_24:
 txna ApplicationArgs 1
 app_global_get
 store 36
-callsub isverified_24
+callsub isverified_23
 !
-bz markdappverified_25_l2
+bz markdappverified_24_l2
 txna ApplicationArgs 1
 app_global_del
 txna ApplicationArgs 1
@@ -791,45 +771,12 @@ concat
 app_global_put
 int 1
 return
-markdappverified_25_l2:
+markdappverified_24_l2:
 int 1
 return
 
-// is_valid_private_notification
-isvalidprivatenotification_26:
-int 0
-int 4
-callsub validatenoops_4
-int 0
-int 4
-callsub validaterekeys_3
-txna Accounts 1
-global CurrentApplicationID
-app_opted_in
-assert
-txn Sender
-global CurrentApplicationID
-app_opted_in
-txn NumAccounts
-int 1
-==
-&&
-txn NumAppArgs
-int 3
-==
-&&
-txn NumApplications
-int 1
-==
-&&
-global GroupSize
-int 5
-==
-&&
-retsub
-
 // is_valid_public_notification
-isvalidpublicnotification_27:
+isvalidpublicnotification_25:
 global GroupSize
 int 1
 ==
@@ -860,7 +807,7 @@ app_opted_in
 retsub
 
 // send_public_msg
-sendpublicmsg_28:
+sendpublicmsg_26:
 txna Applications 1
 app_params_get AppCreator
 store 38
@@ -898,7 +845,7 @@ app_local_put
 retsub
 
 // send_personal_msg
-sendpersonalmsg_29:
+sendpersonalmsg_27:
 txna Applications 1
 app_params_get AppCreator
 store 47
@@ -926,12 +873,24 @@ txn Sender
 callsub incmsgcount_12
 txna Accounts 1
 callsub incmsgcount_12
-callsub constructmsg_13
+global LatestTimestamp
+itob
+txna Applications 1
+itob
+concat
+txn Note
+int 0
+int 1008
+txn Note
+len
+callsub minval_11
+extract3
+concat
 store 49
 txna Accounts 1
 load 48
 load 49
 int 1024
 int 1
-callsub writetobox_14
+callsub writetobox_13
 retsub

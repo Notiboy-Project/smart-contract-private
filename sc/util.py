@@ -177,26 +177,6 @@ def inc_msg_count(addr):
     ])
 
 
-@Subroutine(TealType.bytes)
-def construct_msg():
-    # return Itob(Global.latest_timestamp())
-    return Concat(
-        Itob(Global.latest_timestamp()),
-        Gtxn[0].application_args[1],
-        Bytes(":"),
-        Extract(Gtxn[0].note(), Int(0), min_val(Int(1008), Len(Gtxn[0].note()))),
-    )
-
-
-@Subroutine(TealType.none)
-def write_msg(idx, msg):
-    return Seq(
-        (start_byte := ScratchVar(TealType.uint64)).store(Mul(Btoi(idx), Int(1024))),
-        App.box_replace(Gtxn[0].accounts[1], start_byte.load(), Extract(ERASE_BYTES, Int(0), Len(ERASE_BYTES))),
-        App.box_replace(Gtxn[0].accounts[1], start_byte.load(), msg)
-    )
-
-
 @Subroutine(TealType.none)
 def write_to_box(box_name, start_idx, msg, max_msg_len, overwrite):
     return Seq(

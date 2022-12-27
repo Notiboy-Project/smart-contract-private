@@ -289,7 +289,7 @@ def main(reset):
     update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
-    read_box(algod_client, app_id, "notiboy")
+    read_box(algod_client, app_id, "notiboy".encode('utf-8'))
 
 
 main(reset=True)

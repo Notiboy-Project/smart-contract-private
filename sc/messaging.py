@@ -6,9 +6,11 @@ def is_valid_private_notification():
     return Seq(
         validate_noops(Int(0), Int(4)),
         validate_rekeys(Int(0), Int(4)),
-        # rcvr opted in?
-        Assert(App.optedIn(Txn.accounts[1], app_id)),
         And(
+            # rcvr opted in?
+            App.optedIn(Txn.accounts[1], app_id),
+            # rcvr opted in to creator's app?
+            App.optedIn(Txn.accounts[1], Txn.applications[1]),
             # creator opted in?
             App.optedIn(Txn.sender(), app_id),
             # is rcvr address passed?
@@ -97,6 +99,12 @@ def send_personal_msg():
         inc_msg_count(Txn.sender()),
         # increase 'received' msg count of rcvr
         inc_msg_count(Txn.accounts[1]),
-        (data := ScratchVar(TealType.bytes)).store(construct_msg()),
+        (data := ScratchVar(TealType.bytes)).store(
+            Concat(
+                Itob(Global.latest_timestamp()),
+                Itob(Txn.applications[1]),
+                Extract(Txn.note(), Int(0), min_val(Int(1008), Len(Txn.note()))),
+            )
+        ),
         write_to_box(Txn.accounts[1], next_lstate_index.load(), data.load(), MAX_USER_BOX_MSG_SIZE, Int(1)),
     )
