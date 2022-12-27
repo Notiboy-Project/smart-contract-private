@@ -34,9 +34,9 @@ def main():
         try:
             print("\n*************OPT-IN*************")
             opt_in(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
-            read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting in, err: {}".format(err))
+        read_box(algod_client, APP_ID, "notiboy")
 
         # public message
         print("\n*************PUBLIC MSG*************")
@@ -51,9 +51,9 @@ def main():
         try:
             print("\n*************OPT-OUT*************")
             opt_out(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
-            read_box(algod_client, APP_ID, "notiboy")
         except Exception as err:
             print("error opting out, err: {}".format(err))
+        read_box(algod_client, APP_ID, "notiboy")
 
     print("Global state:", read_global_state(algod_client, APP_ID))
 

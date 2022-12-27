@@ -21,63 +21,29 @@ byte "dapp"
 bnz main_l4
 callsub isvaliduseroptout_1
 assert
-callsub deregisteruser_7
+callsub deregisteruser_9
 b main_l5
 main_l4:
 callsub isvalidcreatoroptout_2
 assert
-callsub deregisterdapp_6
+callsub deregisterdapp_8
 main_l5:
 int 1
 return
 
 // is_valid_base_optout
 isvalidbaseoptout_0:
-gtxn 0 RekeyTo
-global ZeroAddress
-==
-gtxn 1 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 2 RekeyTo
-global ZeroAddress
-==
-&&
-gtxn 3 RekeyTo
-global ZeroAddress
-==
-&&
+int 0
+int 3
+callsub validaterekeys_3
+int 1
+int 3
+callsub validatenoops_4
 gtxn 0 TypeEnum
 int appl
 ==
-&&
 gtxn 0 OnCompletion
 int CloseOut
-==
-&&
-gtxn 1 TypeEnum
-int appl
-==
-&&
-gtxn 1 OnCompletion
-int NoOp
-==
-&&
-gtxn 2 TypeEnum
-int appl
-==
-&&
-gtxn 2 OnCompletion
-int NoOp
-==
-&&
-gtxn 3 TypeEnum
-int appl
-==
-&&
-gtxn 3 OnCompletion
-int NoOp
 ==
 &&
 retsub
@@ -108,78 +74,131 @@ int NoOp
 &&
 retsub
 
-// sanitize_dapp_name
-sanitizedappname_3:
-store 3
-store 2
-load 2
-load 3
-callsub trimstring_4
-store 4
-load 4
-len
-int 10
-<
-bz sanitizedappname_3_l2
-byte "::::::::::"
-int 0
-int 10
-load 4
-len
--
-extract3
-load 4
-concat
-store 4
-sanitizedappname_3_l2:
-load 4
-retsub
-
-// trim_string
-trimstring_4:
+// validate_rekeys
+validaterekeys_3:
 store 1
 store 0
 load 0
+store 2
+validaterekeys_3_l1:
+load 2
+load 1
+<=
+bz validaterekeys_3_l3
+load 2
+gtxns RekeyTo
+global ZeroAddress
+==
+assert
+load 2
+int 1
++
+store 2
+b validaterekeys_3_l1
+validaterekeys_3_l3:
+retsub
+
+// validate_noops
+validatenoops_4:
+store 4
+store 3
+load 3
+store 5
+validatenoops_4_l1:
+load 5
+load 4
+<=
+bz validatenoops_4_l3
+load 3
+gtxns TypeEnum
+int appl
+==
+load 3
+gtxns OnCompletion
+int NoOp
+==
+&&
+assert
+load 5
+int 1
++
+store 5
+b validatenoops_4_l1
+validatenoops_4_l3:
+retsub
+
+// sanitize_dapp_name
+sanitizedappname_5:
+store 9
+store 8
+load 8
+load 9
+callsub trimstring_6
+store 10
+load 10
 len
-load 1
->
-bnz trimstring_4_l2
-load 0
-b trimstring_4_l3
-trimstring_4_l2:
-load 0
+int 10
+<
+bz sanitizedappname_5_l2
+byte "::::::::::"
 int 0
-load 1
+int 10
+load 10
+len
+-
 extract3
-trimstring_4_l3:
+load 10
+concat
+store 10
+sanitizedappname_5_l2:
+load 10
+retsub
+
+// trim_string
+trimstring_6:
+store 7
+store 6
+load 6
+len
+load 7
+>
+bnz trimstring_6_l2
+load 6
+b trimstring_6_l3
+trimstring_6_l2:
+load 6
+int 0
+load 7
+extract3
+trimstring_6_l3:
 retsub
 
 // is_creator_onboarded
-iscreatoronboarded_5:
-store 11
-store 10
-store 9
-load 9
-load 11
+iscreatoronboarded_7:
+store 17
+store 16
+store 15
+load 15
+load 17
 concat
-store 12
-load 12
+store 18
+load 18
 pop
 byte "notiboy"
-load 10
-load 12
+load 16
+load 18
 len
 box_extract
-load 12
+load 18
 b==
 retsub
 
 // deregister_dapp
-deregisterdapp_6:
+deregisterdapp_8:
 txna Applications 1
 app_params_get AppCreator
-store 7
-store 6
+store 13
+store 12
 txn NumAppArgs
 int 4
 ==
@@ -191,40 +210,40 @@ txna ApplicationArgs 0
 byte "dapp"
 ==
 &&
-load 7
+load 13
 &&
-load 6
+load 12
 txn Sender
 ==
 &&
 assert
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_3
-store 5
+callsub sanitizedappname_5
+store 11
 txna ApplicationArgs 3
 btoi
 int 23
 *
-store 8
-load 5
-load 8
+store 14
+load 11
+load 14
 txna Applications 1
 itob
-callsub iscreatoronboarded_5
-bnz deregisterdapp_6_l2
+callsub iscreatoronboarded_7
+bnz deregisterdapp_8_l2
 int 0
 return
-deregisterdapp_6_l2:
+deregisterdapp_8_l2:
 byte "notiboy"
-load 8
+load 14
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 extract 0 23
 box_replace
 retsub
 
 // deregister_user
-deregisteruser_7:
+deregisteruser_9:
 gtxn 0 Sender
 box_del
 assert

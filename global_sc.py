@@ -73,19 +73,13 @@ def index_from_gstate(dapp_name):
 
 @Subroutine(TealType.uint64)
 def is_valid_base_optout():
-    return And(
-        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
-        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[3].on_completion(), OnComplete.NoOp)
+    return Seq(
+        validate_rekeys(Int(0), Int(3)),
+        validate_noops(Int(1), Int(3)),
+        And(
+            Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
+            Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
+        )
     )
 
 
@@ -106,24 +100,50 @@ def is_valid_creator_optout():
     )
 
 
+@Subroutine(TealType.none)
+def validate_rekeys(i, j):
+    return Seq(
+        For((start_idx := ScratchVar(TealType.uint64)).store(i),
+            start_idx.load() <= j,
+            start_idx.store(start_idx.load() + Int(1))
+            ).Do(
+            Assert(
+                Eq(
+                    Gtxn[start_idx.load()].rekey_to(), Global.zero_address()
+                )
+            )
+        )
+    )
+
+
+@Subroutine(TealType.none)
+def validate_noops(i, j):
+    return Seq(
+        For((start_idx := ScratchVar(TealType.uint64)).store(i),
+            start_idx.load() <= j,
+            start_idx.store(start_idx.load() + Int(1))
+            ).Do(
+            Assert(
+                And(
+                    Eq(Gtxn[i].type_enum(), TxnType.ApplicationCall),
+                    Eq(Gtxn[i].on_completion(), OnComplete.NoOp),
+                )
+            )
+        )
+    )
+
+
 @Subroutine(TealType.uint64)
 def is_valid_base_optin():
-    return And(
-        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[0].type_enum(), TxnType.Payment),
-        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
-        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
-        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
+    return Seq(
+        validate_rekeys(Int(0), Int(4)),
+        validate_noops(Int(2), Int(4)),
+        And(
+            Eq(Gtxn[0].type_enum(), TxnType.Payment),
+            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+            Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+            Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
+        )
     )
 
 
@@ -146,32 +166,21 @@ def is_valid_creator_optin():
 
 @Subroutine(TealType.uint64)
 def is_valid_private_notification():
-    return And(
-        Eq(Gtxn[0].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[1].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[2].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[3].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-        Eq(Gtxn[0].application_args.length(), Int(2)),
-        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[0].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[1].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[2].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[2].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[3].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[3].on_completion(), OnComplete.NoOp),
-        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp),
-        Eq(Global.group_size(), Int(5)),
-        Eq(
-            # verify dapp name belongs to sender
-            # <txn sender> == dapp_name's acct addr in global state
-            Gtxn[0].sender(),
-            sender_from_gstate(Gtxn[0].application_args[1])
-        ),
-        # dapp opted in?
-        Eq(App.optedIn(Gtxn[0].sender(), app_id), Int(1)),
+    return Seq(
+        validate_noops(Int(0), Int(4)),
+        validate_rekeys(Int(0), Int(4)),
+        And(
+            Eq(Gtxn[0].application_args.length(), Int(2)),
+            Eq(Global.group_size(), Int(5)),
+            Eq(
+                # verify dapp name belongs to sender
+                # <txn sender> == dapp_name's acct addr in global state
+                Gtxn[0].sender(),
+                sender_from_gstate(Gtxn[0].application_args[1])
+            ),
+            # dapp opted in?
+            Eq(App.optedIn(Gtxn[0].sender(), app_id), Int(1)),
+        )
     )
 
 
@@ -665,7 +674,7 @@ private_notify = Seq([
     # increase 'received' msg count of rcvr
     inc_msg_count(Txn.accounts[1]),
     (data := ScratchVar(TealType.bytes)).store(construct_msg()),
-    # write_msg(next_lstate_index.load(), data.load()),
+    write_msg(next_lstate_index.load(), data.load()),
     # user_optin_dapp(index_from_gstate(Gtxn[0].application_args[1])),
     Approve()
 ])
