@@ -8,11 +8,11 @@ def is_valid_private_notification():
         validate_rekeys(Int(0), Int(1)),
         And(
             # rcvr opted in?
-            App.optedIn(Txn.accounts[1], app_id),
+            App.optedIn(Txn.accounts[1], APP_ID),
             # rcvr opted in to creator's app?
             App.optedIn(Txn.accounts[1], Txn.applications[1]),
             # creator opted in?
-            App.optedIn(Txn.sender(), app_id),
+            App.optedIn(Txn.sender(), APP_ID),
             # is rcvr address passed?
             Eq(Txn.accounts.length(), Int(1)),
             # "pvt_notify" dapp_name index_position
@@ -35,7 +35,7 @@ def is_valid_public_notification():
         Eq(Txn.type_enum(), TxnType.ApplicationCall),
         Eq(Txn.on_completion(), OnComplete.NoOp),
         # creator opted in?
-        App.optedIn(Txn.sender(), app_id),
+        App.optedIn(Txn.sender(), APP_ID),
     )
 
 

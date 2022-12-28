@@ -4,79 +4,13 @@ from sc.creator_verify import *
 from sc.messaging import *
 
 '''
-app_args: verify dapp_name
-acct_args: dapp_lsig_addr
+app_args: verify dapp_name index_position
+acct_args: app_id
 '''
 verify_dapp = Seq([
-    Assert(
-        And(
-            is_valid(),
-            Eq(Txn.application_args.length(), Int(2)),
-            # is dapp lsig address passed?
-            Eq(Txn.accounts.length(), Int(1)),
-            # dapp lsig opted in?
-            App.optedIn(Txn.accounts[1], app_id),
-            # called by creator?
-            is_creator(),
-            # value should be at least 65 bytes long
-            Ge(Len(App.globalGet(Txn.application_args[1])), Int(65)),
-            # dapp lsig address present in global state against dapp name?
-            Eq(
-                Extract(App.globalGet(Txn.application_args[1]), Int(33), Int(32)), Txn.accounts[1]
-            )
-        )
-    ),
-    Return(mark_dapp_verified())
+    Assert(is_channel_valid_for_verification()),
+    Return(mark_channel_verified())
 ])
-
-# to store list of dapps opted in by user
-# @Subroutine(TealType.none)
-# def user_optin_dapp(dapp_idx):
-#     return Seq(
-#         is_apps_set := App.localGetEx(Gtxn[0].accounts[1], app_id, Bytes("apps")),
-#         If(
-#             And(
-#                 Eq(
-#                     is_apps_set.hasValue(), Int(0)
-#                 ),
-#                 Eq(
-#                     Btoi(is_apps_set.value()), Int(0)
-#                 )
-#             )
-#         )
-#         .Then(App.localPut(Gtxn[0].accounts[1], Bytes("apps"), dapp_idx))
-#         .Else(
-#             (found := ScratchVar(TealType.uint64)).store(Int(0)),
-#             (app_list := ScratchVar(TealType.bytes)).store(App.localGet(Gtxn[0].accounts[1], Bytes("apps"))),
-#             For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
-#                 start_idx.load() < Len(app_list.load()),
-#                 start_idx.store(start_idx.load() + Int(3))
-#                 ).Do(
-#                 If(
-#                     Eq(
-#                         Extract(app_list.load(), start_idx.load(), Int(3)),
-#                         dapp_idx
-#                     )
-#                 )
-#                 .Then(
-#                     found.store(Int(1)),
-#                     Break()
-#                 )
-#             ),
-#             If(
-#                 Neq(
-#                     found.load(),
-#                     Int(1)
-#                 )
-#             )
-#             .Then(
-#                 app_list.store(
-#                     Concat(app_list.load(), dapp_idx)
-#                 )
-#             )
-#         )
-#     )
-
 
 '''
 app_args: pvt_notify dapp_name
@@ -102,8 +36,10 @@ public_notify = Seq([
 # Creates main box
 bootstrap = Seq([
     Assert(
-        is_valid(),
-        is_creator()
+        And(
+            is_valid(),
+            is_creator()
+        )
     ),
     App.globalPut(INDEX_KEY, Itob(Int(0))),
     # create box
@@ -120,6 +56,12 @@ bootstrap = Seq([
 
 # Note: used only for testing
 dev_test = Seq([
+    Assert(
+        And(
+            is_valid(),
+            is_creator()
+        )
+    ),
     Pop(App.box_delete(NOTIBOY_BOX)),
     Approve()
 ])
@@ -194,12 +136,16 @@ handle_deleteapp = Seq([
     Return(is_creator())
 ])
 
+# this is for dummy box budget txns
+noop_dummies = Seq([
+    validate_rekeys(Int(0), Int(0)),
+    Approve()
+])
+
 # application calls
 handle_noop = Seq([
     Cond(
-        # this is for dummy box budget txns
-        # TODO: add rekeying checks here
-        [Txn.application_args.length() == Int(0), Approve()],
+        [Txn.application_args.length() == Int(0), noop_dummies],
         [Txn.application_args[0] == Bytes("bootstrap"), bootstrap],
         [Txn.application_args[0] == Bytes("test"), dev_test],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],

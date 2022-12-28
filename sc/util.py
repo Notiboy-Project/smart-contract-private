@@ -1,7 +1,23 @@
 from sc.constants import *
 
-is_creator = Assert(Txn.sender() == Global.creator_address())
-app_id = Global.current_application_id()
+APP_ID = Global.current_application_id()
+
+
+@Subroutine(TealType.uint64)
+def is_creator_onboarded(name, start_idx, app_id):
+    return Seq(
+        (prefix := ScratchVar(TealType.bytes)).store(
+            Concat(
+                # dapp name, app id
+                name, app_id,
+            )
+        ),
+        Pop(prefix.load()),
+        BytesEq(
+            App.box_extract(NOTIBOY_BOX, start_idx, Len(prefix.load())),
+            prefix.load()
+        )
+    )
 
 
 @Subroutine(TealType.uint64)
@@ -116,7 +132,7 @@ def trim_string(name, max_size):
 @Subroutine(TealType.bytes)
 def load_idx_from_lstate(addr):
     return Seq([
-        index_val := App.localGetEx(addr, app_id, INDEX_KEY),
+        index_val := App.localGetEx(addr, APP_ID, INDEX_KEY),
         If(Not(index_val.hasValue()))
         .Then(App.localPut(addr, INDEX_KEY, Itob(Int(0)))),
         App.localGet(addr, INDEX_KEY)
@@ -127,7 +143,7 @@ def load_idx_from_lstate(addr):
 @Subroutine(TealType.bytes)
 def load_idx_gstate():
     return Seq([
-        index_val := App.globalGetEx(app_id, INDEX_KEY),
+        index_val := App.globalGetEx(APP_ID, INDEX_KEY),
         If(Not(index_val.hasValue()))
         .Then(App.globalPut(INDEX_KEY, Itob(Int(0)))),
         App.globalGet(INDEX_KEY)
@@ -158,7 +174,7 @@ def min_val(x, y):
 @Subroutine(TealType.none)
 def inc_msg_count(addr):
     return Seq([
-        count_val := App.localGetEx(addr, app_id, MSG_COUNT),
+        count_val := App.localGetEx(addr, APP_ID, MSG_COUNT),
         If(Not(count_val.hasValue()))
         .Then(App.localPut(addr, MSG_COUNT, Itob(Int(0)))),
         App.localPut(addr, MSG_COUNT, Itob(

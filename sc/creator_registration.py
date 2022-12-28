@@ -2,23 +2,6 @@ from sc.util import *
 
 
 @Subroutine(TealType.uint64)
-def is_creator_onboarded(name, start_idx, app_id):
-    return Seq(
-        (prefix := ScratchVar(TealType.bytes)).store(
-            Concat(
-                # dapp name, app id
-                name, app_id,
-            )
-        ),
-        Pop(prefix.load()),
-        BytesEq(
-            App.box_extract(NOTIBOY_BOX, start_idx, Len(prefix.load())),
-            prefix.load()
-        )
-    )
-
-
-@Subroutine(TealType.uint64)
 def is_valid_creator_optout():
     return Seq(
         validate_rekeys(Int(0), Int(3)),
@@ -48,7 +31,7 @@ def is_valid_creator_optin():
 
 # invoked as part of dapp opt-in
 # app arg: "dapp" dapp_name
-# acct arg: app_id
+# apps: app_id
 # global registry will have
 # Key: dapp_name (max 10B)
 # Value: app_id (8B)  dapp_idx (4B) verified (1B)
@@ -112,7 +95,7 @@ def register_dapp():
 
 # invoked as part of dapp opt-in
 # app arg: "dapp" dapp_name index_position
-# acct arg: app_id
+# apps: app_id
 # 1. remove entry from global state
 # 2. decrement dapp count
 # TODO: 3. adjust index so that slot can be used (for reclaiming). A delete may happen in the middle of box. Reclamation can be a separate workflow

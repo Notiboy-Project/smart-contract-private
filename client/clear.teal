@@ -5,7 +5,7 @@ int ClearState
 bnz main_l2
 err
 main_l2:
-callsub isvalidbaseoptout_0
+callsub isvalidbaseoptout_1
 assert
 gtxn 0 NumAppArgs
 int 3
@@ -31,118 +31,8 @@ main_l5:
 int 1
 return
 
-// is_valid_base_optout
-isvalidbaseoptout_0:
-gtxn 0 TypeEnum
-int appl
-==
-gtxn 0 OnCompletion
-int CloseOut
-==
-&&
-retsub
-
-// validate_rekeys
-validaterekeys_1:
-store 1
-store 0
-load 0
-store 2
-validaterekeys_1_l1:
-load 2
-load 1
-<=
-bz validaterekeys_1_l3
-load 2
-gtxns RekeyTo
-global ZeroAddress
-==
-assert
-load 2
-int 1
-+
-store 2
-b validaterekeys_1_l1
-validaterekeys_1_l3:
-retsub
-
-// validate_noops
-validatenoops_2:
-store 4
-store 3
-load 3
-store 5
-validatenoops_2_l1:
-load 5
-load 4
-<=
-bz validatenoops_2_l3
-load 3
-gtxns TypeEnum
-int appl
-==
-load 3
-gtxns OnCompletion
-int NoOp
-==
-&&
-assert
-load 5
-int 1
-+
-store 5
-b validatenoops_2_l1
-validatenoops_2_l3:
-retsub
-
-// sanitize_dapp_name
-sanitizedappname_3:
-store 7
-store 6
-load 6
-load 7
-callsub trimstring_4
-store 8
-load 8
-len
-int 10
-<
-bz sanitizedappname_3_l2
-byte "::::::::::"
-int 0
-int 10
-load 8
-len
--
-extract3
-load 8
-concat
-store 8
-sanitizedappname_3_l2:
-load 8
-retsub
-
-// trim_string
-trimstring_4:
-store 10
-store 9
-load 9
-len
-load 10
->
-bnz trimstring_4_l2
-load 9
-b trimstring_4_l3
-trimstring_4_l2:
-load 9
-int 0
-load 10
-extract3
-trimstring_4_l3:
-retsub
-
 // is_creator_onboarded
-iscreatoronboarded_5:
+iscreatoronboarded_0:
 store 17
 store 16
 store 15
@@ -161,14 +51,124 @@ load 18
 b==
 retsub
 
+// is_valid_base_optout
+isvalidbaseoptout_1:
+gtxn 0 TypeEnum
+int appl
+==
+gtxn 0 OnCompletion
+int CloseOut
+==
+&&
+retsub
+
+// validate_rekeys
+validaterekeys_2:
+store 1
+store 0
+load 0
+store 2
+validaterekeys_2_l1:
+load 2
+load 1
+<=
+bz validaterekeys_2_l3
+load 2
+gtxns RekeyTo
+global ZeroAddress
+==
+assert
+load 2
+int 1
++
+store 2
+b validaterekeys_2_l1
+validaterekeys_2_l3:
+retsub
+
+// validate_noops
+validatenoops_3:
+store 4
+store 3
+load 3
+store 5
+validatenoops_3_l1:
+load 5
+load 4
+<=
+bz validatenoops_3_l3
+load 3
+gtxns TypeEnum
+int appl
+==
+load 3
+gtxns OnCompletion
+int NoOp
+==
+&&
+assert
+load 5
+int 1
++
+store 5
+b validatenoops_3_l1
+validatenoops_3_l3:
+retsub
+
+// sanitize_dapp_name
+sanitizedappname_4:
+store 7
+store 6
+load 6
+load 7
+callsub trimstring_5
+store 8
+load 8
+len
+int 10
+<
+bz sanitizedappname_4_l2
+byte "::::::::::"
+int 0
+int 10
+load 8
+len
+-
+extract3
+load 8
+concat
+store 8
+sanitizedappname_4_l2:
+load 8
+retsub
+
+// trim_string
+trimstring_5:
+store 10
+store 9
+load 9
+len
+load 10
+>
+bnz trimstring_5_l2
+load 9
+b trimstring_5_l3
+trimstring_5_l2:
+load 9
+int 0
+load 10
+extract3
+trimstring_5_l3:
+retsub
+
 // is_valid_creator_optout
 isvalidcreatoroptout_6:
 int 0
 int 3
-callsub validaterekeys_1
+callsub validaterekeys_2
 int 1
 int 3
-callsub validatenoops_2
+callsub validatenoops_3
 gtxn 4 RekeyTo
 global ZeroAddress
 ==
@@ -212,7 +212,7 @@ txn Sender
 assert
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_3
+callsub sanitizedappname_4
 store 11
 txna ApplicationArgs 2
 btoi
@@ -223,7 +223,7 @@ load 11
 load 14
 txna Applications 1
 itob
-callsub iscreatoronboarded_5
+callsub iscreatoronboarded_0
 bnz deregisterdapp_7_l2
 int 0
 return
@@ -239,10 +239,10 @@ retsub
 isvaliduseroptout_8:
 int 0
 int 1
-callsub validaterekeys_1
+callsub validaterekeys_2
 int 1
 int 1
-callsub validatenoops_2
+callsub validatenoops_3
 global GroupSize
 int 2
 ==
