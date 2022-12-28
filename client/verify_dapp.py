@@ -2,45 +2,16 @@ from algosdk import account
 from algosdk.future import transaction
 from algosdk.v2client import algod
 
-from client.lib.util import read_global_state, DAPP_NAME, APP_ID
-
-SC_CREATOR_KEY = "9DyHfbCbo/ZZ+bG8/VGOlyikLm0bhf5u0/tpik6u74ugEC3cEXrSvwa+s8eHxzZFKrCVECPurvA/VxRbcuUjsg=="
-SC_CREATOR_ADDR = "UAIC3XARPLJL6BV6WPDYPRZWIUVLBFIQEPXK54B7K4KFW4XFEOZNSSUKZI"
-
-
-def get_algod_client(private_key, my_address):
-    algod_address = "http://localhost:4001"
-    algod_address = "https://node.testnet.algoexplorerapi.io"
-    algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    algod_client = algod.AlgodClient(algod_token, algod_address)
-    account_info = algod_client.account_info(my_address)
-    print("Account balance: {} microAlgos\n".format(account_info.get('amount')))
-
-    return algod_client
-
-
-def generate_algorand_keypair(overwrite, fname):
-    if overwrite:
-        private_key, address = account.generate_account()
-        with open(fname, "w") as f:
-            f.write('{}\n{}\n'.format(address, private_key))
-    else:
-        with open(fname, "r") as f:
-            lns = f.readlines()
-            address = lns[0].rstrip('\n')
-            private_key = lns[1].rstrip('\n')
-
-    print("My address: {}".format(address))
-    print("My private key: {}".format(private_key))
-
-    return private_key, address
+from client.lib.util import read_global_state, DAPP_NAME, APP_ID, generate_notiboy_algorand_keypair, get_algod_client, \
+    read_global_state_key, print_logs, generate_noop_txns, get_signed_grp_txn, read_box
+from client.lib.constants import *
 
 
 # call application
-def call_app(client, private_key, index, app_args, acct_args):
+def call_app(client, private_key, index, box_name, app_args, account_args, foreign_apps, num_noops):
     # declare sender
     sender = account.address_from_private_key(private_key)
-    print("Call from account:", sender)
+    print("Verify from account: ", sender)
 
     # get node suggested parameters
     params = client.suggested_params()
@@ -48,38 +19,69 @@ def call_app(client, private_key, index, app_args, acct_args):
     params.flat_fee = True
     params.fee = 1000
 
-    print("app args {}, acct args {}".format(app_args, acct_args))
-    # create unsigned transaction
-    txn = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args)
+    boxes = [
+        [0, box_name],
+        [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""]
+    ]
 
-    # sign transaction
-    signed_txn = txn.sign(private_key)
-    tx_id = signed_txn.transaction.get_txid()
+    # create unsigned transaction
+    txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, foreign_apps=foreign_apps)
+    noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
+
+    signed_group = get_signed_grp_txn(txn1,
+                                      *noop_txns,
+                                      private_key=private_key)
 
     # send transaction
-    client.send_transactions([signed_txn])
+    tx_id = client.send_transactions(signed_group)
 
     # await confirmation
     transaction.wait_for_confirmation(client, tx_id)
-    print("Transaction ID:", tx_id)
+
+    # display results
+    transaction_response = client.pending_transaction_info(tx_id)
+    print(
+        "OptOut to app-id: {} in round: {}, txn: {}".format(index, transaction_response.get("confirmed-round"), tx_id))
+    transaction_response = client.pending_transaction_info(signed_group[0].get_txid())
+    print_logs(transaction_response)
 
 
-def main():
-    _, dapp_address = generate_algorand_keypair(False, "sndr-secret.txt")
+def call_verify(value):
+    pvt_key, address = generate_notiboy_algorand_keypair(overwrite=False, fname="notiboy-secret.txt", sandbox=True)
+    algod_client = get_algod_client(pvt_key, address)
+    num_noops = 4
+    dapp_name = DAPP_NAME
     app_args = [
-        str.encode("verify"),
-        str.encode(DAPP_NAME)
+        str.encode(value),
+        str.encode(dapp_name),
     ]
-    acct_args = [
-        dapp_address
+
+    foreign_apps = [
+        CREATOR_APP_ID
     ]
-    algod_client = get_algod_client(SC_CREATOR_KEY, SC_CREATOR_ADDR)
+    acct_args = []
+
+    nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
+    app_args.append(
+        # passing index to preventing for loop in SC in order to set verify bit in main box slot
+        nxt_idx.to_bytes(8, 'big')
+    )
+
     try:
-        call_app(algod_client, SC_CREATOR_KEY, APP_ID, app_args, acct_args)
+        call_app(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
     except Exception as err:
         print("app call failed", err)
 
-    print("Global state:", read_global_state(algod_client, APP_ID))
+    read_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
 
 
-main()
+def verify_channel():
+    print("\n*************CREATOR VERIFY START*************")
+    call_verify("verify")
+    print("*************CREATOR VERIFY END*************")
+
+
+def unverify_channel():
+    print("\n*************CREATOR UNVERIFY START*************")
+    call_verify("unverify")
+    print("*************CREATOR UNVERIFY END*************")

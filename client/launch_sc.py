@@ -6,27 +6,10 @@ from algosdk import account, mnemonic
 import base64
 
 from sc.main_sc import approval_program, clear_state_program
-from client.lib.util import read_global_state, read_box
+from client.lib.util import read_global_state, read_box, generate_notiboy_algorand_keypair
 from client.lib.constants import *
 
 DEBUG = False
-
-
-# ./sandbox/sandbox goal account list
-# ./sandbox/sandbox goal account export -a ZIC23NIY7IJVIQ5NEWXV5B7TIHNV4ZEHGT2IHYEMJSDEYV75DB4DNO67CY
-def generate_algorand_keypair():
-    # private_key, address = account.generate_account()
-    # print("My address: {}".format(address))
-    # print("My private key: {}".format(private_key))
-    # print("My passphrase: {}".format(mnemonic.from_private_key(private_key)))
-
-    private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
-    mnemonic_string = "image such scheme erase ethics else coach ensure fox goose skin share mutual fury elevator dice snap outer purpose forward possible tree reunion above topic"
-    if mnemonic_string != "":
-        private_key = mnemonic.to_private_key(mnemonic_string)
-    address = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
-
-    return private_key, address
 
 
 def get_algod_client(private_key, my_address):
@@ -243,7 +226,7 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
 
 
 def main(reset):
-    pvt_key, address = generate_algorand_keypair()
+    pvt_key, address = generate_notiboy_algorand_keypair(overwrite=False, fname="notiboy-secret.txt", sandbox=True)
     algod_client = get_algod_client(pvt_key, address)
 
     # declare application state storage (immutable)

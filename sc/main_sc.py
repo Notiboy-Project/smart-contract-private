@@ -7,6 +7,15 @@ from sc.messaging import *
 app_args: verify dapp_name index_position
 acct_args: app_id
 '''
+unverify_dapp = Seq([
+    Assert(is_channel_valid_for_verification()),
+    Return(mark_channel_unverified())
+])
+
+'''
+app_args: verify dapp_name index_position
+acct_args: app_id
+'''
 verify_dapp = Seq([
     Assert(is_channel_valid_for_verification()),
     Return(mark_channel_verified())
@@ -150,7 +159,8 @@ handle_noop = Seq([
         [Txn.application_args[0] == Bytes("test"), dev_test],
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
-        [Txn.application_args[0] == Bytes("verify"), verify_dapp]
+        [Txn.application_args[0] == Bytes("verify"), verify_dapp],
+        [Txn.application_args[0] == Bytes("unverify"), unverify_dapp]
     )
 ])
 

@@ -9,7 +9,7 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.encoding import decode_address
 
-from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_ID, generate_algorand_keypair, \
+from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_ID, \
     get_algod_client, \
     NOTIBOY_ADDR, teal_debug, debug, \
     generate_noop_txns, get_signed_grp_txn, print_logs

@@ -250,7 +250,7 @@ def generate_creator_algorand_keypair(overwrite, fname, sandbox):
     return private_key, address
 
 
-def generate_algorand_keypair(overwrite, fname, sandbox):
+def generate_notiboy_algorand_keypair(overwrite, fname, sandbox):
     if sandbox:
         private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
         mnemonic_string = "image such scheme erase ethics else coach ensure fox goose skin share mutual fury elevator dice snap outer purpose forward possible tree reunion above topic"
