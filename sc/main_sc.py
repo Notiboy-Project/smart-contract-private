@@ -107,7 +107,7 @@ bootstrap = Seq([
     ),
     App.globalPut(INDEX_KEY, Itob(Int(0))),
     # create box
-    Assert(App.box_create(NOTIBOY_BOX, MAX_BOX_SIZE)),
+    Assert(App.box_create(NOTIBOY_BOX, MAX_MAIN_BOX_SIZE)),
     # setting zero value
     For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
         start_idx.load() < Int(32),

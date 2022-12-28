@@ -17,7 +17,7 @@ def user_optin_out():
 
     for idx in range(1):
         idx += 1
-        num_noops = 3
+        num_noops = 1
         app_args = [
             str.encode("user")
         ]
@@ -57,7 +57,7 @@ def user_optin():
     # 32B public key of user
     box_name = encoding.decode_address(address)
 
-    num_noops = 3
+    num_noops = 1
     app_args = [
         str.encode("user")
     ]
@@ -80,7 +80,7 @@ def user_optout():
     # 32B public key of user
     box_name = encoding.decode_address(address)
 
-    num_noops = 3
+    num_noops = 1
     app_args = [
         str.encode("user")
     ]

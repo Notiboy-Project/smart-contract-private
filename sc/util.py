@@ -35,13 +35,9 @@ def index_from_gstate(dapp_name):
 
 @Subroutine(TealType.uint64)
 def is_valid_base_optout():
-    return Seq(
-        validate_rekeys(Int(0), Int(3)),
-        validate_noops(Int(1), Int(3)),
-        And(
-            Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
-            Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
-        )
+    return And(
+        Eq(Gtxn[0].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[0].on_completion(), OnComplete.CloseOut),
     )
 
 
@@ -80,15 +76,11 @@ def validate_noops(i, j):
 
 @Subroutine(TealType.uint64)
 def is_valid_base_optin():
-    return Seq(
-        validate_rekeys(Int(0), Int(4)),
-        validate_noops(Int(2), Int(4)),
-        And(
-            Eq(Gtxn[0].type_enum(), TxnType.Payment),
-            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
-            Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
-            Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
-        )
+    return And(
+        Eq(Gtxn[0].type_enum(), TxnType.Payment),
+        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+        Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
+        Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
     )
 
 

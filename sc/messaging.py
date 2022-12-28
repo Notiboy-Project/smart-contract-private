@@ -4,8 +4,8 @@ from sc.util import *
 @Subroutine(TealType.uint64)
 def is_valid_private_notification():
     return Seq(
-        validate_noops(Int(0), Int(4)),
-        validate_rekeys(Int(0), Int(4)),
+        validate_noops(Int(0), Int(1)),
+        validate_rekeys(Int(0), Int(1)),
         And(
             # rcvr opted in?
             App.optedIn(Txn.accounts[1], app_id),
@@ -19,7 +19,7 @@ def is_valid_private_notification():
             Eq(Txn.application_args.length(), Int(3)),
             # creator's channel id passed?
             Eq(Txn.applications.length(), Int(1)),
-            Eq(Global.group_size(), Int(5)),
+            Eq(Global.group_size(), Int(2)),
         )
     )
 
@@ -89,7 +89,7 @@ def send_personal_msg():
                 ),
             ),
         ),
-        # this ranges from 0 to 31
+        # this ranges from 0 to MAX_USER_BOX_SLOTS
         (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
             (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_USER_BOX_SLOTS
         )),
@@ -103,7 +103,7 @@ def send_personal_msg():
             Concat(
                 Itob(Global.latest_timestamp()),
                 Itob(Txn.applications[1]),
-                Extract(Txn.note(), Int(0), min_val(Int(1008), Len(Txn.note()))),
+                Extract(Txn.note(), Int(0), min_val(Int(280), Len(Txn.note()))),
             )
         ),
         write_to_box(Txn.accounts[1], next_lstate_index.load(), data.load(), MAX_USER_BOX_MSG_SIZE, Int(1)),

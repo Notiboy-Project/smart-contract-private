@@ -20,21 +20,29 @@ def is_creator_onboarded(name, start_idx, app_id):
 
 @Subroutine(TealType.uint64)
 def is_valid_creator_optout():
-    return And(
-        Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(5)),
-        Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
+    return Seq(
+        validate_rekeys(Int(0), Int(3)),
+        validate_noops(Int(1), Int(3)),
+        And(
+            Eq(Gtxn[4].rekey_to(), Global.zero_address()),
+            Eq(Global.group_size(), Int(5)),
+            Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
+            Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
+        )
     )
 
 
 @Subroutine(TealType.uint64)
 def is_valid_creator_optin():
-    return And(
-        Eq(Gtxn[5].rekey_to(), Global.zero_address()),
-        Eq(Global.group_size(), Int(6)),
-        Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
-        Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
+    return Seq(
+        validate_rekeys(Int(0), Int(4)),
+        validate_noops(Int(2), Int(4)),
+        And(
+            Eq(Gtxn[5].rekey_to(), Global.zero_address()),
+            Eq(Global.group_size(), Int(6)),
+            Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
+            Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
+        )
     )
 
 
@@ -80,7 +88,7 @@ def register_dapp():
         # write message
         # this ranges from 0 to MAX_MAIN_BOX_NUM_CHUNKS
         (next_gstate_index := ScratchVar(TealType.bytes)).store(Itob(
-            (Btoi(load_idx_gstate()) + Int(1)) % MAX_MAIN_BOX_NUM_CHUNKS
+            (Btoi(load_idx_gstate()) + Int(1)) % MAX_MAIN_BOX_SLOTS
         )),
         # update index (position in box storage)
         set_idx_gstate(next_gstate_index.load()),

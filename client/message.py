@@ -20,17 +20,17 @@ def send(client, private_key, index, msg, app_args, foreign_apps, acct_args, num
     params.fee = 1000
     boxes = [
         [0, box_name],
-        [0, ""], [0, ""], [0, ""], [0, ""], [0, ""], [0, ""]
-        , [0, ""]
+        [0, ""], [0, ""], [0, ""], [0, ""], [0, ""]
     ]
 
     # create unsigned transaction
     txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, foreign_apps=foreign_apps,
-                                          note=str.encode(msg))
+                                          note=str.encode(msg), boxes=boxes)
 
-    noop_txns = []
-    if num_noops > 0:
-        noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
+    boxes += [
+        [0, ""], [0, ""]
+    ]
+    noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
 
     # sign transaction
     signed_group = get_signed_grp_txn(txn1, *noop_txns, private_key=private_key)
@@ -59,8 +59,8 @@ def send_public_notification():
             9
         ]
 
-        msg = "Hi Sending notification {} adding very very long msg. This will be trimmed to 120 chars. You won't see remaining messagexxxxxxxxxxxxxxxxxx".format(
-            idx)
+        msg = "Sending a looong public notification. Will be trimmed to 120 characters. Anything after this sentence " \
+              "would not be seen."
         try:
             send(algod_client, pvt_key, APP_ID, msg, app_args, foreign_apps, [], 0, "")
         except Exception as err:
@@ -78,9 +78,8 @@ def send_personal_notification():
 
     RECEIVER = "AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA"
     box_name = encoding.decode_address(RECEIVER)
-    for idx in range(1):
-        idx += 1
-        num_noops = 4
+    for idx in range(49, 50):
+        num_noops = 1
         dapp_name = 'dapp' + str(idx)
         app_args = [
             str.encode("pvt_notify"),
@@ -100,9 +99,9 @@ def send_personal_notification():
             # passing index to preventing for loop in SC in order to verify if creator is present in box slot
             (nxt_idx).to_bytes(8, 'big')
         )
-        msg = "Hi, sending a very very very long personal notification numbered {}." \
-              " This will be trimmed to 1008 chars.".format(
-            idx)
+        msg = "Hi, sending a very very very long personal notification numbered. DM size is 160 chars. Tweets are 280 " \
+              "long. We believe 280 is a good size for notifications. Therefore, this particular notification will " \
+              "be trimmed to 280 characters. Anything after this sentence would not be seen. xxxxxxxx"
         try:
             # user has to opt in to creator's app before receiving message
             # ./sandbox goal app optin --app-id 9 -f AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA

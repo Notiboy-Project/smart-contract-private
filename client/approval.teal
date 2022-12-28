@@ -223,12 +223,6 @@ retsub
 
 // is_valid_base_optout
 isvalidbaseoptout_2:
-int 0
-int 3
-callsub validaterekeys_3
-int 1
-int 3
-callsub validatenoops_4
 gtxn 0 TypeEnum
 int appl
 ==
@@ -293,12 +287,6 @@ retsub
 
 // is_valid_base_optin
 isvalidbaseoptin_5:
-int 0
-int 4
-callsub validaterekeys_3
-int 2
-int 4
-callsub validatenoops_4
 gtxn 0 TypeEnum
 int pay
 ==
@@ -519,23 +507,18 @@ load 33
 load 35
 len
 box_extract
-log
-load 35
-log
-load 33
-itob
-log
-byte "notiboy"
-load 33
-load 35
-len
-box_extract
 load 35
 b==
 retsub
 
 // is_valid_creator_optout
 isvalidcreatoroptout_15:
+int 0
+int 3
+callsub validaterekeys_3
+int 1
+int 3
+callsub validatenoops_4
 gtxn 4 RekeyTo
 global ZeroAddress
 ==
@@ -555,6 +538,12 @@ retsub
 
 // is_valid_creator_optin
 isvalidcreatoroptin_16:
+int 0
+int 4
+callsub validaterekeys_3
+int 2
+int 4
+callsub validatenoops_4
 gtxn 5 RekeyTo
 global ZeroAddress
 ==
@@ -686,15 +675,27 @@ retsub
 
 // is_valid_user_optin
 isvaliduseroptin_19:
+int 0
+int 2
+callsub validaterekeys_3
+int 2
+int 2
+callsub validatenoops_4
 global GroupSize
-int 5
+int 3
 ==
 retsub
 
 // is_valid_user_optout
 isvaliduseroptout_20:
+int 0
+int 1
+callsub validaterekeys_3
+int 1
+int 1
+callsub validatenoops_4
 global GroupSize
-int 4
+int 2
 ==
 retsub
 
@@ -721,7 +722,7 @@ int 1000000
 &&
 assert
 gtxn 0 Sender
-int 32768
+int 14336
 box_create
 assert
 txn Sender
@@ -791,10 +792,10 @@ return
 // is_valid_private_notification
 isvalidprivatenotification_25:
 int 0
-int 4
+int 1
 callsub validatenoops_4
 int 0
-int 4
+int 1
 callsub validaterekeys_3
 txna Accounts 1
 global CurrentApplicationID
@@ -820,7 +821,7 @@ int 1
 ==
 &&
 global GroupSize
-int 5
+int 2
 ==
 &&
 retsub
@@ -911,7 +912,9 @@ callsub loadidxfromlstate_8
 btoi
 int 1
 +
-int 32
+int 14336
+int 296
+/
 %
 itob
 store 48
@@ -930,7 +933,7 @@ itob
 concat
 txn Note
 int 0
-int 1008
+int 280
 txn Note
 len
 callsub minval_11
@@ -940,7 +943,7 @@ store 49
 txna Accounts 1
 load 48
 load 49
-int 1024
+int 296
 int 1
 callsub writetobox_13
 retsub

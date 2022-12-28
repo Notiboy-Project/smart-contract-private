@@ -33,12 +33,6 @@ return
 
 // is_valid_base_optout
 isvalidbaseoptout_0:
-int 0
-int 3
-callsub validaterekeys_1
-int 1
-int 3
-callsub validatenoops_2
 gtxn 0 TypeEnum
 int appl
 ==
@@ -163,23 +157,18 @@ load 16
 load 18
 len
 box_extract
-log
-load 18
-log
-load 16
-itob
-log
-byte "notiboy"
-load 16
-load 18
-len
-box_extract
 load 18
 b==
 retsub
 
 // is_valid_creator_optout
 isvalidcreatoroptout_6:
+int 0
+int 3
+callsub validaterekeys_1
+int 1
+int 3
+callsub validatenoops_2
 gtxn 4 RekeyTo
 global ZeroAddress
 ==
@@ -248,8 +237,14 @@ retsub
 
 // is_valid_user_optout
 isvaliduseroptout_8:
+int 0
+int 1
+callsub validaterekeys_1
+int 1
+int 1
+callsub validatenoops_2
 global GroupSize
-int 4
+int 2
 ==
 retsub
 
