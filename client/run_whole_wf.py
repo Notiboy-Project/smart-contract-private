@@ -7,7 +7,7 @@ from verify_dapp import verify_channel, unverify_channel
 def optin():
     creator_optin()
     verify_channel()
-    # user_optin()
+    user_optin()
 
 
 def msg():
@@ -16,14 +16,14 @@ def msg():
 
 
 def optout():
-    # user_optout()
+    user_optout()
     unverify_channel()
     creator_optout()
 
 
 def main():
     optin()
-    # msg()
+    msg()
     optout()
 
 

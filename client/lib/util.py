@@ -192,16 +192,24 @@ def print_logs(transaction_response):
         print("LOG{}".format(idx), base64.b64decode(log))
 
 
-def generate_user_algorand_keypair(overwrite, fname, sandbox):
-    if sandbox:
-        private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
+def get_sandbox_creds(kind):
+    if kind == "user":
         mnemonic_string = "music snack pool plastic glide dress term own bottom addict one same rebel lawn pave symptom there account recipe use vintage crouch below above quality"
-        if mnemonic_string != "":
-            private_key = mnemonic.to_private_key(mnemonic_string)
+        private_key = mnemonic.to_private_key(mnemonic_string)
         address = "AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA"
+    elif kind == "creator":
+        mnemonic_string = "sphere deliver tent capital net run cube horror volcano damp shine place include venture pond cook cross drill material narrow lava athlete human above battle"
+        private_key = mnemonic.to_private_key(mnemonic_string)
+        address = "EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM"
+    elif kind == "notiboy":
+        mnemonic_string = "image such scheme erase ethics else coach ensure fox goose skin share mutual fury elevator dice snap outer purpose forward possible tree reunion above topic"
+        private_key = mnemonic.to_private_key(mnemonic_string)
+        address = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
 
-        return private_key, address
+    return private_key, address
 
+
+def generate_creds(overwrite, fname):
     if overwrite:
         private_key, address = account.generate_account()
         with open(fname, "w") as f:
@@ -212,71 +220,31 @@ def generate_user_algorand_keypair(overwrite, fname, sandbox):
             address = lns[0].rstrip('\n')
             private_key = lns[1].rstrip('\n')
 
-    print("My address: {}".format(address))
-    print("My private key: {}".format(private_key))
-
-    if overwrite:
-        sys.exit()
+    print("{} address: {}".format(fname, address))
+    print("{} private key: {}".format(fname, private_key))
 
     return private_key, address
+
+
+def generate_user_algorand_keypair(overwrite, fname, sandbox):
+    if sandbox:
+        return get_sandbox_creds("user")
+
+    return generate_creds(overwrite, fname)
 
 
 def generate_creator_algorand_keypair(overwrite, fname, sandbox):
     if sandbox:
-        private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
-        mnemonic_string = "sphere deliver tent capital net run cube horror volcano damp shine place include venture pond cook cross drill material narrow lava athlete human above battle"
-        if mnemonic_string != "":
-            private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM"
+        return get_sandbox_creds("creator")
 
-        return private_key, address
-
-    if overwrite:
-        private_key, address = account.generate_account()
-        with open(fname, "w") as f:
-            f.write('{}\n{}\n'.format(address, private_key))
-    else:
-        with open(fname, "r") as f:
-            lns = f.readlines()
-            address = lns[0].rstrip('\n')
-            private_key = lns[1].rstrip('\n')
-
-    print("My address: {}".format(address))
-    print("My private key: {}".format(private_key))
-
-    if overwrite:
-        sys.exit()
-
-    return private_key, address
+    return generate_creds(overwrite, fname)
 
 
 def generate_notiboy_algorand_keypair(overwrite, fname, sandbox):
     if sandbox:
-        private_key = "Fa6ctT9AZhWWtnL5/ASqqy4HNq8kCz1UWwbHGRAiGGL16CyzvQTyGfwoT9HwWRr7bJFbwUAfYpjdXjg3cBueYQ=="
-        mnemonic_string = "image such scheme erase ethics else coach ensure fox goose skin share mutual fury elevator dice snap outer purpose forward possible tree reunion above topic"
-        if mnemonic_string != "":
-            private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
+        return get_sandbox_creds("notiboy")
 
-        return private_key, address
-
-    if overwrite:
-        private_key, address = account.generate_account()
-        with open(fname, "w") as f:
-            f.write('{}\n{}\n'.format(address, private_key))
-    else:
-        with open(fname, "r") as f:
-            lns = f.readlines()
-            address = lns[0].rstrip('\n')
-            private_key = lns[1].rstrip('\n')
-
-    print("My address: {}".format(address))
-    print("My private key: {}".format(private_key))
-
-    if overwrite:
-        sys.exit()
-
-    return private_key, address
+    return generate_creds(overwrite, fname)
 
 
 def get_algod_client(private_key, my_address):

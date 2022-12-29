@@ -6,23 +6,10 @@ from algosdk import account, mnemonic
 import base64
 
 from sc.main_sc import approval_program, clear_state_program
-from client.lib.util import read_global_state, read_box, generate_notiboy_algorand_keypair
+from client.lib.util import read_global_state, read_box, generate_notiboy_algorand_keypair, get_algod_client
 from client.lib.constants import *
 
 DEBUG = False
-
-
-def get_algod_client(private_key, my_address):
-    # sandbox
-    algod_address = "http://localhost:4001"
-    # algo-explorer
-    # algod_address = "https://node.testnet.algoexplorerapi.io"
-    algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    algod_client = algod.AlgodClient(algod_token, algod_address)
-    account_info = algod_client.account_info(my_address)
-    print("Account balance: {} microAlgos, Address: {}\n".format(account_info.get('amount'), my_address))
-
-    return algod_client
 
 
 def compile_program(client, source_code):
