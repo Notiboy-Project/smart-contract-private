@@ -4,7 +4,7 @@ from algosdk import encoding
 
 from client.lib.util import read_local_state, debug, generate_creator_algorand_keypair, \
     get_algod_client, generate_noop_txns, read_box, \
-    get_signed_grp_txn, read_global_state_key, read_user_box, print_logs
+    get_signed_grp_txn, read_global_state_key, read_user_box, print_logs, get_sandbox_creds
 from client.lib.constants import *
 
 
@@ -47,16 +47,15 @@ def send(client, private_key, index, msg, app_args, foreign_apps, acct_args, num
 
 def send_public_notification():
     print("\n*************PUBLIC MSG START*************")
-    pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    algod_client = get_algod_client(address)
 
-    for idx in range(1):
-        idx += 1
+    for idx in range(1, 2):
         app_args = [
             str.encode("pub_notify"),
         ]
         foreign_apps = [
-            9
+            CREATOR_APP_ID
         ]
 
         msg = "Sending a looong public notification. Will be trimmed to 120 characters. Anything after this sentence " \
@@ -73,12 +72,18 @@ def send_public_notification():
 
 def send_personal_notification():
     print("\n*************PERSONAL NOTIFICATION START*************")
-    pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    algod_client = get_algod_client(address)
 
-    RECEIVER = "AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA"
-    box_name = encoding.decode_address(RECEIVER)
-    for idx in range(49, 50):
+    if RUNNING_MODE == "sandbox":
+        _, receiver = get_sandbox_creds("user")
+    else:
+        with open("user-secret.txt", "r") as f:
+            lns = f.readlines()
+            receiver = lns[0].rstrip('\n')
+
+    box_name = encoding.decode_address(receiver)
+    for idx in range(1, 2):
         num_noops = 1
         dapp_name = 'dapp' + str(idx)
         app_args = [
@@ -91,13 +96,13 @@ def send_personal_notification():
         ]
 
         acct_args = [
-            RECEIVER
+            receiver
         ]
 
         nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
         app_args.append(
             # passing index to preventing for loop in SC in order to verify if creator is present in box slot
-            (nxt_idx).to_bytes(8, 'big')
+            nxt_idx.to_bytes(8, 'big')
         )
         msg = "Hi, sending a very very very long personal notification numbered. DM size is 160 chars. Tweets are 280 " \
               "long. We believe 280 is a good size for notifications. Therefore, this particular notification will " \
@@ -110,7 +115,7 @@ def send_personal_notification():
             print("error calling app, err: {}".format(err))
 
     print("USER LOCAL State:")
-    read_local_state(algod_client, RECEIVER, APP_ID)
+    read_local_state(algod_client, receiver, APP_ID)
     print("CREATOR LOCAL State:")
     read_local_state(algod_client, address, APP_ID)
     read_user_box(algod_client, APP_ID, box_name)

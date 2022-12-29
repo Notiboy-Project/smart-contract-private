@@ -164,26 +164,14 @@ retsub
 // is_valid_creator_optout
 isvalidcreatoroptout_6:
 int 0
-int 3
+int 4
 callsub validaterekeys_2
 int 1
-int 3
+int 4
 callsub validatenoops_3
-gtxn 4 RekeyTo
-global ZeroAddress
-==
 global GroupSize
 int 5
 ==
-&&
-gtxn 4 TypeEnum
-int appl
-==
-&&
-gtxn 4 OnCompletion
-int NoOp
-==
-&&
 retsub
 
 // deregister_dapp

@@ -301,7 +301,7 @@ gtxn 0 TypeEnum
 int pay
 ==
 gtxn 0 Receiver
-addr 3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI
+addr PMJ44TV52KSPIP6RMTPCEPXTFWKGCNQ2YDTYXQYDXU2OG7CMHZXEAN4W2E
 ==
 &&
 gtxn 1 TypeEnum
@@ -504,51 +504,27 @@ retsub
 // is_valid_creator_optout
 isvalidcreatoroptout_15:
 int 0
-int 3
+int 4
 callsub validaterekeys_4
 int 1
-int 3
+int 4
 callsub validatenoops_5
-gtxn 4 RekeyTo
-global ZeroAddress
-==
 global GroupSize
 int 5
 ==
-&&
-gtxn 4 TypeEnum
-int appl
-==
-&&
-gtxn 4 OnCompletion
-int NoOp
-==
-&&
 retsub
 
 // is_valid_creator_optin
 isvalidcreatoroptin_16:
 int 0
-int 4
+int 5
 callsub validaterekeys_4
 int 2
-int 4
+int 5
 callsub validatenoops_5
-gtxn 5 RekeyTo
-global ZeroAddress
-==
 global GroupSize
 int 6
 ==
-&&
-gtxn 5 TypeEnum
-int appl
-==
-&&
-gtxn 5 OnCompletion
-int NoOp
-==
-&&
 retsub
 
 // register_dapp

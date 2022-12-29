@@ -47,8 +47,8 @@ def call_app(client, private_key, index, box_name, app_args, account_args, forei
 
 
 def call_verify(value):
-    pvt_key, address = generate_notiboy_algorand_keypair(overwrite=False, fname="notiboy-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+    pvt_key, address = generate_notiboy_algorand_keypair(fname="notiboy-secret.txt")
+    algod_client = get_algod_client(address)
     num_noops = 4
     dapp_name = DAPP_NAME
     app_args = [

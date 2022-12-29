@@ -1,14 +1,55 @@
-from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_ID, generate_creator_algorand_keypair, \
+from client.lib.util import compile_program, read_global_state, DAPP_NAME, APP_ID, generate_creator_algorand_keypair, \
     get_algod_client, read_global_state_key, \
     MAIN_BOX, read_box
+from launch_sc import create_app
 from client.lib.opt import opt_in, opt_out
 from client.lib.constants import *
 from client.message import send_public_notification
+from algosdk.future import transaction
+from creator_sc import clear_state_program, approval_program
+
+
+def create_creator_app():
+    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    algod_client = get_algod_client(address)
+
+    # declare application state storage (immutable)
+    # 16 local kv pairs, each pair 128 bytes
+    local_ints = 0
+    local_bytes = 16
+    local_schema = transaction.StateSchema(local_ints, local_bytes)
+    # 64 global kv pairs, each pair 128 bytes
+    global_ints = 0
+    global_bytes = 64
+    global_schema = transaction.StateSchema(global_ints, global_bytes)
+
+    # compile program to TEAL assembly
+    with open("./approval.teal", "w") as f:
+        approval_program_teal = approval_program()
+        f.write(approval_program_teal)
+
+    # compile program to TEAL assembly
+    with open("./clear.teal", "w") as f:
+        clear_state_program_teal = clear_state_program()
+        f.write(clear_state_program_teal)
+
+    # compile program to binary
+    approval_program_compiled = compile_program(algod_client, approval_program_teal)
+
+    # compile program to binary
+    clear_state_program_compiled = compile_program(algod_client, clear_state_program_teal)
+
+    print("Deploying Creator application......")
+
+    # create new application
+    app_id = create_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled,
+                        global_schema, local_schema)
+    print("Creator APP ID:", app_id)
 
 
 def creator_optin_out():
-    pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    algod_client = get_algod_client(address)
 
     # create test.teal with following
     # #pragma version 7
@@ -17,8 +58,7 @@ def creator_optin_out():
     # WARN: should be strictly 64 global byteslices and 16 local byteslices
     # ./sandbox goal app create --creator EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM --global-byteslices 64 --global-ints 0 --local-byteslices 16 --local-ints 0 --approval-prog test.teal  --clear-prog test.teal
     # Pass created app id as arg
-    for idx in range(1):
-        idx += 1
+    for idx in range(1, 1):
         num_noops = 4
         dapp_name = 'dapp' + str(idx)
         app_args = [
@@ -61,8 +101,8 @@ def creator_optin_out():
 
 def creator_optin():
     print("\n*************CREATOR OPT-IN START*************")
-    pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    algod_client = get_algod_client(address)
 
     # create test.teal with following
     # #pragma version 7
@@ -92,8 +132,8 @@ def creator_optin():
 
 def creator_optout():
     print("\n*************CREATOR OPT-OUT START*************")
-    pvt_key, address = generate_creator_algorand_keypair(overwrite=False, fname="creator-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    algod_client = get_algod_client(address)
 
     # create test.teal with following
     # #pragma version 7

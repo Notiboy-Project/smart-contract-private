@@ -64,8 +64,8 @@ def opt_in(client, private_key, index, box_name, app_args, account_args, foreign
     # get node suggested parameters
     params = client.suggested_params()
     # comment out the next two (2) lines to use suggested fees
-    params.flat_fee = True
-    params.fee = 1000
+    # params.flat_fee = True
+    # params.fee = 1000
 
     boxes = [
         [0, box_name],

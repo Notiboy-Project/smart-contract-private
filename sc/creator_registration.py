@@ -4,28 +4,18 @@ from sc.util import *
 @Subroutine(TealType.uint64)
 def is_valid_creator_optout():
     return Seq(
-        validate_rekeys(Int(0), Int(3)),
-        validate_noops(Int(1), Int(3)),
-        And(
-            Eq(Gtxn[4].rekey_to(), Global.zero_address()),
-            Eq(Global.group_size(), Int(5)),
-            Eq(Gtxn[4].type_enum(), TxnType.ApplicationCall),
-            Eq(Gtxn[4].on_completion(), OnComplete.NoOp)
-        )
+        validate_rekeys(Int(0), Int(4)),
+        validate_noops(Int(1), Int(4)),
+        Eq(Global.group_size(), Int(5)),
     )
 
 
 @Subroutine(TealType.uint64)
 def is_valid_creator_optin():
     return Seq(
-        validate_rekeys(Int(0), Int(4)),
-        validate_noops(Int(2), Int(4)),
-        And(
-            Eq(Gtxn[5].rekey_to(), Global.zero_address()),
-            Eq(Global.group_size(), Int(6)),
-            Eq(Gtxn[5].type_enum(), TxnType.ApplicationCall),
-            Eq(Gtxn[5].on_completion(), OnComplete.NoOp)
-        )
+        validate_rekeys(Int(0), Int(5)),
+        validate_noops(Int(2), Int(5)),
+        Eq(Global.group_size(), Int(6))
     )
 
 
@@ -62,7 +52,7 @@ def register_dapp():
                     app_id_creator.value(),
                     Txn.sender(),
                 ),
-                # amt is >= optin fee
+                # # amt is >= optin fee
                 Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
             ),
         ),

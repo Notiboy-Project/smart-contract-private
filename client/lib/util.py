@@ -112,7 +112,11 @@ def is_zero_value(data):
 
 def read_user_box(client, app_id, box_name):
     print("USER BOX STORAGE")
-    data = client.application_box_by_name(app_id, box_name)
+    try:
+        data = client.application_box_by_name(app_id, box_name)
+    except Exception as err:
+        print("unable to access box", err)
+        return
     value = data['value']
     value = base64.b64decode(value)
     chunks = [value[i:i + MAX_USER_BOX_MSG_SIZE] for i in range(0, len(value), MAX_USER_BOX_MSG_SIZE)]
@@ -138,7 +142,12 @@ def read_user_box(client, app_id, box_name):
 
 def read_box(client, app_id, box_name):
     print("MAIN BOX STORAGE")
-    data = client.application_box_by_name(app_id, box_name)
+    try:
+        data = client.application_box_by_name(app_id, box_name)
+    except Exception as err:
+        print("unable to access box", err)
+        return
+
     value = data['value']
     value = base64.b64decode(value)
     chunks = [value[i:i + MAX_MAIN_BOX_MSG_SIZE] for i in range(0, len(value), MAX_MAIN_BOX_MSG_SIZE)]
@@ -192,6 +201,11 @@ def print_logs(transaction_response):
         print("LOG{}".format(idx), base64.b64decode(log))
 
 
+def compile_program(client, source_code):
+    compile_response = client.compile(source_code)
+    return base64.b64decode(compile_response['result'])
+
+
 def get_sandbox_creds(kind):
     if kind == "user":
         mnemonic_string = "music snack pool plastic glide dress term own bottom addict one same rebel lawn pave symptom there account recipe use vintage crouch below above quality"
@@ -226,32 +240,32 @@ def generate_creds(overwrite, fname):
     return private_key, address
 
 
-def generate_user_algorand_keypair(overwrite, fname, sandbox):
-    if sandbox:
+def generate_user_algorand_keypair(fname, overwrite=False):
+    if RUNNING_MODE == "sandbox":
         return get_sandbox_creds("user")
 
     return generate_creds(overwrite, fname)
 
 
-def generate_creator_algorand_keypair(overwrite, fname, sandbox):
-    if sandbox:
+def generate_creator_algorand_keypair(fname, overwrite=False):
+    if RUNNING_MODE == "sandbox":
         return get_sandbox_creds("creator")
 
     return generate_creds(overwrite, fname)
 
 
-def generate_notiboy_algorand_keypair(overwrite, fname, sandbox):
-    if sandbox:
+def generate_notiboy_algorand_keypair(fname, overwrite=False):
+    if RUNNING_MODE == "sandbox":
         return get_sandbox_creds("notiboy")
 
     return generate_creds(overwrite, fname)
 
 
-def get_algod_client(private_key, my_address):
-    # sandbox
-    algod_address = "http://localhost:4001"
-    # algo-explorer
-    # algod_address = "https://node.testnet.algoexplorerapi.io"
+def get_algod_client(my_address):
+    if RUNNING_MODE == "sandbox":
+        algod_address = "http://localhost:4001"
+    elif RUNNING_MODE == "testnet":
+        algod_address = "https://node.testnet.algoexplorerapi.io"
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
@@ -266,5 +280,4 @@ def teal_debug(client, group_txn):
 
     filename = "dryrun.msgp"
     with open(filename, "wb") as f:
-        import base64
         f.write(base64.b64decode(encoding.msgpack_encode(drr)))

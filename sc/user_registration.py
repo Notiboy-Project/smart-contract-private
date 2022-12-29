@@ -6,9 +6,7 @@ def is_valid_user_optin():
     return Seq(
         validate_rekeys(Int(0), Int(2)),
         validate_noops(Int(2), Int(2)),
-        And(
-            Eq(Global.group_size(), Int(3)),
-        )
+        Eq(Global.group_size(), Int(3)),
     )
 
 
@@ -17,9 +15,7 @@ def is_valid_user_optout():
     return Seq(
         validate_rekeys(Int(0), Int(1)),
         validate_noops(Int(1), Int(1)),
-        And(
-            Eq(Global.group_size(), Int(2)),
-        )
+        Eq(Global.group_size(), Int(2)),
     )
 
 

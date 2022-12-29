@@ -6,15 +6,11 @@ from algosdk import account, mnemonic
 import base64
 
 from sc.main_sc import approval_program, clear_state_program
-from client.lib.util import read_global_state, read_box, generate_notiboy_algorand_keypair, get_algod_client
+from client.lib.util import read_global_state, read_box, generate_notiboy_algorand_keypair, get_algod_client, \
+    compile_program
 from client.lib.constants import *
 
 DEBUG = False
-
-
-def compile_program(client, source_code):
-    compile_response = client.compile(source_code)
-    return base64.b64decode(compile_response['result'])
 
 
 def dev_test(client, private_key, app_id):
@@ -212,9 +208,9 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
     return app_id
 
 
-def main(reset):
-    pvt_key, address = generate_notiboy_algorand_keypair(overwrite=False, fname="notiboy-secret.txt", sandbox=True)
-    algod_client = get_algod_client(pvt_key, address)
+def launch_app(update, reset):
+    pvt_key, address = generate_notiboy_algorand_keypair(fname="notiboy-secret.txt")
+    algod_client = get_algod_client(address)
 
     # declare application state storage (immutable)
     # 16 local kv pairs, each pair 128 bytes
@@ -246,20 +242,19 @@ def main(reset):
     print("Deploying Counter application......")
 
     # create new application
-    # app_id = create_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled,
-    #                     global_schema, local_schema)
+    if not update:
+        # FUND SC acct after creation for bootstrap to work
+        # ./sandbox goal app info --app-id 1
+        app_id = create_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled,
+                            global_schema, local_schema)
+    else:
+        app_id = APP_ID
 
-    # FUND SC acct after creation for bootstrap to work
-    # ./sandbox goal app info --app-id 1
-
-    app_id = APP_ID
     if reset:
         dev_test(algod_client, pvt_key, app_id)
         bootstrap_app(algod_client, pvt_key, app_id)
-    update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
+    if update:
+        update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
     read_box(algod_client, app_id, "notiboy".encode('utf-8'))
-
-
-main(reset=True)
