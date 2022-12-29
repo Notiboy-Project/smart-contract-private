@@ -13,6 +13,7 @@ from client.lib.util import read_local_state, read_global_state, DAPP_NAME, APP_
     get_algod_client, \
     NOTIBOY_ADDR, teal_debug, debug, \
     generate_noop_txns, get_signed_grp_txn, print_logs
+from client.lib.constants import *
 
 
 def opt_out(client, private_key, index, box_name, app_args, account_args, foreign_apps, num_noops):
@@ -74,12 +75,15 @@ def opt_in(client, private_key, index, box_name, app_args, account_args, foreign
     ]
 
     # create unsigned transactions
-    # pay 1 algo
-    txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR,
-                                  1000000)
+
     if len(foreign_apps) != 0:
-        txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_apps=foreign_apps)
+        # pay 100 USDC
+        txn1 = transaction.AssetTransferTxn(sender, params, NOTIBOY_ADDR, 100000000, ASA_ASSET)
+        txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_assets=[ASA_ASSET],
+                                               foreign_apps=foreign_apps)
     else:
+        # pay 5 algo
+        txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 5000000)
         txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, boxes=boxes)
     noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
 

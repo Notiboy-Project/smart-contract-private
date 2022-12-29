@@ -39,14 +39,14 @@ def generate_accounts():
 def bootstrap():
     # Fund ALL accounts
     # Change notiboy address in SC and constants.py - NOTIBOY_ADDR
-    # generate_accounts()
+    generate_accounts()
     # Update constants.py - CREATOR_APP_ID
-    create_creator_app()
+    # create_creator_app()
 
 
 def main():
     # Update constants.py - APP_ID
-    # launch_app(update=True, reset=False)
+    launch_app(update=True, reset=False)
     # bootstrap()
     optin()
     msg()

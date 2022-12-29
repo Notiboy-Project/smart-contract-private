@@ -15,7 +15,11 @@ def is_valid_creator_optin():
     return Seq(
         validate_rekeys(Int(0), Int(5)),
         validate_noops(Int(2), Int(5)),
-        Eq(Global.group_size(), Int(6))
+        And(
+            Eq(Global.group_size(), Int(6)),
+            Eq(Gtxn[0].type_enum(), TxnType.AssetTransfer),
+            Eq(Gtxn[0].asset_receiver(), Addr(NOTIBOY_ADDR)),
+        )
     )
 
 
@@ -38,11 +42,13 @@ def register_dapp():
     name = ScratchVar(TealType.bytes)
 
     return Seq(
+        assetName := AssetParam.name(Txn.assets[0]),
         # dapp name
         name.store(sanitize_dapp_name(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
+                Txn.assets.length() == Int(1),
                 Txn.application_args.length() == Int(2),
                 Txn.applications.length() == Int(1),
                 Txn.application_args[0] == TYPE_DAPP,
@@ -52,8 +58,9 @@ def register_dapp():
                     app_id_creator.value(),
                     Txn.sender(),
                 ),
-                # # amt is >= optin fee
-                Ge(Gtxn[0].amount(), Int(DAPP_OPTIN_FEE)),
+                Eq(assetName.value(), USDC_ASSET),
+                # amt is >= optin fee
+                Ge(Gtxn[0].asset_amount(), Int(DAPP_OPTIN_FEE))
             ),
         ),
 

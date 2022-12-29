@@ -125,7 +125,7 @@ handle_optout = Seq([
     )
     .Then(
         Assert(is_valid_creator_optout()),
-        deregister_dapp()
+        # deregister_dapp()
     )
     .Else(
         Assert(is_valid_user_optout()),

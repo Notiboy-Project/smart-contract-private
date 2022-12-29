@@ -26,7 +26,7 @@ def send(client, private_key, index, msg, app_args, foreign_apps, acct_args, num
     # create unsigned transaction
     txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, foreign_apps=foreign_apps,
                                           note=str.encode(msg), boxes=boxes)
-
+ 
     boxes += [
         [0, ""], [0, ""]
     ]

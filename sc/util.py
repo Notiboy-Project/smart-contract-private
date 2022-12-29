@@ -93,8 +93,6 @@ def validate_noops(i, j):
 @Subroutine(TealType.uint64)
 def is_valid_base_optin():
     return And(
-        Eq(Gtxn[0].type_enum(), TxnType.Payment),
-        Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
         Eq(Gtxn[1].type_enum(), TxnType.ApplicationCall),
         Eq(Gtxn[1].on_completion(), OnComplete.OptIn),
     )

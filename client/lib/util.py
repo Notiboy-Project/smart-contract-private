@@ -236,6 +236,7 @@ def generate_creds(overwrite, fname):
 
     print("{} address: {}".format(fname, address))
     print("{} private key: {}".format(fname, private_key))
+    print("{} mnemonic: {}".format(fname, mnemonic.from_private_key(private_key)))
 
     return private_key, address
 
@@ -269,7 +270,9 @@ def get_algod_client(my_address):
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
-    print("Account balance: {} microAlgos\n".format(account_info.get('amount')))
+    acct_asset_info = algod_client.account_asset_info(my_address, ASA_ASSET)
+    assets = acct_asset_info.get('asset-holding').get('amount') / 1000000
+    print("Account balance: {} microAlgos, {} USDC\n".format(account_info.get('amount') / 1000000, assets))
 
     return algod_client
 

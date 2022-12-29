@@ -6,7 +6,11 @@ def is_valid_user_optin():
     return Seq(
         validate_rekeys(Int(0), Int(2)),
         validate_noops(Int(2), Int(2)),
-        Eq(Global.group_size(), Int(3)),
+        And(
+            Eq(Global.group_size(), Int(3)),
+            Eq(Gtxn[0].type_enum(), TxnType.Payment),
+            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+        )
     )
 
 
