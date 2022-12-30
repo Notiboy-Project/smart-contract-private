@@ -43,7 +43,7 @@ def register_user():
                 Gtxn[1].application_args.length() == Int(1),
                 Gtxn[1].application_args[0] == TYPE_USER,
                 # amt is >= optin fee
-                Ge(Gtxn[0].amount(), Int(USER_OPTIN_FEE))
+                Ge(Gtxn[0].amount(), user_optin_fee())
             )
         ),
         # create box with name as sender's 32B address

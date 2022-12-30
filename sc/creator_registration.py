@@ -15,11 +15,24 @@ def is_valid_creator_optin():
     return Seq(
         validate_rekeys(Int(0), Int(5)),
         validate_noops(Int(2), Int(5)),
-        And(
-            Eq(Global.group_size(), Int(6)),
-            Eq(Gtxn[0].type_enum(), TxnType.AssetTransfer),
-            Eq(Gtxn[0].asset_receiver(), Addr(NOTIBOY_ADDR)),
+        If(Eq(RUNNING_MODE, SANDBOX))
+        .Then(
+            Assert(
+                And(
+                    Eq(Gtxn[0].type_enum(), TxnType.Payment),
+                    Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+                )
+            )
         )
+        .Else(
+            Assert(
+                And(
+                    Eq(Gtxn[0].type_enum(), TxnType.AssetTransfer),
+                    Eq(Gtxn[0].asset_receiver(), Addr(NOTIBOY_ADDR)),
+                )
+            )
+        ),
+        Eq(Global.group_size(), Int(6)),
     )
 
 
@@ -60,7 +73,7 @@ def register_dapp():
                 ),
                 Eq(assetName.value(), USDC_ASSET),
                 # amt is >= optin fee
-                Ge(Gtxn[0].asset_amount(), Int(DAPP_OPTIN_FEE))
+                Ge(Gtxn[0].asset_amount(), dapp_optin_fee())
             ),
         ),
 

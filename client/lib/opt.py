@@ -77,13 +77,22 @@ def opt_in(client, private_key, index, box_name, app_args, account_args, foreign
     # create unsigned transactions
 
     if len(foreign_apps) != 0:
-        # pay 100 USDC
-        txn1 = transaction.AssetTransferTxn(sender, params, NOTIBOY_ADDR, 100000000, ASA_ASSET)
-        txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_assets=[ASA_ASSET],
-                                               foreign_apps=foreign_apps)
+        if RUNNING_MODE == 'sandbox':
+            # pay 1 algo
+            txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 1000000)
+            txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_apps=foreign_apps)
+        elif RUNNING_MODE == 'testnet':
+            # pay 25 USDC
+            txn1 = transaction.AssetTransferTxn(sender, params, NOTIBOY_ADDR, 25000000, ASA_ASSET)
+            txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_assets=[ASA_ASSET],
+                                                   foreign_apps=foreign_apps)
     else:
-        # pay 5 algo
-        txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 5000000)
+        if RUNNING_MODE == 'sandbox':
+            # pay 1 algo
+            txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 1000000)
+        elif RUNNING_MODE == 'testnet':
+            # pay 5 algo
+            txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 5000000)
         txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, boxes=boxes)
     noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
 
