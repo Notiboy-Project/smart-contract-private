@@ -198,20 +198,20 @@ return
 
 // notiboy_address
 notiboyaddress_0:
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz notiboyaddress_0_l2
 addr PMJ44TV52KSPIP6RMTPCEPXTFWKGCNQ2YDTYXQYDXU2OG7CMHZXEAN4W2E
 b notiboyaddress_0_l3
 notiboyaddress_0_l2:
-addr 3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI
+addr EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE
 notiboyaddress_0_l3:
 retsub
 
 // dapp_optin_fee
 dappoptinfee_1:
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz dappoptinfee_1_l2
@@ -224,7 +224,7 @@ retsub
 
 // user_optin_fee
 useroptinfee_2:
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz useroptinfee_2_l2
@@ -552,7 +552,7 @@ callsub validaterekeys_7
 int 2
 int 5
 callsub validatenoops_8
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz isvalidcreatoroptin_19_l2
@@ -582,25 +582,17 @@ retsub
 
 // register_dapp
 registerdapp_20:
-txna Assets 0
-asset_params_get AssetName
-store 9
-store 8
 txna ApplicationArgs 1
 int 10
 callsub sanitizedappname_10
 store 7
 txna Applications 1
 app_params_get AppCreator
-store 11
-store 10
-txn NumAssets
-int 1
-==
+store 9
+store 8
 txn NumAppArgs
 int 2
 ==
-&&
 txn NumApplications
 int 1
 ==
@@ -609,21 +601,40 @@ txna ApplicationArgs 0
 byte "dapp"
 ==
 &&
-load 11
+load 9
 &&
-load 10
+load 8
 txn Sender
 ==
 &&
-load 8
-byte "USDC"
+assert
+byte "sandbox"
+byte "sandbox"
 ==
-&&
+bnz registerdapp_20_l2
+txna Assets 0
+asset_params_get AssetName
+store 11
+store 10
+txn NumAssets
+int 1
+==
 gtxn 0 AssetAmount
 callsub dappoptinfee_1
 >=
 &&
+load 10
+byte "USDC"
+==
+&&
 assert
+b registerdapp_20_l3
+registerdapp_20_l2:
+gtxn 0 Amount
+callsub dappoptinfee_1
+>=
+assert
+registerdapp_20_l3:
 callsub loadidxgstate_13
 btoi
 int 1

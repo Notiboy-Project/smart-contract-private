@@ -4,7 +4,7 @@ TESTNET = Bytes('testnet')
 SANDBOX = Bytes('sandbox')
 MAINNET = Bytes('mainnet')
 # sandbox, testnet, mainnet
-RUNNING_MODE = TESTNET
+RUNNING_MODE = SANDBOX
 
 TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")
@@ -43,7 +43,7 @@ def notiboy_address():
     return Seq(
         If(Eq(RUNNING_MODE, SANDBOX))
         .Then(
-            Addr("3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI")
+            Addr("EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE")
         )
         .Else(
             Addr("PMJ44TV52KSPIP6RMTPCEPXTFWKGCNQ2YDTYXQYDXU2OG7CMHZXEAN4W2E")

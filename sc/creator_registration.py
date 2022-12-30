@@ -55,13 +55,11 @@ def register_dapp():
     name = ScratchVar(TealType.bytes)
 
     return Seq(
-        assetName := AssetParam.name(Txn.assets[0]),
         # dapp name
         name.store(sanitize_dapp_name(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
-                Txn.assets.length() == Int(1),
                 Txn.application_args.length() == Int(2),
                 Txn.applications.length() == Int(1),
                 Txn.application_args[0] == TYPE_DAPP,
@@ -71,10 +69,27 @@ def register_dapp():
                     app_id_creator.value(),
                     Txn.sender(),
                 ),
-                Eq(assetName.value(), USDC_ASSET),
-                # amt is >= optin fee
-                Ge(Gtxn[0].asset_amount(), dapp_optin_fee())
             ),
+        ),
+        If(Eq(RUNNING_MODE, SANDBOX))
+        .Then(
+            Assert(
+                And(
+                    # amt is >= optin fee
+                    Ge(Gtxn[0].amount(), dapp_optin_fee()),
+                )
+            )
+        )
+        .Else(
+            assetName := AssetParam.name(Txn.assets[0]),
+            Assert(
+                And(
+                    Txn.assets.length() == Int(1),
+                    # amt is >= optin fee
+                    Ge(Gtxn[0].asset_amount(), dapp_optin_fee()),
+                    Eq(assetName.value(), USDC_ASSET),
+                )
+            )
         ),
 
         # ************* START *************

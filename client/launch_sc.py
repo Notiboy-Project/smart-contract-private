@@ -208,7 +208,7 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
     return app_id
 
 
-def launch_app(update, reset):
+def launch_app(update, bootstrap, reset):
     pvt_key, address = generate_notiboy_algorand_keypair(fname="notiboy-secret.txt")
     algod_client = get_algod_client(address)
 
@@ -247,11 +247,13 @@ def launch_app(update, reset):
         # ./sandbox goal app info --app-id 1
         app_id = create_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled,
                             global_schema, local_schema)
+        return
     else:
         app_id = APP_ID
 
     if reset:
         dev_test(algod_client, pvt_key, app_id)
+    if bootstrap:
         bootstrap_app(algod_client, pvt_key, app_id)
     if update:
         update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)

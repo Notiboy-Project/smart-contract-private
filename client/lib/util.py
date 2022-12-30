@@ -208,17 +208,17 @@ def compile_program(client, source_code):
 
 def get_sandbox_creds(kind):
     if kind == "user":
-        mnemonic_string = "music snack pool plastic glide dress term own bottom addict one same rebel lawn pave symptom there account recipe use vintage crouch below above quality"
+        mnemonic_string = "kingdom fetch cement drama winter universe elder animal mechanic torch bonus boy town they boost next tenant enjoy silk guess great park wrist ability few"
         private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "AAVUPELO5ZCBDA3DD3G7ZDZ64BSEOOE3G7ZBOMR7DKI3YIBXLYEC3EATQA"
+        address = "CC2TVHRQWPEBR37OX7UT4VTGILEAZR36PH3AZRAL54B67H2RQHGGH7XK4U"
     elif kind == "creator":
-        mnemonic_string = "sphere deliver tent capital net run cube horror volcano damp shine place include venture pond cook cross drill material narrow lava athlete human above battle"
+        mnemonic_string = "boy mule wait zebra betray also heavy quit dragon again program cliff enact ordinary catch width duty possible organ quit gravity salon veteran abstract public"
         private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "EVYC4CFP533BRC26OLGJEWJJ4SDB5JZJPNFPOZ7R56QUENTTUDQDLNJGTM"
+        address = "D7XPB62RBZODMDRJGQAJ5CKRJCBO6QQ3WOYYTMWD3B7CM4HSVHOHFK4IYQ"
     elif kind == "notiboy":
-        mnemonic_string = "image such scheme erase ethics else coach ensure fox goose skin share mutual fury elevator dice snap outer purpose forward possible tree reunion above topic"
+        mnemonic_string = "random tomorrow leave elder weird alert bounce flag clay tennis hill foil rhythm option swear flip equip junk chase rapid foot wrap chaos able slender"
         private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "3KOQUDTQAYKMXFL66Q5DS27FJJS6O3E2J3YMOC3WJRWNWJW3J4Q65POKPI"
+        address = "EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE"
 
     return private_key, address
 
@@ -270,9 +270,12 @@ def get_algod_client(my_address):
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
-    acct_asset_info = algod_client.account_asset_info(my_address, ASA_ASSET)
-    assets = acct_asset_info.get('asset-holding').get('amount') / 1000000
-    print("Account balance: {} microAlgos, {} USDC\n".format(account_info.get('amount') / 1000000, assets))
+    if RUNNING_MODE == 'testnet':
+        acct_asset_info = algod_client.account_asset_info(my_address, ASA_ASSET)
+        assets = acct_asset_info.get('asset-holding').get('amount') / 1000000
+        print("Account balance: {} microAlgos, {} USDC\n".format(account_info.get('amount') / 1000000, assets))
+    elif RUNNING_MODE == 'sandbox':
+        print("Account balance: {} microAlgos\n".format(account_info.get('amount') / 1000000))
 
     return algod_client
 
