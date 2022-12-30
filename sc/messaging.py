@@ -95,6 +95,7 @@ def send_personal_msg():
                 ),
             ),
         ),
+        (msgcount := ScratchVar(TealType.bytes)).store(App.localGet(Txn.sender(), MSG_COUNT)),
         # this ranges from 0 to MAX_USER_BOX_SLOTS
         (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
             (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_USER_BOX_SLOTS
