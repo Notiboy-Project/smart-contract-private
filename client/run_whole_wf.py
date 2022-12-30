@@ -46,7 +46,7 @@ def bootstrap():
 
 def main():
     # Update constants.py - APP_ID
-    launch_app(update=True, bootstrap=False, reset=False)
+    launch_app(update=True, bootstrap=True, reset=True)
     # bootstrap()
     optin()
     msg()

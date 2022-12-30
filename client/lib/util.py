@@ -141,13 +141,12 @@ def read_user_box(client, app_id, box_name):
 
 
 def parse_main_box_slot(chunk):
-    chunk_items = [chunk[:10].lstrip(b':'), chunk[10:18], chunk[18:22], chunk[22]]
+    chunk_items = [chunk[:10].lstrip(b':'), chunk[10:18], chunk[18:]]
     new_l = []
     try:
         new_l.append(chunk_items[0].decode('utf-8'))
         new_l.append(str(int.from_bytes(chunk_items[1], "big")))
-        new_l.append(str(int.from_bytes(chunk_items[2][:4], "big")))
-        new_l.append(chr(chunk_items[3]))
+        new_l.append(chunk_items[2].decode('utf-8'))
     except Exception as err:
         debug()()
 

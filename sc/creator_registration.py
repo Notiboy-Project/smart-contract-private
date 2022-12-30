@@ -104,9 +104,6 @@ def register_dapp():
             Concat(
                 # dapp name, app id, idx
                 name.load(), Itob(Txn.applications[1]),
-                # we only use 4 bytes dapp index. The scratch slot is 8 bytes.
-                # E.g. 1004 is stored as 00001004
-                Extract(next_gstate_index.load(), Int(4), Int(4)),
                 # unverified
                 Bytes("u")
             )
