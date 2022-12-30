@@ -111,6 +111,7 @@ def register_dapp():
                 Bytes("u")
             )
         ),
+        App.localPut(Txn.sender(), WHOAMI, msg.load()),
         write_to_box(NOTIBOY_BOX, next_gstate_index.load(), msg.load(), MAX_MAIN_BOX_MSG_SIZE, Int(0)),
         # write message
         # ************* END *************

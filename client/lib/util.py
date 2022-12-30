@@ -12,6 +12,7 @@ from client.lib.constants import *
 
 # read user local state
 def read_local_state(client, addr, app_id):
+    print("LOCAL STATE")
     results = client.account_info(addr)
 
     for local_state in results["apps-local-state"]:
@@ -32,15 +33,18 @@ def format_local_state(state):
         key = item['key']
         value = item['value']
         byte_key = base64.b64decode(key)
-        if byte_key.decode() in ["index", DAPP_NAME, "msgcount", "apps"]:
+        if byte_key.decode() in ["index", DAPP_NAME, "msgcount", "apps", "whoami"]:
             formatted_key = byte_key.decode()
         else:
             formatted_key = str(int.from_bytes(byte_key, "big"))
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if byte_key.decode() in ["index", "msgcount", "apps"]:
+            if formatted_key in ["index", "msgcount", "apps"]:
                 formatted_value = int.from_bytes(byte_value, "big")
+            elif formatted_key in ["whoami"]:
+                new_l = parse_main_box_slot(byte_value)
+                formatted_value = ":".join(new_l)
             else:
                 try:
                     formatted_value = encoding.encode_address(byte_value)
@@ -76,10 +80,6 @@ def format_global_state(state):
                 try:
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + str(int.from_bytes(
                         byte_value[33:], "big"))
-
-                    # if len(byte_value) == 67 and byte_value[66:67].decode() == "v":
-                    #     print("{} is verified".format(formatted_key))
-                    #     formatted_value = formatted_value + ":verfied"
                 except Exception as err:
                     formatted_value = byte_value.decode()
             formatted[formatted_key] = formatted_value
@@ -140,6 +140,20 @@ def read_user_box(client, app_id, box_name):
             print("value at index {} is {}".format(idx, to_print))
 
 
+def parse_main_box_slot(chunk):
+    chunk_items = [chunk[:10].lstrip(b':'), chunk[10:18], chunk[18:22], chunk[22]]
+    new_l = []
+    try:
+        new_l.append(chunk_items[0].decode('utf-8'))
+        new_l.append(str(int.from_bytes(chunk_items[1], "big")))
+        new_l.append(str(int.from_bytes(chunk_items[2][:4], "big")))
+        new_l.append(chr(chunk_items[3]))
+    except Exception as err:
+        debug()()
+
+    return new_l
+
+
 def read_box(client, app_id, box_name):
     print("MAIN BOX STORAGE")
     try:
@@ -155,15 +169,7 @@ def read_box(client, app_id, box_name):
     for idx, chunk in enumerate(chunks):
         if is_zero_value(chunk):
             continue
-        chunk_items = [chunk[:10].lstrip(b':'), chunk[10:18], chunk[18:22], chunk[22]]
-        new_l = []
-        try:
-            new_l.append(chunk_items[0].decode('utf-8'))
-            new_l.append(str(int.from_bytes(chunk_items[1], "big")))
-            new_l.append(str(int.from_bytes(chunk_items[2][:4], "big")))
-            new_l.append(chr(chunk_items[3]))
-        except Exception as err:
-            debug()()
+        new_l = parse_main_box_slot(chunk)
 
         to_print = ":".join(new_l)
         if to_print.strip() != '':

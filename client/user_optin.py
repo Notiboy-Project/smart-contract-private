@@ -85,7 +85,7 @@ def user_optin_out():
             print("\n*************USER OPT-IN START*************")
             opt_in(algod_client, pvt_key, APP_ID, box_name, app_args, acct_args, foreign_apps, num_noops)
             print("*************USER OPT-IN DONE*************")
-            print("LOCAL State:", read_local_state(algod_client, address, APP_ID))
+            read_local_state(algod_client, address, APP_ID)
         except Exception as err:
             print("error opting in, err: {}".format(err))
         read_user_box(algod_client, APP_ID, box_name)
@@ -99,7 +99,7 @@ def user_optin_out():
             print("\n*************USER OPT-OUT START*************")
             opt_out(algod_client, pvt_key, APP_ID, box_name, app_args, acct_args, foreign_apps, num_noops)
             print("*************USER OPT-OUT DONE*************")
-            print("LOCAL State:", read_local_state(algod_client, address, APP_ID))
+            read_local_state(algod_client, address, APP_ID)
         except Exception as err:
             print("error opting out, err: {}".format(err))
         read_user_box(algod_client, APP_ID, box_name)
@@ -123,7 +123,7 @@ def user_optin():
     acct_args = []
     try:
         opt_in(algod_client, pvt_key, APP_ID, box_name, app_args, acct_args, foreign_apps, num_noops)
-        print("LOCAL State:", read_local_state(algod_client, address, APP_ID))
+        read_local_state(algod_client, address, APP_ID)
     except Exception as err:
         print("error opting in, err: {}".format(err))
     read_user_box(algod_client, APP_ID, box_name)
@@ -147,7 +147,7 @@ def user_optout():
 
     try:
         opt_out(algod_client, pvt_key, APP_ID, box_name, app_args, acct_args, foreign_apps, num_noops)
-        print("LOCAL State:", read_local_state(algod_client, address, APP_ID))
+        read_local_state(algod_client, address, APP_ID)
     except Exception as err:
         print("error opting out, err: {}".format(err))
 

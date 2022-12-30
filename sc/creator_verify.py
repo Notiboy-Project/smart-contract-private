@@ -42,12 +42,6 @@ def set_verify_bit(value):
     return Seq([
         # dapp name
         (name := ScratchVar(TealType.bytes)).store(sanitize_dapp_name(Txn.application_args[1], DAPP_NAME_MAX_LEN)),
-        (start_idx := ScratchVar(TealType.uint64)).store(
-            Mul(
-                Btoi(Txn.application_args[2]),
-                MAX_MAIN_BOX_MSG_SIZE
-            )
-        ),
         (msg := ScratchVar(TealType.bytes)).store(
             Concat(
                 # dapp name, app id, idx

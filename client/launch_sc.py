@@ -137,7 +137,7 @@ def create_app(client, private_key, approval_program, clear_program, global_sche
 
     # create unsigned transaction
     txn = transaction.ApplicationCreateTxn(sender, params, on_complete, approval_program, clear_program, global_schema,
-                                           local_schema, extra_pages=1)
+                                           local_schema, extra_pages=2)
 
     # sign transaction
     signed_txn = txn.sign(private_key)

@@ -48,8 +48,11 @@ def is_valid_public_notification():
 def send_public_msg():
     return Seq(
         app_id_creator := AppParam.creator(Txn.applications[1]),
+        (whoami := ScratchVar(TealType.bytes)).store(App.localGet(Txn.sender(), WHOAMI)),
         Assert(
             And(
+                # if whoami is not set, clearstate invoked to reset counter?
+                Neq(whoami.load(), Bytes("")),
                 # if app_id belongs to sender
                 app_id_creator.hasValue(),
                 Eq(
@@ -78,9 +81,12 @@ def send_public_msg():
 @Subroutine(TealType.none)
 def send_personal_msg():
     return Seq(
+        (whoami := ScratchVar(TealType.bytes)).store(App.localGet(Txn.sender(), WHOAMI)),
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
+                # if whoami is not set, clearstate invoked to reset counter?
+                Neq(whoami.load(), Bytes("")),
                 # if app_id belongs to sender
                 app_id_creator.hasValue(),
                 Eq(

@@ -1,5 +1,5 @@
 from client.lib.util import compile_program, read_global_state, DAPP_NAME, APP_ID, generate_creator_algorand_keypair, \
-    get_algod_client, read_global_state_key, \
+    get_algod_client, read_global_state_key, read_local_state, \
     MAIN_BOX, read_box
 from launch_sc import create_app
 from client.lib.opt import opt_in, opt_out
@@ -126,6 +126,7 @@ def creator_optin():
         opt_in(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
     except Exception as err:
         print("error opting in, err: {}".format(err))
+    read_local_state(algod_client, address, APP_ID)
     read_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
     print("*************CREATOR OPT-IN END*************")
 
@@ -164,6 +165,7 @@ def creator_optout():
         opt_out(algod_client, pvt_key, APP_ID, MAIN_BOX, app_args, acct_args, foreign_apps, num_noops)
     except Exception as err:
         print("error opting out, err: {}".format(err))
+    read_local_state(algod_client, address, APP_ID)
     read_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
 
     print("Global state:", read_global_state(algod_client, APP_ID))

@@ -10,6 +10,7 @@ TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")
 NOTIBOY_BOX = Bytes("notiboy")
 MSG_COUNT = Bytes("msgcount")
+WHOAMI = Bytes("whoami")
 INDEX_KEY = Bytes("index")
 DELIMITER = Bytes(":")
 DAPP_NAME_MAX_LEN = Int(10)
@@ -17,7 +18,7 @@ USDC_ASSET = Bytes("USDC")
 
 # LSTATE
 MAX_LSTATE_MSG_SIZE = Int(120)
-MAX_LSTATE_SLOTS = Int(14)
+MAX_LSTATE_SLOTS = Int(13)
 LSTATE_INDEX_SLOT = Int(16)
 LSTATE_COUNTER_SLOT = Int(16)
 
