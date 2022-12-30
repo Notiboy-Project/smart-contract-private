@@ -20,7 +20,7 @@ def is_valid_creator_optin():
             Assert(
                 And(
                     Eq(Gtxn[0].type_enum(), TxnType.Payment),
-                    Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+                    Eq(Gtxn[0].receiver(), notiboy_address()),
                 )
             )
         )
@@ -28,7 +28,7 @@ def is_valid_creator_optin():
             Assert(
                 And(
                     Eq(Gtxn[0].type_enum(), TxnType.AssetTransfer),
-                    Eq(Gtxn[0].asset_receiver(), Addr(NOTIBOY_ADDR)),
+                    Eq(Gtxn[0].asset_receiver(), notiboy_address()),
                 )
             )
         ),

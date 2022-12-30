@@ -9,7 +9,7 @@ def is_valid_user_optin():
         And(
             Eq(Global.group_size(), Int(3)),
             Eq(Gtxn[0].type_enum(), TxnType.Payment),
-            Eq(Gtxn[0].receiver(), Addr(NOTIBOY_ADDR)),
+            Eq(Gtxn[0].receiver(), notiboy_address()),
         )
     )
 
