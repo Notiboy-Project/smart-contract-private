@@ -2,7 +2,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from algosdk import account, mnemonic, logic
-from algosdk import account
+from algosdk import account, logic
 from algosdk import encoding
 import base64
 from algosdk.future import transaction
@@ -76,6 +76,7 @@ def opt_in(client, private_key, index, box_name, app_args, account_args, foreign
 
     # create unsigned transactions
 
+    # creator flow
     if len(foreign_apps) != 0:
         if RUNNING_MODE == 'sandbox':
             # pay 1 algo
@@ -87,12 +88,13 @@ def opt_in(client, private_key, index, box_name, app_args, account_args, foreign
             txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_assets=[ASA_ASSET],
                                                    foreign_apps=foreign_apps)
     else:
+        # user flow
         if RUNNING_MODE == 'sandbox':
             # pay 1 algo
-            txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 1000000)
+            txn1 = transaction.PaymentTxn(sender, params, logic.get_application_address(APP_ID), 1000000)
         elif RUNNING_MODE == 'testnet':
             # pay 5 algo
-            txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 5000000)
+            txn1 = transaction.PaymentTxn(sender, params, logic.get_application_address(APP_ID), 5000000)
         txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, boxes=boxes)
     noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
 

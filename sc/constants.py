@@ -42,6 +42,19 @@ ERASE_BYTES = Bytes(
 
 
 @Subroutine(TealType.bytes)
+def notiboy_sc_address():
+    return Seq(
+        If(Eq(RUNNING_MODE, SANDBOX))
+        .Then(
+            Addr("QUTNHJKEN7T7FZRMPMPA66B6Q3F3IIR2NM6MDAUHBETAPZXOWKYWWNVBTE")
+        )
+        .Else(
+            Addr("4LAT7PGGPCCF7MIZVV5BUGX3GCEQZHNDA7BIBXYO3G7PJBR6R2AAW5TSVI")
+        )
+    )
+
+
+@Subroutine(TealType.bytes)
 def notiboy_address():
     return Seq(
         If(Eq(RUNNING_MODE, SANDBOX))
