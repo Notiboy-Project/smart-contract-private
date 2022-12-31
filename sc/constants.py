@@ -4,7 +4,7 @@ TESTNET = Bytes('testnet')
 SANDBOX = Bytes('sandbox')
 MAINNET = Bytes('mainnet')
 # sandbox, testnet, mainnet
-RUNNING_MODE = TESTNET
+RUNNING_MODE = SANDBOX
 
 TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")
@@ -15,6 +15,8 @@ INDEX_KEY = Bytes("index")
 DELIMITER = Bytes(":")
 DAPP_NAME_MAX_LEN = Int(10)
 USDC_ASSET = Bytes("USDC")
+# 1000 msgs
+PAYABLE_MSG_LIMIT = Int(1000)
 
 # LSTATE
 MAX_LSTATE_MSG_SIZE = Int(120)
@@ -23,7 +25,7 @@ LSTATE_INDEX_SLOT = Int(16)
 LSTATE_COUNTER_SLOT = Int(16)
 
 # USER BOX
-MAX_USER_BOX_SIZE = Int(14336)
+MAX_USER_BOX_SIZE = Int(6144)
 # include 8B ts, 8B app id, 280B data
 MAX_USER_BOX_MSG_SIZE = Int(296)
 MAX_USER_BOX_SLOTS = Div(MAX_USER_BOX_SIZE, MAX_USER_BOX_MSG_SIZE)
@@ -48,6 +50,21 @@ def notiboy_address():
         )
         .Else(
             Addr("PMJ44TV52KSPIP6RMTPCEPXTFWKGCNQ2YDTYXQYDXU2OG7CMHZXEAN4W2E")
+        )
+    )
+
+
+@Subroutine(TealType.uint64)
+def msg_barrier_unblock_fee():
+    return Seq(
+        If(Eq(RUNNING_MODE, SANDBOX))
+        .Then(
+            # 1 Algo
+            Int(1000000)
+        )
+        .Else(
+            # 1 USDC
+            Int(1000000)
         )
     )
 

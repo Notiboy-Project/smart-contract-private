@@ -40,8 +40,11 @@ def format_local_state(state):
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if formatted_key in ["index", "msgcount", "apps"]:
-                formatted_value = int.from_bytes(byte_value, "big")
+            if formatted_key in ["index", "apps"]:
+                formatted_value = int.from_bytes(byte_value[:8], "big")
+            elif formatted_key in ["msgcount"]:
+                formatted_value = 'pvt: ' + str(int.from_bytes(byte_value[:8], "big")) + ', ' + 'pub: ' + str(
+                    int.from_bytes(byte_value[9:], "big"))
             elif formatted_key in ["whoami"]:
                 new_l = parse_main_box_slot(byte_value)
                 formatted_value = ":".join(new_l)

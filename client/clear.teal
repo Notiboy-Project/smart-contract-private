@@ -226,13 +226,10 @@ retsub
 // is_valid_user_optout
 isvaliduseroptout_8:
 int 0
-int 1
+int 0
 callsub validaterekeys_2
-int 1
-int 1
-callsub validatenoops_3
 global GroupSize
-int 2
+int 1
 ==
 retsub
 

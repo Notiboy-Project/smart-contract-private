@@ -46,9 +46,6 @@ def set_verify_bit(value):
             Concat(
                 # dapp name, app id, idx
                 name.load(), Itob(Txn.applications[1]),
-                # we only use 4 bytes dapp index. The scratch slot is 8 bytes.
-                # E.g. 1004 is stored as 00001004
-                Extract(Txn.application_args[2], Int(4), Int(4)),
                 # set verified bit
                 value
             )

@@ -26,7 +26,7 @@ def send(client, private_key, index, msg, app_args, foreign_apps, acct_args, num
     # create unsigned transaction
     txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, acct_args, foreign_apps=foreign_apps,
                                           note=str.encode(msg), boxes=boxes)
- 
+
     boxes += [
         [0, ""], [0, ""]
     ]
@@ -65,7 +65,7 @@ def send_public_notification():
         except Exception as err:
             print("error calling app, err: {}".format(err))
 
-    print("LOCAL State:")
+    print("Creator local State:")
     read_local_state(algod_client, address, APP_ID)
     print("*************PUBLIC MSG END*************")
 
@@ -114,9 +114,9 @@ def send_personal_notification():
         except Exception as err:
             print("error calling app, err: {}".format(err))
 
+    read_user_box(algod_client, APP_ID, box_name)
     print("USER LOCAL State:")
     read_local_state(algod_client, receiver, APP_ID)
     print("CREATOR LOCAL State:")
     read_local_state(algod_client, address, APP_ID)
-    read_user_box(algod_client, APP_ID, box_name)
     print("*************PERSONAL NOTIFICATION END*************")

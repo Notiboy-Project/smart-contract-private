@@ -170,16 +170,57 @@ def min_val(x, y):
 
 
 @Subroutine(TealType.none)
-def inc_msg_count(addr):
+def inc_pvt_msg_count(addr):
     return Seq([
         count_val := App.localGetEx(addr, APP_ID, MSG_COUNT),
         If(Not(count_val.hasValue()))
-        .Then(App.localPut(addr, MSG_COUNT, Itob(Int(0)))),
-        App.localPut(addr, MSG_COUNT, Itob(
-            Add(
-                Btoi(App.localGet(addr, MSG_COUNT)), Int(1)
-            )
-        ))
+        .Then(App.localPut(addr, MSG_COUNT,
+                           # pvt count, public count
+                           Concat(Itob(Int(0)), DELIMITER, Itob(Int(0))))
+              ),
+        (pvt := ScratchVar(TealType.bytes)).store(
+            Extract(App.localGet(addr, MSG_COUNT), Int(0), Int(8))
+        ),
+        (pub := ScratchVar(TealType.bytes)).store(
+            Extract(App.localGet(addr, MSG_COUNT), Int(9), Int(8))
+        ),
+        App.localPut(addr, MSG_COUNT,
+                     Concat(
+                         Itob(
+                             Add(
+                                 Btoi(pvt.load()), Int(1)
+                             )
+                         ), DELIMITER, pub.load()
+                     )
+                     )
+    ])
+
+
+@Subroutine(TealType.none)
+def inc_pub_msg_count(addr):
+    return Seq([
+        count_val := App.localGetEx(addr, APP_ID, MSG_COUNT),
+        If(Not(count_val.hasValue()))
+        .Then(App.localPut(addr, MSG_COUNT,
+                           # pvt count, public count
+                           Concat(Itob(Int(0)), DELIMITER, Itob(Int(0))))
+              ),
+        (pvt := ScratchVar(TealType.bytes)).store(
+            Extract(App.localGet(addr, MSG_COUNT), Int(0), Int(8))
+        ),
+        (pub := ScratchVar(TealType.bytes)).store(
+            Extract(App.localGet(addr, MSG_COUNT), Int(9), Int(8))
+        ),
+        App.localPut(addr, MSG_COUNT,
+                     Concat(
+                         pvt.load(), DELIMITER,
+                         Itob(
+                             Add(
+                                 Btoi(pub.load()), Int(1)
+                             )
+                         )
+                     )
+                     )
     ])
 
 

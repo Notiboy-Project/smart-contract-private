@@ -55,25 +55,25 @@ byte "unverify"
 bnz main_l15
 err
 main_l15:
-callsub ischannelvalidforverification_26
+callsub ischannelvalidforverification_27
 assert
-callsub markchannelunverified_29
+callsub markchannelunverified_30
 return
 main_l16:
-callsub ischannelvalidforverification_26
+callsub ischannelvalidforverification_27
 assert
-callsub markchannelverified_28
+callsub markchannelverified_29
 return
 main_l17:
-callsub isvalidprivatenotification_30
+callsub isvalidprivatenotification_31
 assert
-callsub sendpersonalmsg_33
+callsub sendpersonalmsg_34
 int 1
 return
 main_l18:
-callsub isvalidpublicnotification_31
+callsub isvalidpublicnotification_32
 assert
-callsub sendpublicmsg_32
+callsub sendpublicmsg_33
 int 1
 return
 main_l19:
@@ -154,16 +154,16 @@ byte "dapp"
 ==
 &&
 bnz main_l30
-callsub isvaliduseroptout_23
+callsub isvaliduseroptout_24
 assert
-callsub deregisteruser_24
+callsub deregisteruser_25
 main_l29:
 int 1
 return
 main_l30:
-callsub isvalidcreatoroptout_18
+callsub isvalidcreatoroptout_19
 assert
-callsub deregisterdapp_21
+callsub deregisterdapp_22
 b main_l29
 main_l31:
 callsub isvalidbaseoptin_9
@@ -180,16 +180,16 @@ byte "dapp"
 ==
 &&
 bnz main_l34
-callsub isvaliduseroptin_22
+callsub isvaliduseroptin_23
 assert
-callsub registeruser_25
+callsub registeruser_26
 main_l33:
 int 1
 return
 main_l34:
-callsub isvalidcreatoroptin_19
+callsub isvalidcreatoroptin_20
 assert
-callsub registerdapp_20
+callsub registerdapp_21
 b main_l33
 main_l35:
 callsub isvalid_5
@@ -199,7 +199,7 @@ return
 
 // notiboy_address
 notiboyaddress_0:
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz notiboyaddress_0_l2
@@ -212,7 +212,7 @@ retsub
 
 // dapp_optin_fee
 dappoptinfee_1:
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz dappoptinfee_1_l2
@@ -225,7 +225,7 @@ retsub
 
 // user_optin_fee
 useroptinfee_2:
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz useroptinfee_2_l2
@@ -456,8 +456,55 @@ load 29
 minval_15_l3:
 retsub
 
-// inc_msg_count
-incmsgcount_16:
+// inc_pvt_msg_count
+incpvtmsgcount_16:
+store 60
+load 60
+global CurrentApplicationID
+byte "msgcount"
+app_local_get_ex
+store 62
+store 61
+load 62
+!
+bz incpvtmsgcount_16_l2
+load 60
+byte "msgcount"
+int 0
+itob
+byte ":"
+concat
+int 0
+itob
+concat
+app_local_put
+incpvtmsgcount_16_l2:
+load 60
+byte "msgcount"
+app_local_get
+extract 0 8
+store 63
+load 60
+byte "msgcount"
+app_local_get
+extract 9 8
+store 64
+load 60
+byte "msgcount"
+load 63
+btoi
+int 1
++
+itob
+byte ":"
+concat
+load 64
+concat
+app_local_put
+retsub
+
+// inc_pub_msg_count
+incpubmsgcount_17:
 store 50
 load 50
 global CurrentApplicationID
@@ -467,27 +514,44 @@ store 52
 store 51
 load 52
 !
-bz incmsgcount_16_l2
+bz incpubmsgcount_17_l2
 load 50
 byte "msgcount"
 int 0
 itob
+byte ":"
+concat
+int 0
+itob
+concat
 app_local_put
-incmsgcount_16_l2:
-load 50
-byte "msgcount"
+incpubmsgcount_17_l2:
 load 50
 byte "msgcount"
 app_local_get
+extract 0 8
+store 53
+load 50
+byte "msgcount"
+app_local_get
+extract 9 8
+store 54
+load 50
+byte "msgcount"
+load 53
+byte ":"
+concat
+load 54
 btoi
 int 1
 +
 itob
+concat
 app_local_put
 retsub
 
 // write_to_box
-writetobox_17:
+writetobox_18:
 store 26
 store 25
 store 24
@@ -501,7 +565,7 @@ store 27
 load 26
 int 0
 ==
-bz writetobox_17_l2
+bz writetobox_18_l2
 load 22
 load 27
 load 25
@@ -512,7 +576,7 @@ load 25
 extract3
 ==
 assert
-writetobox_17_l2:
+writetobox_18_l2:
 load 22
 load 27
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -533,7 +597,7 @@ box_replace
 retsub
 
 // is_valid_creator_optout
-isvalidcreatoroptout_18:
+isvalidcreatoroptout_19:
 int 0
 int 4
 callsub validaterekeys_7
@@ -546,17 +610,17 @@ int 5
 retsub
 
 // is_valid_creator_optin
-isvalidcreatoroptin_19:
+isvalidcreatoroptin_20:
 int 0
 int 5
 callsub validaterekeys_7
 int 2
 int 5
 callsub validatenoops_8
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
-bnz isvalidcreatoroptin_19_l2
+bnz isvalidcreatoroptin_20_l2
 gtxn 0 TypeEnum
 int axfer
 ==
@@ -565,8 +629,8 @@ callsub notiboyaddress_0
 ==
 &&
 assert
-b isvalidcreatoroptin_19_l3
-isvalidcreatoroptin_19_l2:
+b isvalidcreatoroptin_20_l3
+isvalidcreatoroptin_20_l2:
 gtxn 0 TypeEnum
 int pay
 ==
@@ -575,14 +639,14 @@ callsub notiboyaddress_0
 ==
 &&
 assert
-isvalidcreatoroptin_19_l3:
+isvalidcreatoroptin_20_l3:
 global GroupSize
 int 6
 ==
 retsub
 
 // register_dapp
-registerdapp_20:
+registerdapp_21:
 txna ApplicationArgs 1
 int 10
 callsub sanitizedappname_10
@@ -609,10 +673,10 @@ txn Sender
 ==
 &&
 assert
-byte "testnet"
+byte "sandbox"
 byte "sandbox"
 ==
-bnz registerdapp_20_l2
+bnz registerdapp_21_l2
 txna Assets 0
 asset_params_get AssetName
 store 11
@@ -629,13 +693,13 @@ byte "USDC"
 ==
 &&
 assert
-b registerdapp_20_l3
-registerdapp_20_l2:
+b registerdapp_21_l3
+registerdapp_21_l2:
 gtxn 0 Amount
 callsub dappoptinfee_1
 >=
 assert
-registerdapp_20_l3:
+registerdapp_21_l3:
 callsub loadidxgstate_13
 btoi
 int 1
@@ -664,12 +728,12 @@ load 12
 load 13
 int 19
 int 0
-callsub writetobox_17
+callsub writetobox_18
 int 1
 return
 
 // deregister_dapp
-deregisterdapp_21:
+deregisterdapp_22:
 txna Applications 1
 app_params_get AppCreator
 store 32
@@ -706,10 +770,10 @@ load 33
 txna Applications 1
 itob
 callsub iscreatoronboarded_3
-bnz deregisterdapp_21_l2
+bnz deregisterdapp_22_l2
 int 0
 return
-deregisterdapp_21_l2:
+deregisterdapp_22_l2:
 byte "notiboy"
 load 33
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -718,15 +782,12 @@ box_replace
 retsub
 
 // is_valid_user_optin
-isvaliduseroptin_22:
+isvaliduseroptin_23:
 int 0
-int 2
+int 1
 callsub validaterekeys_7
-int 2
-int 2
-callsub validatenoops_8
 global GroupSize
-int 3
+int 2
 ==
 gtxn 0 TypeEnum
 int pay
@@ -739,20 +800,17 @@ callsub notiboyaddress_0
 retsub
 
 // is_valid_user_optout
-isvaliduseroptout_23:
+isvaliduseroptout_24:
 int 0
-int 1
+int 0
 callsub validaterekeys_7
-int 1
-int 1
-callsub validatenoops_8
 global GroupSize
-int 2
+int 1
 ==
 retsub
 
 // deregister_user
-deregisteruser_24:
+deregisteruser_25:
 gtxn 0 Sender
 box_del
 assert
@@ -760,7 +818,7 @@ int 1
 return
 
 // register_user
-registeruser_25:
+registeruser_26:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -774,13 +832,18 @@ callsub useroptinfee_2
 &&
 assert
 gtxn 0 Sender
-int 14336
+int 6144
 box_create
 assert
 txn Sender
 byte "msgcount"
 int 0
 itob
+byte ":"
+concat
+int 0
+itob
+concat
 app_local_put
 txn Sender
 byte "index"
@@ -791,7 +854,7 @@ int 1
 return
 
 // is_channel_valid_for_verification
-ischannelvalidforverification_26:
+ischannelvalidforverification_27:
 int 0
 int 4
 callsub validaterekeys_7
@@ -829,7 +892,7 @@ callsub iscreatoronboarded_3
 retsub
 
 // set_verify_bit
-setverifybit_27:
+setverifybit_28:
 store 40
 txna ApplicationArgs 1
 int 10
@@ -839,9 +902,6 @@ load 41
 txna Applications 1
 itob
 concat
-txna ApplicationArgs 2
-extract 4 4
-concat
 load 40
 concat
 store 42
@@ -850,33 +910,37 @@ txna ApplicationArgs 2
 load 42
 int 19
 int 1
-callsub writetobox_17
+callsub writetobox_18
 int 1
 return
 
 // mark_channel_verified
-markchannelverified_28:
+markchannelverified_29:
 byte "v"
-callsub setverifybit_27
+callsub setverifybit_28
 retsub
 
 // mark_channel_unverified
-markchannelunverified_29:
+markchannelunverified_30:
 byte "u"
-callsub setverifybit_27
+callsub setverifybit_28
 retsub
 
 // is_valid_private_notification
-isvalidprivatenotification_30:
+isvalidprivatenotification_31:
 int 0
 int 1
 callsub validatenoops_8
 int 0
 int 1
 callsub validaterekeys_7
+global GroupSize
+int 2
+==
 txna Accounts 1
 global CurrentApplicationID
 app_opted_in
+&&
 txna Accounts 1
 txna Applications 1
 app_opted_in
@@ -897,14 +961,10 @@ txn NumApplications
 int 1
 ==
 &&
-global GroupSize
-int 2
-==
-&&
 retsub
 
 // is_valid_public_notification
-isvalidpublicnotification_31:
+isvalidpublicnotification_32:
 global GroupSize
 int 1
 ==
@@ -935,7 +995,7 @@ app_opted_in
 retsub
 
 // send_public_msg
-sendpublicmsg_32:
+sendpublicmsg_33:
 txna Applications 1
 app_params_get AppCreator
 store 44
@@ -971,7 +1031,7 @@ byte "index"
 load 46
 app_local_put
 txn Sender
-callsub incmsgcount_16
+callsub incpubmsgcount_17
 txn Sender
 load 46
 txn Note
@@ -981,21 +1041,21 @@ app_local_put
 retsub
 
 // send_personal_msg
-sendpersonalmsg_33:
+sendpersonalmsg_34:
 txn Sender
 byte "whoami"
 app_local_get
-store 53
+store 55
 txna Applications 1
 app_params_get AppCreator
-store 55
-store 54
-load 53
+store 57
+store 56
+load 55
 byte ""
 !=
-load 55
+load 57
 &&
-load 54
+load 56
 txn Sender
 ==
 &&
@@ -1005,20 +1065,20 @@ callsub loadidxfromlstate_12
 btoi
 int 1
 +
-int 14336
+int 6144
 int 296
 /
 %
 itob
-store 56
+store 58
 txna Accounts 1
 byte "index"
-load 56
+load 58
 app_local_put
 txn Sender
-callsub incmsgcount_16
+callsub incpvtmsgcount_16
 txna Accounts 1
-callsub incmsgcount_16
+callsub incpvtmsgcount_16
 global LatestTimestamp
 itob
 txna Applications 1
@@ -1032,11 +1092,11 @@ len
 callsub minval_15
 extract3
 concat
-store 57
+store 59
 txna Accounts 1
-load 56
-load 57
+load 58
+load 59
 int 296
 int 1
-callsub writetobox_17
+callsub writetobox_18
 retsub

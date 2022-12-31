@@ -27,6 +27,7 @@ acct_args: rcvr_addr
 '''
 private_notify = Seq([
     Assert(is_valid_private_notification()),
+    # Assert(is_pay_required()),
     send_personal_msg(),
     Approve()
 ])

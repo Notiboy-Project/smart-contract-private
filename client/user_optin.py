@@ -114,7 +114,7 @@ def user_optin():
     # 32B public key of user
     box_name = encoding.decode_address(address)
 
-    num_noops = 1
+    num_noops = 0
     app_args = [
         str.encode("user")
     ]
@@ -137,7 +137,7 @@ def user_optout():
     # 32B public key of user
     box_name = encoding.decode_address(address)
 
-    num_noops = 1
+    num_noops = 0
     app_args = [
         str.encode("user")
     ]

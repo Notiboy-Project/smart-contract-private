@@ -4,10 +4,9 @@ from sc.util import *
 @Subroutine(TealType.uint64)
 def is_valid_user_optin():
     return Seq(
-        validate_rekeys(Int(0), Int(2)),
-        validate_noops(Int(2), Int(2)),
+        validate_rekeys(Int(0), Int(1)),
         And(
-            Eq(Global.group_size(), Int(3)),
+            Eq(Global.group_size(), Int(2)),
             Eq(Gtxn[0].type_enum(), TxnType.Payment),
             Eq(Gtxn[0].receiver(), notiboy_address()),
         )
@@ -17,9 +16,8 @@ def is_valid_user_optin():
 @Subroutine(TealType.uint64)
 def is_valid_user_optout():
     return Seq(
-        validate_rekeys(Int(0), Int(1)),
-        validate_noops(Int(1), Int(1)),
-        Eq(Global.group_size(), Int(2)),
+        validate_rekeys(Int(0), Int(0)),
+        Eq(Global.group_size(), Int(1)),
     )
 
 
@@ -48,7 +46,7 @@ def register_user():
         ),
         # create box with name as sender's 32B address
         Assert(App.box_create(Gtxn[0].sender(), MAX_USER_BOX_SIZE)),
-        App.localPut(Txn.sender(), MSG_COUNT, Itob(Int(0))),
+        App.localPut(Txn.sender(), MSG_COUNT, Concat(Itob(Int(0)), DELIMITER, Itob(Int(0)))),
         App.localPut(Txn.sender(), INDEX_KEY, Itob(Int(0))),
         Approve()
     ])

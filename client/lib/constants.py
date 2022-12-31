@@ -12,7 +12,7 @@ MAX_USER_BOX_MSG_SIZE = 296
 MAX_MAIN_BOX_NUM_CHUNKS = MAX_BOX_SIZE / MAX_MAIN_BOX_MSG_SIZE
 ASA_ASSET = 10458941
 # sandbox, testnet, mainnet
-RUNNING_MODE = 'testnet'
+RUNNING_MODE = 'sandbox'
 
 if RUNNING_MODE == "testnet":
     APP_ID = 151255921

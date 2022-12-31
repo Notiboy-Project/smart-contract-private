@@ -2,11 +2,75 @@ from sc.util import *
 
 
 @Subroutine(TealType.uint64)
+def is_pay_limit_reached():
+    return Seq(
+        (msgcount := ScratchVar(TealType.bytes)).store(
+            Extract(App.localGet(Txn.sender(), MSG_COUNT), Int(0), Int(8))
+        ),
+        And(
+            Eq(
+                Mod(
+                    Btoi(msgcount.load()),
+                    PAYABLE_MSG_LIMIT
+                ),
+                Int(0)
+            ),
+            Ge(Btoi(msgcount.load()), Int(1))
+        )
+    )
+
+
+@Subroutine(TealType.uint64)
+def ensure_payment():
+    return Seq(
+        If(Eq(RUNNING_MODE, SANDBOX))
+        .Then(
+            And(
+                Eq(Gtxn[0].type_enum(), TxnType.Payment),
+                Eq(Gtxn[0].receiver(), notiboy_address()),
+                # amt is >= msg limit fee
+                Ge(Gtxn[0].amount(), msg_barrier_unblock_fee()),
+            )
+        )
+        .Else(
+            assetName := AssetParam.name(Txn.assets[0]),
+            And(
+                Eq(Gtxn[0].type_enum(), TxnType.AssetTransfer),
+                Eq(Gtxn[0].asset_receiver(), notiboy_address()),
+                Txn.assets.length() == Int(1),
+                # amt is >= msg limit fee
+                Ge(Gtxn[0].asset_amount(), msg_barrier_unblock_fee()),
+                Eq(assetName.value(), USDC_ASSET),
+            )
+        )
+    )
+
+
+@Subroutine(TealType.uint64)
+def is_pay_required():
+    return Seq(
+        If(is_pay_limit_reached())
+        .Then(
+            validate_rekeys(Int(0), Int(2)),
+            And(
+                Eq(Global.group_size(), Int(3)),
+                ensure_payment(),
+            )
+        )
+        .Else(
+            validate_rekeys(Int(0), Int(1)),
+            Eq(Global.group_size(), Int(2)),
+        )
+    )
+
+
+@Subroutine(TealType.uint64)
 def is_valid_private_notification():
     return Seq(
         validate_noops(Int(0), Int(1)),
         validate_rekeys(Int(0), Int(1)),
         And(
+            Eq(Global.group_size(), Int(2)),
             # rcvr opted in?
             App.optedIn(Txn.accounts[1], APP_ID),
             # rcvr opted in to creator's app?
@@ -19,7 +83,6 @@ def is_valid_private_notification():
             Eq(Txn.application_args.length(), Int(3)),
             # creator's channel id passed?
             Eq(Txn.applications.length(), Int(1)),
-            Eq(Global.group_size(), Int(2)),
         )
     )
 
@@ -69,7 +132,7 @@ def send_public_msg():
         # set index key
         App.localPut(Txn.sender(), INDEX_KEY, next_lstate_index.load()),
         # increment msg count
-        inc_msg_count(Txn.sender()),
+        inc_pub_msg_count(Txn.sender()),
         # write message
         App.localPut(Txn.sender(), next_lstate_index.load(), trim_string(Txn.note(), MAX_LSTATE_MSG_SIZE)),
     )
@@ -95,7 +158,6 @@ def send_personal_msg():
                 ),
             ),
         ),
-        (msgcount := ScratchVar(TealType.bytes)).store(App.localGet(Txn.sender(), MSG_COUNT)),
         # this ranges from 0 to MAX_USER_BOX_SLOTS
         (next_lstate_index := ScratchVar(TealType.bytes)).store(Itob(
             (Btoi(load_idx_from_lstate(Txn.accounts[1])) + Int(1)) % MAX_USER_BOX_SLOTS
@@ -103,9 +165,9 @@ def send_personal_msg():
         # update index key in receiver's local state
         App.localPut(Txn.accounts[1], INDEX_KEY, next_lstate_index.load()),
         # increase 'sent' msg count of dapp
-        inc_msg_count(Txn.sender()),
+        inc_pvt_msg_count(Txn.sender()),
         # increase 'received' msg count of rcvr
-        inc_msg_count(Txn.accounts[1]),
+        inc_pvt_msg_count(Txn.accounts[1]),
         (data := ScratchVar(TealType.bytes)).store(
             Concat(
                 Itob(Global.latest_timestamp()),
