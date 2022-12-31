@@ -2,7 +2,7 @@ from algosdk import account
 from algosdk.future import transaction
 from algosdk.v2client import algod
 
-from client.lib.util import read_global_state, DAPP_NAME, APP_ID, generate_notiboy_algorand_keypair, get_algod_client, \
+from client.lib.util import generate_creator_algorand_keypair, generate_notiboy_algorand_keypair, get_algod_client, \
     read_global_state_key, print_logs, generate_noop_txns, get_signed_grp_txn, read_box
 from client.lib.constants import *
 
@@ -25,7 +25,8 @@ def call_app(client, private_key, index, box_name, app_args, account_args, forei
     ]
 
     # create unsigned transaction
-    txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, foreign_apps=foreign_apps)
+    txn1 = transaction.ApplicationNoOpTxn(sender, params, index, app_args, foreign_apps=foreign_apps,
+                                          accounts=account_args)
     noop_txns = generate_noop_txns(num_noops, sender, params, index, boxes=boxes, foreign_apps=[])
 
     signed_group = get_signed_grp_txn(txn1,
@@ -47,7 +48,8 @@ def call_app(client, private_key, index, box_name, app_args, account_args, forei
 
 
 def call_verify(value):
-    pvt_key, address = generate_notiboy_algorand_keypair(fname="notiboy-secret.txt")
+    pvt_key, address = generate_notiboy_algorand_keypair()
+    _, creator_address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
     num_noops = 4
     dapp_name = DAPP_NAME
@@ -59,7 +61,9 @@ def call_verify(value):
     foreign_apps = [
         CREATOR_APP_ID
     ]
-    acct_args = []
+    acct_args = [
+        creator_address
+    ]
 
     nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
     app_args.append(

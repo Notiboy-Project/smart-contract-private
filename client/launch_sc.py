@@ -209,7 +209,7 @@ def update_app(client, private_key, approval_program, clear_program, app_id):
 
 
 def launch_app(update, bootstrap, reset):
-    pvt_key, address = generate_notiboy_algorand_keypair(fname="notiboy-secret.txt")
+    pvt_key, address = generate_notiboy_algorand_keypair()
     algod_client = get_algod_client(address)
 
     # declare application state storage (immutable)

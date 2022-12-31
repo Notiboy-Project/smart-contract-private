@@ -249,21 +249,24 @@ def generate_creds(overwrite, fname):
     return private_key, address
 
 
-def generate_user_algorand_keypair(fname, overwrite=False):
+def generate_user_algorand_keypair(overwrite=False):
+    fname = "user-secret.txt"
     if RUNNING_MODE == "sandbox":
         return get_sandbox_creds("user")
 
     return generate_creds(overwrite, fname)
 
 
-def generate_creator_algorand_keypair(fname, overwrite=False):
+def generate_creator_algorand_keypair(overwrite=False):
+    fname = "creator-secret.txt"
     if RUNNING_MODE == "sandbox":
         return get_sandbox_creds("creator")
 
     return generate_creds(overwrite, fname)
 
 
-def generate_notiboy_algorand_keypair(fname, overwrite=False):
+def generate_notiboy_algorand_keypair(overwrite=False):
+    fname = "notiboy-secret.txt"
     if RUNNING_MODE == "sandbox":
         return get_sandbox_creds("notiboy")
 

@@ -10,7 +10,7 @@ from creator_sc import clear_state_program, approval_program
 
 
 def create_creator_app():
-    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    pvt_key, address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
 
     # declare application state storage (immutable)
@@ -48,7 +48,7 @@ def create_creator_app():
 
 
 def creator_optin_out():
-    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    pvt_key, address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
 
     # create test.teal with following
@@ -101,7 +101,7 @@ def creator_optin_out():
 
 def creator_optin():
     print("\n*************CREATOR OPT-IN START*************")
-    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    pvt_key, address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
 
     # create test.teal with following
@@ -133,7 +133,7 @@ def creator_optin():
 
 def creator_optout():
     print("\n*************CREATOR OPT-OUT START*************")
-    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    pvt_key, address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
 
     # create test.teal with following

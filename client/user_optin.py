@@ -16,7 +16,7 @@ def user_opt_in_to_creator_app():
     print("\n*************USER OPT-IN TO CREATOR START*************")
     app_id = CREATOR_APP_ID
     # declare sender
-    private_key, sender = generate_user_algorand_keypair(fname="user-secret.txt")
+    private_key, sender = generate_user_algorand_keypair()
     client = get_algod_client(sender)
     print("OptIn from account: ", sender)
 
@@ -43,7 +43,7 @@ def user_opt_out_from_creator_app():
     print("\n*************USER OPT-OUT FROM CREATOR START*************")
     app_id = CREATOR_APP_ID
     # declare sender
-    private_key, sender = generate_user_algorand_keypair(fname="user-secret.txt")
+    private_key, sender = generate_user_algorand_keypair()
     client = get_algod_client(sender)
     print("OptIn from account: ", sender)
 
@@ -67,7 +67,7 @@ def user_opt_out_from_creator_app():
 
 
 def user_optin_out():
-    pvt_key, address = generate_user_algorand_keypair(fname="user-secret.txt")
+    pvt_key, address = generate_user_algorand_keypair()
     algod_client = get_algod_client(address)
     # 32B public key of user
     box_name = encoding.decode_address(address)
@@ -109,7 +109,7 @@ def user_optin_out():
 
 def user_optin():
     print("\n*************USER OPT-IN START*************")
-    pvt_key, address = generate_user_algorand_keypair(fname="user-secret.txt")
+    pvt_key, address = generate_user_algorand_keypair()
     algod_client = get_algod_client(address)
     # 32B public key of user
     box_name = encoding.decode_address(address)
@@ -132,7 +132,7 @@ def user_optin():
 
 def user_optout():
     print("\n*************USER OPT-OUT START*************")
-    pvt_key, address = generate_user_algorand_keypair(fname="user-secret.txt")
+    pvt_key, address = generate_user_algorand_keypair()
     algod_client = get_algod_client(address)
     # 32B public key of user
     box_name = encoding.decode_address(address)

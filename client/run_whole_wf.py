@@ -28,11 +28,11 @@ def optout():
 
 def generate_accounts():
     overwrite = False
-    _, addr = generate_notiboy_algorand_keypair("notiboy-secret.txt", overwrite)
+    _, addr = generate_notiboy_algorand_keypair(overwrite)
     get_algod_client(addr)
-    _, addr = generate_user_algorand_keypair("user-secret.txt", overwrite)
+    _, addr = generate_user_algorand_keypair(overwrite)
     get_algod_client(addr)
-    _, addr = generate_creator_algorand_keypair("creator-secret.txt", overwrite)
+    _, addr = generate_creator_algorand_keypair(overwrite)
     get_algod_client(addr)
 
 

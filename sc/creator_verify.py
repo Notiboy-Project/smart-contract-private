@@ -3,6 +3,7 @@ from sc.util import *
 '''
 app_args: verify dapp_name index_position
 apps: app_id
+acct args: <app_id creator>
 '''
 
 
@@ -34,6 +35,7 @@ def is_channel_valid_for_verification():
 '''
 app_args: verify dapp_name index_position
 apps: app_id
+acct args: <app_id creator>
 '''
 
 
@@ -50,6 +52,8 @@ def set_verify_bit(value):
                 value
             )
         ),
+        # update local state
+        App.localPut(Txn.accounts[1], WHOAMI, msg.load()),
         write_to_box(NOTIBOY_BOX, Txn.application_args[2], msg.load(), MAX_MAIN_BOX_MSG_SIZE, Int(1)),
         Approve()
     ])

@@ -905,6 +905,10 @@ concat
 load 40
 concat
 store 42
+txna Accounts 1
+byte "whoami"
+load 42
+app_local_put
 byte "notiboy"
 txna ApplicationArgs 2
 load 42

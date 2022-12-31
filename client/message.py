@@ -3,7 +3,7 @@ from algosdk.future import transaction
 from algosdk import encoding
 
 from client.lib.util import read_local_state, debug, generate_creator_algorand_keypair, \
-    get_algod_client, generate_noop_txns, read_box, \
+    get_algod_client, generate_noop_txns, read_box, generate_user_algorand_keypair, \
     get_signed_grp_txn, read_global_state_key, read_user_box, print_logs, get_sandbox_creds
 from client.lib.constants import *
 
@@ -47,7 +47,7 @@ def send(client, private_key, index, msg, app_args, foreign_apps, acct_args, num
 
 def send_public_notification():
     print("\n*************PUBLIC MSG START*************")
-    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    pvt_key, address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
 
     for idx in range(1, 2):
@@ -72,15 +72,10 @@ def send_public_notification():
 
 def send_personal_notification():
     print("\n*************PERSONAL NOTIFICATION START*************")
-    pvt_key, address = generate_creator_algorand_keypair(fname="creator-secret.txt")
+    pvt_key, address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
 
-    if RUNNING_MODE == "sandbox":
-        _, receiver = get_sandbox_creds("user")
-    else:
-        with open("user-secret.txt", "r") as f:
-            lns = f.readlines()
-            receiver = lns[0].rstrip('\n')
+    _, receiver = generate_user_algorand_keypair()
 
     box_name = encoding.decode_address(receiver)
     for idx in range(1, 2):
