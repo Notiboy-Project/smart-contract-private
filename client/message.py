@@ -79,7 +79,7 @@ def send_personal_notification():
 
     box_name = encoding.decode_address(receiver)
     for idx in range(1, 2):
-        num_noops = 1
+        num_noops = 0
         dapp_name = 'dapp' + str(idx)
         app_args = [
             str.encode("pvt_notify"),

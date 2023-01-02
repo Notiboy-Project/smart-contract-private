@@ -67,10 +67,9 @@ def is_pay_required():
 @Subroutine(TealType.uint64)
 def is_valid_private_notification():
     return Seq(
-        validate_noops(Int(0), Int(1)),
-        validate_rekeys(Int(0), Int(1)),
+        validate_rekeys(Int(0), Int(0)),
         And(
-            Eq(Global.group_size(), Int(2)),
+            Eq(Global.group_size(), Int(1)),
             # rcvr opted in?
             App.optedIn(Txn.accounts[1], APP_ID),
             # rcvr opted in to creator's app?

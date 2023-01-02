@@ -203,7 +203,7 @@ byte "testnet"
 byte "sandbox"
 ==
 bnz notiboyscaddress_0_l2
-addr PMJ44TV52KSPIP6RMTPCEPXTFWKGCNQ2YDTYXQYDXU2OG7CMHZXEAN4W2E
+addr 4LAT7PGGPCCF7MIZVV5BUGX3GCEQZHNDA7BIBXYO3G7PJBR6R2AAW5TSVI
 b notiboyscaddress_0_l3
 notiboyscaddress_0_l2:
 addr QUTNHJKEN7T7FZRMPMPA66B6Q3F3IIR2NM6MDAUHBETAPZXOWKYWWNVBTE
@@ -946,13 +946,10 @@ retsub
 // is_valid_private_notification
 isvalidprivatenotification_32:
 int 0
-int 1
-callsub validatenoops_9
 int 0
-int 1
 callsub validaterekeys_8
 global GroupSize
-int 2
+int 1
 ==
 txna Accounts 1
 global CurrentApplicationID
