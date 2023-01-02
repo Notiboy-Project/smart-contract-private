@@ -94,11 +94,6 @@ def send_personal_notification():
             receiver
         ]
 
-        nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
-        app_args.append(
-            # passing index to preventing for loop in SC in order to verify if creator is present in box slot
-            nxt_idx.to_bytes(8, 'big')
-        )
         msg = "Hi, sending a very very very long personal notification numbered. DM size is 160 chars. Tweets are 280 " \
               "long. We believe 280 is a good size for notifications. Therefore, this particular notification will " \
               "be trimmed to 280 characters. Anything after this sentence would not be seen. xxxxxxxx"

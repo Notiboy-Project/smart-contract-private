@@ -78,8 +78,8 @@ def is_valid_private_notification():
             App.optedIn(Txn.sender(), APP_ID),
             # is rcvr address passed?
             Eq(Txn.accounts.length(), Int(1)),
-            # "pvt_notify" dapp_name index_position
-            Eq(Txn.application_args.length(), Int(3)),
+            # "pvt_notify" dapp_name
+            Eq(Txn.application_args.length(), Int(2)),
             # creator's channel id passed?
             Eq(Txn.applications.length(), Int(1)),
         )
