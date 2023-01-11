@@ -132,6 +132,8 @@ def send_public_msg():
         App.localPut(Txn.sender(), INDEX_KEY, next_lstate_index.load()),
         # increment msg count
         inc_pub_msg_count(Txn.sender()),
+        # increment global msg count
+        inc_global_msg_count(),
         # write message
         App.localPut(Txn.sender(), next_lstate_index.load(), trim_string(Txn.note(), MAX_LSTATE_MSG_SIZE)),
     )
@@ -167,6 +169,8 @@ def send_personal_msg():
         inc_pvt_msg_count(Txn.sender()),
         # increase 'received' msg count of rcvr
         inc_pvt_msg_count(Txn.accounts[1]),
+        # increment global msg count
+        inc_global_msg_count(),
         (data := ScratchVar(TealType.bytes)).store(
             Concat(
                 Itob(Global.latest_timestamp()),

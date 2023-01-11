@@ -76,7 +76,7 @@ def format_global_state(state):
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if formatted_key in ["index"]:
+            if formatted_key in ["index", "msgcount"]:
                 byte_value = base64.b64decode(value['bytes'])
                 formatted_value = int.from_bytes(byte_value, "big")
             else:

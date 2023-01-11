@@ -10,8 +10,8 @@ from launch_sc import launch_app
 def optin():
     creator_optin()
     verify_channel()
-    user_optin()
-    user_opt_in_to_creator_app()
+    # user_optin()
+    # user_opt_in_to_creator_app()
 
 
 def msg():
@@ -20,10 +20,10 @@ def msg():
 
 
 def optout():
-    user_opt_out_from_creator_app()
-    user_optout()
+    # user_opt_out_from_creator_app()
+    # user_optout()
     unverify_channel()
-    creator_optout()
+    # creator_optout()
 
 
 def generate_accounts():
@@ -49,8 +49,8 @@ def main():
     launch_app(update=True, bootstrap=False, reset=False)
     # bootstrap()
     optin()
-    msg()
-    optout()
+    # msg()
+    # optout()
 
 
 if __name__ == '__main__':

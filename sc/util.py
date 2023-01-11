@@ -192,7 +192,26 @@ def inc_pvt_msg_count(addr):
                              )
                          ), DELIMITER, pub.load()
                      )
-                     )
+                     ),
+    ])
+
+
+@Subroutine(TealType.none)
+def inc_global_msg_count():
+    return Seq([
+        count_val := App.globalGetEx(APP_ID, MSG_COUNT),
+        If(Not(count_val.hasValue()))
+        .Then(App.globalPut(MSG_COUNT, Itob(Int(1))))
+        .Else(
+            App.globalPut(MSG_COUNT,
+                          Itob(
+                              Add(
+                                  Btoi(count_val.value()),
+                                  Int(1)
+                              )
+                          )
+                          )
+        )
     ])
 
 
@@ -220,7 +239,7 @@ def inc_pub_msg_count(addr):
                              )
                          )
                      )
-                     )
+                     ),
     ])
 
 
