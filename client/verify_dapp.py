@@ -53,23 +53,23 @@ def call_verify(value):
     algod_client = get_algod_client(address)
     num_noops = 4
     dapp_name = DAPP_NAME
-    dapp_name = "Notiboy"
+    # dapp_name = "Notiboy"
     app_args = [
         str.encode(value),
         str.encode(dapp_name),
     ]
 
     foreign_apps = [
-        153267905
-        # CREATOR_APP_ID
+        # 153267905
+        CREATOR_APP_ID
     ]
     acct_args = [
-        "NOTILXUG675YH2JBO3NP5BXADEWRWHPOM5VBIWE6Z3AQU3QKGKMEPNZJRE"
-        # creator_address
+        # "NOTILXUG675YH2JBO3NP5BXADEWRWHPOM5VBIWE6Z3AQU3QKGKMEPNZJRE"
+        creator_address
     ]
 
     nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
-    nxt_idx = 16
+    # nxt_idx = 16
     app_args.append(
         # passing index to preventing for loop in SC in order to set verify bit in main box slot
         nxt_idx.to_bytes(8, 'big')

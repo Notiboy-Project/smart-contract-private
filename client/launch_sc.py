@@ -251,12 +251,12 @@ def launch_app(update, bootstrap, reset):
     else:
         app_id = APP_ID
 
+    if update:
+        update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
     if reset:
         dev_test(algod_client, pvt_key, app_id)
     if bootstrap:
         bootstrap_app(algod_client, pvt_key, app_id)
-    if update:
-        update_app(algod_client, pvt_key, approval_program_compiled, clear_state_program_compiled, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
     read_box(algod_client, app_id, "notiboy".encode('utf-8'))

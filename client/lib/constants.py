@@ -14,7 +14,7 @@ ASA_ASSET = 10458941
 SANDBOX = 'sandbox'
 TESTNET = 'testnet'
 # sandbox, testnet, mainnet
-RUNNING_MODE = TESTNET
+RUNNING_MODE = SANDBOX
 
 if RUNNING_MODE == "testnet":
     APP_ID = 151255921

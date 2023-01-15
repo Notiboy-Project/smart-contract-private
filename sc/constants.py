@@ -4,7 +4,7 @@ TESTNET = Bytes('testnet')
 SANDBOX = Bytes('sandbox')
 MAINNET = Bytes('mainnet')
 # sandbox, testnet, mainnet
-RUNNING_MODE = TESTNET
+RUNNING_MODE = SANDBOX
 
 TYPE_DAPP = Bytes("dapp")
 TYPE_USER = Bytes("user")

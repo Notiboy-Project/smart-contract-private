@@ -76,9 +76,12 @@ def format_global_state(state):
         if value['type'] == 1:
             # byte string
             byte_value = base64.b64decode(value['bytes'])
-            if formatted_key in ["index", "msgcount"]:
+            if formatted_key in ["index"]:
                 byte_value = base64.b64decode(value['bytes'])
                 formatted_value = int.from_bytes(byte_value, "big")
+            elif formatted_key == 'msgcount':
+                formatted_value = 'pvt: ' + str(int.from_bytes(byte_value[:8], "big")) + ', ' + 'pub: ' + str(
+                    int.from_bytes(byte_value[9:], "big"))
             else:
                 try:
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + str(int.from_bytes(
@@ -298,3 +301,30 @@ def teal_debug(client, group_txn):
     filename = "dryrun.msgp"
     with open(filename, "wb") as f:
         f.write(base64.b64decode(encoding.msgpack_encode(drr)))
+
+
+def print_creator_details():
+    pvt_key, address = generate_creator_algorand_keypair()
+    algod_client = get_algod_client(address)
+    print("\n************CREATOR LOCAL STATE************")
+    read_local_state(algod_client, address, APP_ID)
+
+
+def print_notiboy_details():
+    pvt_key, address = generate_notiboy_algorand_keypair()
+    algod_client = get_algod_client(address)
+    print("\n************NOTIBOY BOX************")
+    read_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
+    print("\n************NOTIBOY GLOBAL STATE************")
+    print(read_global_state(algod_client, APP_ID))
+
+
+def print_user_details():
+    pvt_key, address = generate_user_algorand_keypair()
+    algod_client = get_algod_client(address)
+    # 32B public key of user
+    box_name = encoding.decode_address(address)
+    print("\n************USER LOCAL STATE************")
+    read_local_state(algod_client, address, APP_ID)
+    print("\n************USER BOX************")
+    read_user_box(algod_client, APP_ID, box_name)

@@ -52,15 +52,19 @@ bootstrap = Seq([
         )
     ),
     App.globalPut(INDEX_KEY, Itob(Int(0))),
-    App.globalPut(MSG_COUNT, Itob(Int(0))),
+    App.globalPut(MSG_COUNT, Concat(Itob(Int(0)), DELIMITER, Itob(Int(0)))),
     # create box
-    Assert(App.box_create(NOTIBOY_BOX, MAX_MAIN_BOX_SIZE)),
+    Assert(Le(App.box_create(NOTIBOY_BOX, MAX_MAIN_BOX_SIZE), Int(1))),
     # setting zero value
     For((start_idx := ScratchVar(TealType.uint64)).store(Int(0)),
-        start_idx.load() < Int(32),
+        And(
+            start_idx.load() < Int(32),
+            Mul(start_idx.load(), Int(1024)) < MAX_MAIN_BOX_SIZE
+        ),
         start_idx.store(start_idx.load() + Int(1))
         ).Do(
-        App.box_replace(NOTIBOY_BOX, Mul(start_idx.load(), Int(1024)), Extract(ERASE_BYTES, Int(0), Int(1024))),
+        App.box_replace(NOTIBOY_BOX, Mul(start_idx.load(), Int(1024)),
+                        Extract(ERASE_BYTES, Int(0), Int(1024))),
     ),
     Approve()
 ])

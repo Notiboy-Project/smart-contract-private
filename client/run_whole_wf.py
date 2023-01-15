@@ -3,15 +3,21 @@ from message import send_personal_notification, send_public_notification
 from user_optin import user_optin, user_optout, user_opt_in_to_creator_app, user_opt_out_from_creator_app
 from verify_dapp import verify_channel, unverify_channel
 from lib.util import generate_notiboy_algorand_keypair, generate_user_algorand_keypair, \
-    generate_creator_algorand_keypair, get_algod_client
+    generate_creator_algorand_keypair, get_algod_client, print_creator_details, print_user_details, \
+    print_notiboy_details
 from launch_sc import launch_app
+
+
+def print_data():
+    # print_creator_details()
+    # print_user_details()
+    print_notiboy_details()
 
 
 def optin():
     creator_optin()
-    verify_channel()
-    # user_optin()
-    # user_opt_in_to_creator_app()
+    user_optin()
+    user_opt_in_to_creator_app()
 
 
 def msg():
@@ -20,10 +26,9 @@ def msg():
 
 
 def optout():
-    # user_opt_out_from_creator_app()
-    # user_optout()
-    unverify_channel()
-    # creator_optout()
+    user_opt_out_from_creator_app()
+    user_optout()
+    creator_optout()
 
 
 def generate_accounts():
@@ -49,8 +54,11 @@ def main():
     launch_app(update=True, bootstrap=False, reset=False)
     # bootstrap()
     optin()
-    # msg()
-    # optout()
+    verify_channel()
+    msg()
+    unverify_channel()
+    optout()
+    # print_data()
 
 
 if __name__ == '__main__':
