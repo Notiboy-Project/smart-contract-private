@@ -51,14 +51,14 @@ def bootstrap():
 
 def main():
     # Update constants.py - APP_ID
-    launch_app(update=True, bootstrap=False, reset=False)
+    # launch_app(update=True, bootstrap=False, reset=False)
     # bootstrap()
-    optin()
+    # optin()
     verify_channel()
-    msg()
-    unverify_channel()
-    optout()
-    # print_data()
+    # msg()
+    # unverify_channel()
+    # optout()
+    print_data()
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ from algosdk.future import transaction
 from algosdk.v2client import algod
 
 from client.lib.util import generate_creator_algorand_keypair, generate_notiboy_algorand_keypair, get_algod_client, \
-    read_global_state_key, print_logs, generate_noop_txns, get_signed_grp_txn, read_box
+    read_global_state_key, print_logs, generate_noop_txns, get_signed_grp_txn, print_main_box, get_val_main_box, debug
 from client.lib.constants import *
 
 
@@ -52,27 +52,29 @@ def call_verify(value):
     _, creator_address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
     num_noops = 4
-    dapp_name = DAPP_NAME
-    # dapp_name = "Notiboy"
+    # dapp_name = DAPP_NAME
+    dapp_name = "Niftgen"
     app_args = [
         str.encode(value),
         str.encode(dapp_name),
     ]
 
+    val = get_val_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'), dapp_name)
+    idx = val[0]
+    entry = val[1]
+
+    app_id = entry.split(":")[1]
+    creator_address = algod_client.application_info(app_id)['params']['creator']
     foreign_apps = [
-        # 153267905
-        CREATOR_APP_ID
+        int(app_id)
     ]
     acct_args = [
-        # "NOTILXUG675YH2JBO3NP5BXADEWRWHPOM5VBIWE6Z3AQU3QKGKMEPNZJRE"
         creator_address
     ]
 
-    nxt_idx = read_global_state_key(algod_client, APP_ID, "index")
-    # nxt_idx = 16
     app_args.append(
         # passing index to preventing for loop in SC in order to set verify bit in main box slot
-        nxt_idx.to_bytes(8, 'big')
+        idx.to_bytes(8, 'big')
     )
 
     try:
@@ -80,7 +82,7 @@ def call_verify(value):
     except Exception as err:
         print("app call failed", err)
 
-    read_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
+    print_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
 
 
 def verify_channel():

@@ -4,7 +4,7 @@ from algosdk import encoding
 from client.lib.util import read_local_state, read_global_state, get_signed_grp_txn, APP_ID, \
     generate_user_algorand_keypair, \
     get_algod_client, \
-    debug, read_box, read_user_box
+    debug, print_main_box, read_user_box
 from algosdk.future import transaction
 
 from client.message import send_personal_notification

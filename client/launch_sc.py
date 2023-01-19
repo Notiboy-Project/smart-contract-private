@@ -6,7 +6,7 @@ from algosdk import account, mnemonic
 import base64
 
 from sc.main_sc import approval_program, clear_state_program
-from client.lib.util import read_global_state, read_box, generate_notiboy_algorand_keypair, get_algod_client, \
+from client.lib.util import read_global_state, print_main_box, generate_notiboy_algorand_keypair, get_algod_client, \
     compile_program
 from client.lib.constants import *
 
@@ -259,4 +259,4 @@ def launch_app(update, bootstrap, reset):
         bootstrap_app(algod_client, pvt_key, app_id)
 
     print("Global state:", read_global_state(algod_client, app_id))
-    read_box(algod_client, app_id, "notiboy".encode('utf-8'))
+    print_main_box(algod_client, app_id, "notiboy".encode('utf-8'))

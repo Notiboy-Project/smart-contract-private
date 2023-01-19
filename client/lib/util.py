@@ -159,8 +159,7 @@ def parse_main_box_slot(chunk):
     return new_l
 
 
-def read_box(client, app_id, box_name):
-    print("MAIN BOX STORAGE")
+def read_main_box(client, app_id, box_name):
     try:
         data = client.application_box_by_name(app_id, box_name)
     except Exception as err:
@@ -171,14 +170,31 @@ def read_box(client, app_id, box_name):
     value = base64.b64decode(value)
     chunks = [value[i:i + MAX_MAIN_BOX_MSG_SIZE] for i in range(0, len(value), MAX_MAIN_BOX_MSG_SIZE)]
 
+    d = dict()
     for idx, chunk in enumerate(chunks):
         if is_zero_value(chunk):
             continue
         new_l = parse_main_box_slot(chunk)
 
         to_print = ":".join(new_l)
-        if to_print.strip() != '':
-            print("value at index {} is {}".format(idx, to_print))
+        d[idx] = to_print
+
+    return d
+
+
+def get_val_main_box(client, app_id, box_name, key):
+    for k, v in read_main_box(client, app_id, box_name).items():
+        if key == v[:len(key)]:
+            return [k, v]
+
+    return []
+
+
+def print_main_box(client, app_id, box_name):
+    print("MAIN BOX STORAGE")
+
+    for k, v in read_main_box(client, app_id, box_name).items():
+        print("value at index {} is {}".format(k, v))
 
 
 def generate_noop_txns(num, sender, params, index, boxes, foreign_apps):
@@ -314,7 +330,7 @@ def print_notiboy_details():
     pvt_key, address = generate_notiboy_algorand_keypair()
     algod_client = get_algod_client(address)
     print("\n************NOTIBOY BOX************")
-    read_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
+    print_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
     print("\n************NOTIBOY GLOBAL STATE************")
     print(read_global_state(algod_client, APP_ID))
 

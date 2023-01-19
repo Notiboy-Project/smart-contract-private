@@ -3,7 +3,7 @@ from algosdk.future import transaction
 from algosdk import encoding
 
 from client.lib.util import read_local_state, debug, generate_creator_algorand_keypair, \
-    get_algod_client, generate_noop_txns, read_box, generate_user_algorand_keypair, \
+    get_algod_client, generate_noop_txns, print_main_box, generate_user_algorand_keypair, \
     get_signed_grp_txn, read_global_state_key, read_user_box, print_logs, get_sandbox_creds
 from client.lib.constants import *
 
