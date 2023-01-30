@@ -1,7 +1,7 @@
 from algosdk.future import transaction
 from algosdk.v2client import algod
 from algosdk.dryrun_results import DryrunResponse, StackPrinterConfig
-from algosdk import account, mnemonic
+from algosdk import account, logic
 
 import base64
 
@@ -168,6 +168,8 @@ def create_app(client, private_key, approval_program, clear_program, global_sche
     transaction_response = client.pending_transaction_info(tx_id)
     app_id = transaction_response['application-index']
     print("Created new app-id:", app_id)
+    app_addr = logic.get_application_address(APP_ID)
+    print("Application address:", app_addr)
 
     return app_id
 
@@ -239,7 +241,7 @@ def launch_app(update, bootstrap, reset):
     clear_state_program_compiled = compile_program(algod_client, clear_state_program_teal)
 
     print("--------------------------------------------")
-    print("Deploying Counter application......")
+    print("Deploying Countermnemonic application......")
 
     # create new application
     if not update:

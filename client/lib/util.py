@@ -324,7 +324,6 @@ def get_algod_client(my_address):
 
 
 def teal_debug(client, group_txn):
-    # debug()
     drr = transaction.create_dryrun(client, group_txn)
 
     filename = "dryrun.msgp"

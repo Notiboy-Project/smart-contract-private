@@ -219,12 +219,19 @@ notiboyscaddress_0:
 byte "mainnet"
 byte "sandbox"
 ==
-bnz notiboyscaddress_0_l2
+bnz notiboyscaddress_0_l4
+byte "mainnet"
+byte "mainnet"
+==
+bnz notiboyscaddress_0_l3
 addr 4LAT7PGGPCCF7MIZVV5BUGX3GCEQZHNDA7BIBXYO3G7PJBR6R2AAW5TSVI
-b notiboyscaddress_0_l3
-notiboyscaddress_0_l2:
-addr QUTNHJKEN7T7FZRMPMPA66B6Q3F3IIR2NM6MDAUHBETAPZXOWKYWWNVBTE
+b notiboyscaddress_0_l5
 notiboyscaddress_0_l3:
+addr KGNCP3PMGIJUAMD7NO5G3SSTYOO74HGYAS72EE34YTXYLRN3ZVQBYXZA3U
+b notiboyscaddress_0_l5
+notiboyscaddress_0_l4:
+addr QUTNHJKEN7T7FZRMPMPA66B6Q3F3IIR2NM6MDAUHBETAPZXOWKYWWNVBTE
+notiboyscaddress_0_l5:
 retsub
 
 // notiboy_address
@@ -232,12 +239,19 @@ notiboyaddress_1:
 byte "mainnet"
 byte "sandbox"
 ==
-bnz notiboyaddress_1_l2
+bnz notiboyaddress_1_l4
+byte "mainnet"
+byte "mainnet"
+==
+bnz notiboyaddress_1_l3
 addr PMJ44TV52KSPIP6RMTPCEPXTFWKGCNQ2YDTYXQYDXU2OG7CMHZXEAN4W2E
-b notiboyaddress_1_l3
-notiboyaddress_1_l2:
-addr EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE
+b notiboyaddress_1_l5
 notiboyaddress_1_l3:
+addr PLQ37KYHYLLX757ZRACQCELRAWN5JFU6VJZRYVA2LK5NDJXERE5DL3TCU4
+b notiboyaddress_1_l5
+notiboyaddress_1_l4:
+addr EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE
+notiboyaddress_1_l5:
 retsub
 
 // dapp_optin_fee

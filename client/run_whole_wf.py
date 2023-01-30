@@ -51,8 +51,8 @@ def bootstrap():
 
 def main():
     # Update constants.py - APP_ID
-    launch_app(update=False, bootstrap=False, reset=False)
-    bootstrap()
+    launch_app(update=True, bootstrap=True, reset=False)
+    # bootstrap()
     # optin()
     # verify_channel()
     # msg()
