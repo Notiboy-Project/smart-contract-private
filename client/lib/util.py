@@ -1,4 +1,5 @@
 import base64
+import os
 import sys
 from datetime import datetime
 
@@ -272,6 +273,8 @@ def generate_user_algorand_keypair(overwrite=False):
     fname = "user-secret.txt"
     if RUNNING_MODE == SANDBOX:
         return get_sandbox_creds("user")
+    elif RUNNING_MODE == MAINNET:
+        return mnemonic.to_private_key(USER_MNEMONIC), USER_ADDR
 
     return generate_creds(overwrite, fname)
 
@@ -280,6 +283,8 @@ def generate_creator_algorand_keypair(overwrite=False):
     fname = "creator-secret.txt"
     if RUNNING_MODE == SANDBOX:
         return get_sandbox_creds("creator")
+    elif RUNNING_MODE == MAINNET:
+        return mnemonic.to_private_key(CREATOR_ADDR), CREATOR_ADDR
 
     return generate_creds(overwrite, fname)
 
@@ -288,6 +293,8 @@ def generate_notiboy_algorand_keypair(overwrite=False):
     fname = "notiboy-secret.txt"
     if RUNNING_MODE == SANDBOX:
         return get_sandbox_creds("notiboy")
+    elif RUNNING_MODE == MAINNET:
+        return mnemonic.to_private_key(NOTIBOY_MNEMONIC), NOTIBOY_ADDR
 
     return generate_creds(overwrite, fname)
 
@@ -302,12 +309,16 @@ def get_algod_client(my_address):
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
-    if RUNNING_MODE in [TESTNET, MAINNET]:
+
+    try:
+        # valid only for creator
         acct_asset_info = algod_client.account_asset_info(my_address, ASA_ASSET)
         assets = acct_asset_info.get('asset-holding').get('amount') / 1000000
         print("Account balance: {} microAlgos, {} USDC\n".format(account_info.get('amount') / 1000000, assets))
-    elif RUNNING_MODE == SANDBOX:
-        print("Account balance: {} microAlgos\n".format(account_info.get('amount') / 1000000))
+    except:
+        pass
+
+    print("Account balance: {} microAlgos\n".format(account_info.get('amount') / 1000000))
 
     return algod_client
 
