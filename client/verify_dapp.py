@@ -52,8 +52,8 @@ def call_verify(value):
     _, creator_address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
     num_noops = 4
-    # dapp_name = DAPP_NAME
-    dapp_name = "Niftgen"
+    dapp_name = DAPP_NAME
+    # dapp_name = "Niftgen"
     app_args = [
         str.encode(value),
         str.encode(dapp_name),

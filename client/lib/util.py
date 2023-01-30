@@ -270,7 +270,7 @@ def generate_creds(overwrite, fname):
 
 def generate_user_algorand_keypair(overwrite=False):
     fname = "user-secret.txt"
-    if RUNNING_MODE == "sandbox":
+    if RUNNING_MODE == SANDBOX:
         return get_sandbox_creds("user")
 
     return generate_creds(overwrite, fname)
@@ -278,7 +278,7 @@ def generate_user_algorand_keypair(overwrite=False):
 
 def generate_creator_algorand_keypair(overwrite=False):
     fname = "creator-secret.txt"
-    if RUNNING_MODE == "sandbox":
+    if RUNNING_MODE == SANDBOX:
         return get_sandbox_creds("creator")
 
     return generate_creds(overwrite, fname)
@@ -286,25 +286,27 @@ def generate_creator_algorand_keypair(overwrite=False):
 
 def generate_notiboy_algorand_keypair(overwrite=False):
     fname = "notiboy-secret.txt"
-    if RUNNING_MODE == "sandbox":
+    if RUNNING_MODE == SANDBOX:
         return get_sandbox_creds("notiboy")
 
     return generate_creds(overwrite, fname)
 
 
 def get_algod_client(my_address):
-    if RUNNING_MODE == "sandbox":
+    if RUNNING_MODE == SANDBOX:
         algod_address = "http://localhost:4001"
-    elif RUNNING_MODE == "testnet":
+    elif RUNNING_MODE == TESTNET:
         algod_address = "https://node.testnet.algoexplorerapi.io"
+    elif RUNNING_MODE == MAINNET:
+        algod_address = "https://node.algoexplorerapi.io"
     algod_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     algod_client = algod.AlgodClient(algod_token, algod_address)
     account_info = algod_client.account_info(my_address)
-    if RUNNING_MODE == 'testnet':
+    if RUNNING_MODE in [TESTNET, MAINNET]:
         acct_asset_info = algod_client.account_asset_info(my_address, ASA_ASSET)
         assets = acct_asset_info.get('asset-holding').get('amount') / 1000000
         print("Account balance: {} microAlgos, {} USDC\n".format(account_info.get('amount') / 1000000, assets))
-    elif RUNNING_MODE == 'sandbox':
+    elif RUNNING_MODE == SANDBOX:
         print("Account balance: {} microAlgos\n".format(account_info.get('amount') / 1000000))
 
     return algod_client

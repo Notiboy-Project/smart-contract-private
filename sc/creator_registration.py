@@ -135,11 +135,16 @@ def deregister_dapp():
                 Txn.application_args.length() == Int(3),
                 Txn.applications.length() == Int(1),
                 Txn.application_args[0] == TYPE_DAPP,
-                # if app_id belongs to sender
                 app_id_creator.hasValue(),
-                Eq(
-                    app_id_creator.value(),
-                    Txn.sender(),
+                # giving admin or creator the right to deregister a channel
+                Or(
+                    # if app_id belongs to sender
+                    Eq(
+                        app_id_creator.value(),
+                        Txn.sender(),
+                    ),
+                    # if it is admin
+                    is_creator()
                 ),
             ),
         ),

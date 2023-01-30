@@ -216,7 +216,7 @@ return
 
 // notiboy_sc_address
 notiboyscaddress_0:
-byte "sandbox"
+byte "testnet"
 byte "sandbox"
 ==
 bnz notiboyscaddress_0_l2
@@ -229,7 +229,7 @@ retsub
 
 // notiboy_address
 notiboyaddress_1:
-byte "sandbox"
+byte "testnet"
 byte "sandbox"
 ==
 bnz notiboyaddress_1_l2
@@ -242,7 +242,7 @@ retsub
 
 // dapp_optin_fee
 dappoptinfee_2:
-byte "sandbox"
+byte "testnet"
 byte "sandbox"
 ==
 bnz dappoptinfee_2_l2
@@ -255,7 +255,7 @@ retsub
 
 // user_optin_fee
 useroptinfee_3:
-byte "sandbox"
+byte "testnet"
 byte "sandbox"
 ==
 bnz useroptinfee_3_l2
@@ -568,6 +568,11 @@ store 61
 store 60
 load 61
 !
+load 60
+len
+int 17
+<
+||
 bz updateglobalmsgcount_20_l2
 byte "msgcount"
 int 0
@@ -685,7 +690,7 @@ callsub validaterekeys_8
 int 2
 int 5
 callsub validatenoops_9
-byte "sandbox"
+byte "testnet"
 byte "sandbox"
 ==
 bnz isvalidcreatoroptin_25_l2
@@ -741,7 +746,7 @@ txn Sender
 ==
 &&
 assert
-byte "sandbox"
+byte "testnet"
 byte "sandbox"
 ==
 bnz registerdapp_26_l2
@@ -822,6 +827,8 @@ load 32
 load 31
 txn Sender
 ==
+callsub iscreator_5
+||
 &&
 assert
 txna ApplicationArgs 1

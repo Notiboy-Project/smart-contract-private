@@ -5,7 +5,7 @@ int ClearState
 bnz main_l2
 err
 main_l2:
-callsub isvalidbaseoptout_1
+callsub isvalidbaseoptout_2
 assert
 gtxn 0 NumAppArgs
 int 3
@@ -19,14 +19,14 @@ byte "dapp"
 ==
 &&
 bnz main_l4
-callsub isvaliduseroptout_8
+callsub isvaliduseroptout_9
 assert
-callsub deregisteruser_9
+callsub deregisteruser_10
 b main_l5
 main_l4:
-callsub isvalidcreatoroptout_6
+callsub isvalidcreatoroptout_7
 assert
-callsub deregisterdapp_7
+callsub deregisterdapp_8
 main_l5:
 int 1
 return
@@ -51,8 +51,15 @@ load 18
 b==
 retsub
 
+// is_creator
+iscreator_1:
+txn Sender
+global CreatorAddress
+==
+retsub
+
 // is_valid_base_optout
-isvalidbaseoptout_1:
+isvalidbaseoptout_2:
 gtxn 0 TypeEnum
 int appl
 ==
@@ -63,16 +70,16 @@ int CloseOut
 retsub
 
 // validate_rekeys
-validaterekeys_2:
+validaterekeys_3:
 store 1
 store 0
 load 0
 store 2
-validaterekeys_2_l1:
+validaterekeys_3_l1:
 load 2
 load 1
 <=
-bz validaterekeys_2_l3
+bz validaterekeys_3_l3
 load 2
 gtxns RekeyTo
 global ZeroAddress
@@ -82,21 +89,21 @@ load 2
 int 1
 +
 store 2
-b validaterekeys_2_l1
-validaterekeys_2_l3:
+b validaterekeys_3_l1
+validaterekeys_3_l3:
 retsub
 
 // validate_noops
-validatenoops_3:
+validatenoops_4:
 store 4
 store 3
 load 3
 store 5
-validatenoops_3_l1:
+validatenoops_4_l1:
 load 5
 load 4
 <=
-bz validatenoops_3_l3
+bz validatenoops_4_l3
 load 3
 gtxns TypeEnum
 int appl
@@ -111,23 +118,23 @@ load 5
 int 1
 +
 store 5
-b validatenoops_3_l1
-validatenoops_3_l3:
+b validatenoops_4_l1
+validatenoops_4_l3:
 retsub
 
 // sanitize_dapp_name
-sanitizedappname_4:
+sanitizedappname_5:
 store 7
 store 6
 load 6
 load 7
-callsub trimstring_5
+callsub trimstring_6
 store 8
 load 8
 len
 int 10
 <
-bz sanitizedappname_4_l2
+bz sanitizedappname_5_l2
 byte "::::::::::"
 int 0
 int 10
@@ -138,44 +145,44 @@ extract3
 load 8
 concat
 store 8
-sanitizedappname_4_l2:
+sanitizedappname_5_l2:
 load 8
 retsub
 
 // trim_string
-trimstring_5:
+trimstring_6:
 store 10
 store 9
 load 9
 len
 load 10
 >
-bnz trimstring_5_l2
+bnz trimstring_6_l2
 load 9
-b trimstring_5_l3
-trimstring_5_l2:
+b trimstring_6_l3
+trimstring_6_l2:
 load 9
 int 0
 load 10
 extract3
-trimstring_5_l3:
+trimstring_6_l3:
 retsub
 
 // is_valid_creator_optout
-isvalidcreatoroptout_6:
+isvalidcreatoroptout_7:
 int 0
 int 4
-callsub validaterekeys_2
+callsub validaterekeys_3
 int 1
 int 4
-callsub validatenoops_3
+callsub validatenoops_4
 global GroupSize
 int 5
 ==
 retsub
 
 // deregister_dapp
-deregisterdapp_7:
+deregisterdapp_8:
 txna Applications 1
 app_params_get AppCreator
 store 13
@@ -196,11 +203,13 @@ load 13
 load 12
 txn Sender
 ==
+callsub iscreator_1
+||
 &&
 assert
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_4
+callsub sanitizedappname_5
 store 11
 txna ApplicationArgs 2
 btoi
@@ -212,10 +221,10 @@ load 14
 txna Applications 1
 itob
 callsub iscreatoronboarded_0
-bnz deregisterdapp_7_l2
+bnz deregisterdapp_8_l2
 int 0
 return
-deregisterdapp_7_l2:
+deregisterdapp_8_l2:
 byte "notiboy"
 load 14
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -224,17 +233,17 @@ box_replace
 retsub
 
 // is_valid_user_optout
-isvaliduseroptout_8:
+isvaliduseroptout_9:
 int 0
 int 0
-callsub validaterekeys_2
+callsub validaterekeys_3
 global GroupSize
 int 1
 ==
 retsub
 
 // deregister_user
-deregisteruser_9:
+deregisteruser_10:
 gtxn 0 Sender
 box_del
 assert

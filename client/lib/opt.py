@@ -78,21 +78,21 @@ def opt_in(client, private_key, index, box_name, app_args, account_args, foreign
 
     # creator flow
     if len(foreign_apps) != 0:
-        if RUNNING_MODE == 'sandbox':
+        if RUNNING_MODE == SANDBOX:
             # pay 1 algo
             txn1 = transaction.PaymentTxn(sender, params, NOTIBOY_ADDR, 1000000)
             txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_apps=foreign_apps)
-        elif RUNNING_MODE == 'testnet':
+        elif RUNNING_MODE in [TESTNET, MAINNET]:
             # pay 25 USDC
             txn1 = transaction.AssetTransferTxn(sender, params, NOTIBOY_ADDR, 25000000, ASA_ASSET)
             txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, foreign_assets=[ASA_ASSET],
                                                    foreign_apps=foreign_apps)
     else:
         # user flow
-        if RUNNING_MODE == 'sandbox':
+        if RUNNING_MODE == SANDBOX:
             # pay 1 algo
             txn1 = transaction.PaymentTxn(sender, params, logic.get_application_address(APP_ID), 1000000)
-        elif RUNNING_MODE == 'testnet':
+        elif RUNNING_MODE in [TESTNET, MAINNET]:
             # pay 5 algo
             txn1 = transaction.PaymentTxn(sender, params, logic.get_application_address(APP_ID), 5000000)
         txn2 = transaction.ApplicationOptInTxn(sender, params, index, app_args, boxes=boxes)

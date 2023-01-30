@@ -220,7 +220,12 @@ def inc_pub_msg_count(addr):
 def update_global_msg_count(pvt_count, pub_count):
     return Seq([
         count_val := App.globalGetEx(APP_ID, MSG_COUNT),
-        If(Not(count_val.hasValue()))
+        If(
+            Or(
+                Not(count_val.hasValue()),
+                Lt(Len(count_val.value()), Int(17))
+            )
+        )
         .Then(App.globalPut(MSG_COUNT,
                             # pvt count, public count
                             Concat(Itob(Int(0)), DELIMITER, Itob(Int(0))))
