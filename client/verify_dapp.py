@@ -49,11 +49,10 @@ def call_app(client, private_key, index, box_name, app_args, account_args, forei
 
 def call_verify(value):
     pvt_key, address = generate_notiboy_algorand_keypair()
-    _, creator_address = generate_creator_algorand_keypair()
     algod_client = get_algod_client(address)
     num_noops = 4
     dapp_name = DAPP_NAME
-    # dapp_name = "Niftgen"
+    dapp_name = "Notiboy"
     app_args = [
         str.encode(value),
         str.encode(dapp_name),

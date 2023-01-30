@@ -316,9 +316,7 @@ def get_algod_client(my_address):
         assets = acct_asset_info.get('asset-holding').get('amount') / 1000000
         print("Account balance: {} microAlgos, {} USDC\n".format(account_info.get('amount') / 1000000, assets))
     except:
-        pass
-
-    print("Account balance: {} microAlgos\n".format(account_info.get('amount') / 1000000))
+        print("Account balance: {} microAlgos\n".format(account_info.get('amount') / 1000000))
 
     return algod_client
 
