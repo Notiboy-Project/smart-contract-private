@@ -47,12 +47,10 @@ def call_app(client, private_key, index, box_name, app_args, account_args, forei
     print_logs(transaction_response)
 
 
-def call_verify(value):
+def call_verify(value, dapp_name):
     pvt_key, address = generate_notiboy_algorand_keypair()
     algod_client = get_algod_client(address)
     num_noops = 4
-    dapp_name = DAPP_NAME
-    dapp_name = "Notiboy"
     app_args = [
         str.encode(value),
         str.encode(dapp_name),
@@ -84,13 +82,13 @@ def call_verify(value):
     print_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
 
 
-def verify_channel():
+def verify_channel(dapp_name):
     print("\n*************CREATOR VERIFY START*************")
-    call_verify("verify")
+    call_verify("verify", dapp_name)
     print("*************CREATOR VERIFY END*************")
 
 
-def unverify_channel():
+def unverify_channel(dapp_name):
     print("\n*************CREATOR UNVERIFY START*************")
-    call_verify("unverify")
+    call_verify("unverify", dapp_name)
     print("*************CREATOR UNVERIFY END*************")

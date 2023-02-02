@@ -51,10 +51,10 @@ def bootstrap():
 
 def main():
     # Update constants.py - APP_ID
-    launch_app(update=True, bootstrap=True, reset=False)
+    # launch_app(update=True, bootstrap=True, reset=False)
     # bootstrap()
     # optin()
-    # verify_channel()
+    verify_channel("IRL.algo")
     # msg()
     # unverify_channel()
     # optout()
