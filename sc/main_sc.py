@@ -53,6 +53,7 @@ bootstrap = Seq([
     ),
     App.globalPut(INDEX_KEY, Itob(Int(0))),
     App.globalPut(MSG_COUNT, Concat(Itob(Int(0)), DELIMITER, Itob(Int(0)))),
+    App.globalPut(OPTIN_COUNT, Concat(Itob(Int(0)), DELIMITER, Itob(Int(0)))),
     # create box
     Assert(Le(App.box_create(NOTIBOY_BOX, MAX_MAIN_BOX_SIZE), Int(1))),
     # setting zero value

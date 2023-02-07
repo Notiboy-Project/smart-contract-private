@@ -86,6 +86,7 @@ def user_optin():
     except Exception as err:
         print("error opting in, err: {}".format(err))
     read_user_box(algod_client, APP_ID, box_name)
+    print(read_global_state(algod_client, APP_ID))
     print("*************USER OPT-IN DONE*************")
 
 
@@ -110,5 +111,5 @@ def user_optout():
     except Exception as err:
         print("error opting out, err: {}".format(err))
 
-    print("Global state:", read_global_state(algod_client, APP_ID))
+    print(read_global_state(algod_client, APP_ID))
     print("*************USER OPT-OUT DONE*************")

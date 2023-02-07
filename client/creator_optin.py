@@ -76,6 +76,7 @@ def creator_optin():
         print("error opting in, err: {}".format(err))
     read_local_state(algod_client, address, APP_ID)
     print_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
+    print(read_global_state(algod_client, APP_ID))
     print("*************CREATOR OPT-IN END*************")
 
 
@@ -116,5 +117,5 @@ def creator_optout():
     read_local_state(algod_client, address, APP_ID)
     print_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'))
 
-    print("Global state:", read_global_state(algod_client, APP_ID))
+    print(read_global_state(algod_client, APP_ID))
     print("*************CREATOR OPT-OUT END*************")

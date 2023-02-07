@@ -110,6 +110,7 @@ def register_dapp():
         ),
         App.localPut(Txn.sender(), WHOAMI, msg.load()),
         write_to_box(NOTIBOY_BOX, next_gstate_index.load(), msg.load(), MAX_MAIN_BOX_MSG_SIZE, Int(0)),
+        inc_global_creator_count(),
         # write message
         # ************* END *************
         Approve()
@@ -128,7 +129,6 @@ def register_dapp():
 def deregister_dapp():
     name = ScratchVar(TealType.bytes)
     return Seq([
-
         app_id_creator := AppParam.creator(Txn.applications[1]),
         Assert(
             And(
@@ -163,4 +163,5 @@ def deregister_dapp():
         )
         # compulsorily delete else Channel List will display non-existent channel
         .Else(Reject()),
+        dec_global_creator_count(),
     ])

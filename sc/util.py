@@ -268,6 +268,86 @@ def inc_global_pub_msg_count():
 
 
 @Subroutine(TealType.none)
+def update_global_optin_count(creator_count, user_count, op):
+    return Seq([
+        count_val := App.globalGetEx(APP_ID, OPTIN_COUNT),
+        If(Not(count_val.hasValue()))
+        .Then(App.globalPut(OPTIN_COUNT,
+                            # creator count, user count
+                            Concat(Itob(Int(2)), DELIMITER, Itob(Int(142))))
+              ),
+        (creator := ScratchVar(TealType.bytes)).store(
+            Extract(App.globalGet(OPTIN_COUNT), Int(0), Int(8))
+        ),
+        (user := ScratchVar(TealType.bytes)).store(
+            Extract(App.globalGet(OPTIN_COUNT), Int(9), Int(8))
+        ),
+        If(Eq(op, Bytes("add")))
+        .Then(
+            App.globalPut(OPTIN_COUNT,
+                          Concat(
+                              Itob(
+                                  Add(
+                                      Btoi(creator.load()), creator_count
+                                  )
+                              ), DELIMITER,
+                              Itob(
+                                  Add(
+                                      Btoi(user.load()), user_count
+                                  )
+                              )
+                          )
+                          )
+        )
+        .Else(
+            App.globalPut(OPTIN_COUNT,
+                          Concat(
+                              Itob(
+                                  Minus(
+                                      Btoi(creator.load()), creator_count
+                                  )
+                              ), DELIMITER,
+                              Itob(
+                                  Minus(
+                                      Btoi(user.load()), user_count
+                                  )
+                              )
+                          )
+                          )
+        )
+
+    ])
+
+
+@Subroutine(TealType.none)
+def inc_global_user_count():
+    return Seq([
+        update_global_optin_count(Int(0), Int(1), Bytes("add"))
+    ])
+
+
+@Subroutine(TealType.none)
+def inc_global_creator_count():
+    return Seq([
+        update_global_optin_count(Int(1), Int(0), Bytes("add"))
+    ])
+
+
+@Subroutine(TealType.none)
+def dec_global_user_count():
+    return Seq([
+        update_global_optin_count(Int(0), Int(1), Bytes("minus"))
+    ])
+
+
+@Subroutine(TealType.none)
+def dec_global_creator_count():
+    return Seq([
+        update_global_optin_count(Int(1), Int(0), Bytes("minus"))
+    ])
+
+
+@Subroutine(TealType.none)
 def write_to_box(box_name, start_idx, msg, max_msg_len, overwrite):
     return Seq(
         (start_byte := ScratchVar(TealType.uint64)).store(Mul(Btoi(start_idx), max_msg_len)),

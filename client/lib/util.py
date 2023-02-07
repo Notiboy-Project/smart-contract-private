@@ -1,11 +1,12 @@
 import base64
 import os
 import sys
+import time
 from datetime import datetime
 
 from algosdk import account, mnemonic, logic
 from algosdk import encoding
-from algosdk.v2client import algod
+from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
 from collections import OrderedDict
 from client.lib.constants import *
@@ -83,6 +84,9 @@ def format_global_state(state):
             elif formatted_key == 'msgcount':
                 formatted_value = 'pvt: ' + str(int.from_bytes(byte_value[:8], "big")) + ', ' + 'pub: ' + str(
                     int.from_bytes(byte_value[9:], "big"))
+            elif formatted_key == 'optincount':
+                formatted_value = 'creator: ' + str(int.from_bytes(byte_value[:8], "big")) + ', ' + 'user: ' + str(
+                    int.from_bytes(byte_value[9:], "big"))
             else:
                 try:
                     formatted_value = encoding.encode_address(byte_value[:32]) + ":" + str(int.from_bytes(
@@ -98,6 +102,7 @@ def format_global_state(state):
 
 # helper function to read app global state
 def read_global_state(client, app_id):
+    print("##########GLOBAL STATE##########")
     app = client.application_info(app_id)
     global_state = app['params']['global-state'] if "global-state" in app['params'] else []
     return format_global_state(global_state)
@@ -118,7 +123,7 @@ def is_zero_value(data):
 
 
 def read_user_box(client, app_id, box_name):
-    print("USER BOX STORAGE")
+    print("##########USER BOX STORAGE##########")
     try:
         data = client.application_box_by_name(app_id, box_name)
     except Exception as err:
@@ -155,7 +160,7 @@ def parse_main_box_slot(chunk):
         new_l.append(str(int.from_bytes(chunk_items[1], "big")))
         new_l.append(chunk_items[2].decode('utf-8'))
     except Exception as err:
-        debug()()
+        print("ERROR:", err)
 
     return new_l
 
@@ -192,7 +197,7 @@ def get_val_main_box(client, app_id, box_name, key):
 
 
 def print_main_box(client, app_id, box_name):
-    print("MAIN BOX STORAGE")
+    print("##########MAIN BOX STORAGE##########")
 
     for k, v in read_main_box(client, app_id, box_name).items():
         print("value at index {} is {}".format(k, v))
@@ -299,6 +304,15 @@ def generate_notiboy_algorand_keypair(overwrite=False):
     return generate_creds(overwrite, fname)
 
 
+def get_indexer_client():
+    if RUNNING_MODE == TESTNET:
+        indexer_address = "https://testnet-idx.algonode.cloud"
+    elif RUNNING_MODE == MAINNET:
+        indexer_address = "https://mainnet-idx.algonode.cloud"
+    indexer_token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    return indexer.IndexerClient(indexer_token, indexer_address)
+
+
 def get_algod_client(my_address):
     if RUNNING_MODE == SANDBOX:
         algod_address = "http://localhost:4001"
@@ -334,6 +348,71 @@ def print_creator_details():
     algod_client = get_algod_client(address)
     print("\n************CREATOR LOCAL STATE************")
     read_local_state(algod_client, address, APP_ID)
+
+
+def print_stats():
+    print("\n************APP DETAILS************")
+    indexer_client = get_indexer_client()
+    _, address = generate_notiboy_algorand_keypair()
+    algod_client = get_algod_client(address)
+    tot_users = 0
+    tot_creators = 0
+    tot_pub_msgs = 0
+    tot_pvt_msgs = 0
+    next_token = ""
+    accts = []
+    while True:
+        data = indexer_client.accounts(application_id=APP_ID, limit=10, exclude='all', next_page=next_token)
+        next_token = data['next-token']
+        if len(data['accounts']) == 0:
+            break
+
+        for acct in data['accounts']:
+            accts.append(acct['address'])
+        time.sleep(300)
+
+    for acct_addr in accts:
+        acct = algod_client.account_info(acct_addr)
+        acct_addr = acct['address']
+        print("LOG: processing account dress", acct_addr)
+        lstates = acct['apps-local-state']
+        creator_found = False
+        for lstate in lstates:
+            if lstate['id'] != APP_ID:
+                continue
+            print("LOG: processing local state", lstate['key-value'])
+            for kv in lstate['key-value']:
+                if base64.b64decode(kv['key']).decode('utf-8') == 'whoami':
+                    creator_found = True
+                    break
+            if creator_found:
+                print("LOG: creator found")
+                tot_creators += 1
+                for kv in lstate['key-value']:
+                    if base64.b64decode(kv['key']).decode('utf-8') == 'msgcount':
+                        byte_value = base64.b64decode(kv['value'])
+                        tot_pvt_msgs += int.from_bytes(byte_value[:8], "big")
+                        tot_pub_msgs += int.from_bytes(byte_value[9:], "big")
+                        break
+            else:
+                print("LOG: user found")
+                tot_users += 1
+            break
+
+    print("Total Creators: {}, Total Users: {}".format(tot_creators, tot_users))
+    print("Total Public Msgs: {}, Total Pvt Msgs: {}".format(tot_pub_msgs, tot_pvt_msgs))
+
+
+def print_app_details():
+    print("\n************APP DETAILS************")
+    pvt_key, address = generate_notiboy_algorand_keypair()
+    algod_client = get_algod_client(address)
+    app_addr = logic.get_application_address(APP_ID)
+    acct_info = algod_client.account_info(app_addr)
+    app_acct_bal = acct_info['amount'] / 1000000
+    app_acct_min_bal = acct_info['min-balance'] / 1000000
+    print("App ID: {}, App Address: {}".format(APP_ID, app_addr))
+    print("Balance: {} algos, Min Balance: {} algos".format(app_acct_bal, app_acct_min_bal))
 
 
 def print_notiboy_details():

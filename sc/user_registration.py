@@ -26,6 +26,7 @@ def is_valid_user_optout():
 def deregister_user():
     return Seq(
         Assert(App.box_delete(Gtxn[0].sender())),
+        dec_global_user_count(),
         Approve()
     )
 
@@ -48,5 +49,6 @@ def register_user():
         Assert(App.box_create(Gtxn[0].sender(), MAX_USER_BOX_SIZE)),
         App.localPut(Txn.sender(), MSG_COUNT, Concat(Itob(Int(0)), DELIMITER, Itob(Int(0)))),
         App.localPut(Txn.sender(), INDEX_KEY, Itob(Int(0))),
+        inc_global_user_count(),
         Approve()
     ])

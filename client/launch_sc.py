@@ -260,5 +260,5 @@ def launch_app(update, bootstrap, reset):
     if bootstrap:
         bootstrap_app(algod_client, pvt_key, app_id)
 
-    print("Global state:", read_global_state(algod_client, app_id))
+    print(read_global_state(algod_client, app_id))
     print_main_box(algod_client, app_id, "notiboy".encode('utf-8'))

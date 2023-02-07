@@ -19,35 +19,35 @@ byte "dapp"
 ==
 &&
 bnz main_l4
-callsub isvaliduseroptout_9
+callsub isvaliduseroptout_12
 assert
-callsub deregisteruser_10
+callsub deregisteruser_13
 b main_l5
 main_l4:
-callsub isvalidcreatoroptout_7
+callsub isvalidcreatoroptout_10
 assert
-callsub deregisterdapp_8
+callsub deregisterdapp_11
 main_l5:
 int 1
 return
 
 // is_creator_onboarded
 iscreatoronboarded_0:
-store 17
-store 16
-store 15
-load 15
-load 17
+store 24
+store 23
+store 22
+load 22
+load 24
 concat
-store 18
-load 18
+store 25
+load 25
 pop
 byte "notiboy"
-load 16
-load 18
+load 23
+load 25
 len
 box_extract
-load 18
+load 25
 b==
 retsub
 
@@ -168,8 +168,97 @@ extract3
 trimstring_6_l3:
 retsub
 
+// update_global_optin_count
+updateglobaloptincount_7:
+store 13
+store 12
+store 11
+global CurrentApplicationID
+byte "optincount"
+app_global_get_ex
+store 15
+store 14
+load 15
+!
+bnz updateglobaloptincount_7_l4
+updateglobaloptincount_7_l1:
+byte "optincount"
+app_global_get
+extract 0 8
+store 16
+byte "optincount"
+app_global_get
+extract 9 8
+store 17
+load 13
+byte "add"
+==
+bnz updateglobaloptincount_7_l3
+byte "optincount"
+load 16
+btoi
+load 11
+-
+itob
+byte ":"
+concat
+load 17
+btoi
+load 12
+-
+itob
+concat
+app_global_put
+b updateglobaloptincount_7_l5
+updateglobaloptincount_7_l3:
+byte "optincount"
+load 16
+btoi
+load 11
++
+itob
+byte ":"
+concat
+load 17
+btoi
+load 12
++
+itob
+concat
+app_global_put
+b updateglobaloptincount_7_l5
+updateglobaloptincount_7_l4:
+byte "optincount"
+int 2
+itob
+byte ":"
+concat
+int 142
+itob
+concat
+app_global_put
+b updateglobaloptincount_7_l1
+updateglobaloptincount_7_l5:
+retsub
+
+// dec_global_user_count
+decglobalusercount_8:
+int 0
+int 1
+byte "minus"
+callsub updateglobaloptincount_7
+retsub
+
+// dec_global_creator_count
+decglobalcreatorcount_9:
+int 1
+int 0
+byte "minus"
+callsub updateglobaloptincount_7
+retsub
+
 // is_valid_creator_optout
-isvalidcreatoroptout_7:
+isvalidcreatoroptout_10:
 int 0
 int 4
 callsub validaterekeys_3
@@ -182,11 +271,11 @@ int 5
 retsub
 
 // deregister_dapp
-deregisterdapp_8:
+deregisterdapp_11:
 txna Applications 1
 app_params_get AppCreator
-store 13
-store 12
+store 20
+store 19
 txn NumAppArgs
 int 3
 ==
@@ -198,9 +287,9 @@ txna ApplicationArgs 0
 byte "dapp"
 ==
 &&
-load 13
+load 20
 &&
-load 12
+load 19
 txn Sender
 ==
 callsub iscreator_1
@@ -210,30 +299,31 @@ assert
 txna ApplicationArgs 1
 int 10
 callsub sanitizedappname_5
-store 11
+store 18
 txna ApplicationArgs 2
 btoi
 int 19
 *
-store 14
-load 11
-load 14
+store 21
+load 18
+load 21
 txna Applications 1
 itob
 callsub iscreatoronboarded_0
-bnz deregisterdapp_8_l2
+bnz deregisterdapp_11_l2
 int 0
 return
-deregisterdapp_8_l2:
+deregisterdapp_11_l2:
 byte "notiboy"
-load 14
+load 21
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 extract 0 19
 box_replace
+callsub decglobalcreatorcount_9
 retsub
 
 // is_valid_user_optout
-isvaliduseroptout_9:
+isvaliduseroptout_12:
 int 0
 int 0
 callsub validaterekeys_3
@@ -243,9 +333,10 @@ int 1
 retsub
 
 // deregister_user
-deregisteruser_10:
+deregisteruser_13:
 gtxn 0 Sender
 box_del
 assert
+callsub decglobalusercount_8
 int 1
 return
