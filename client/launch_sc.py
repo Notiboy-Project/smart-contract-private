@@ -7,7 +7,7 @@ import base64
 
 from sc.main_sc import approval_program, clear_state_program
 from client.lib.util import read_global_state, print_main_box, generate_notiboy_algorand_keypair, get_algod_client, \
-    compile_program
+    compile_program, debug
 from client.lib.constants import *
 
 DEBUG = False
@@ -177,7 +177,7 @@ def create_app(client, private_key, approval_program, clear_program, global_sche
 # create new application
 def update_app(client, private_key, approval_program, clear_program, app_id):
     # define sender as creator
-    sender = account.address_from_private_key(private_key)
+    _, sender = generate_notiboy_algorand_keypair()
 
     # get node suggested parameters
     params = client.suggested_params()

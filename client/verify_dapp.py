@@ -10,7 +10,7 @@ from client.lib.constants import *
 # call application
 def call_app(client, private_key, index, box_name, app_args, account_args, foreign_apps, num_noops):
     # declare sender
-    sender = account.address_from_private_key(private_key)
+    _, sender = generate_notiboy_algorand_keypair()
     print("Verify from account: ", sender)
 
     # get node suggested parameters

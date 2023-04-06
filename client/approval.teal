@@ -236,11 +236,11 @@ return
 
 // notiboy_sc_address
 notiboyscaddress_0:
-byte "sandbox"
+byte "mainnet"
 byte "sandbox"
 ==
 bnz notiboyscaddress_0_l4
-byte "sandbox"
+byte "mainnet"
 byte "mainnet"
 ==
 bnz notiboyscaddress_0_l3
@@ -256,11 +256,11 @@ retsub
 
 // notiboy_address
 notiboyaddress_1:
-byte "sandbox"
+byte "mainnet"
 byte "sandbox"
 ==
 bnz notiboyaddress_1_l4
-byte "sandbox"
+byte "mainnet"
 byte "mainnet"
 ==
 bnz notiboyaddress_1_l3
@@ -276,7 +276,7 @@ retsub
 
 // dapp_optin_fee
 dappoptinfee_2:
-byte "sandbox"
+byte "mainnet"
 byte "sandbox"
 ==
 bnz dappoptinfee_2_l2
@@ -289,7 +289,7 @@ retsub
 
 // user_optin_fee
 useroptinfee_3:
-byte "sandbox"
+byte "mainnet"
 byte "sandbox"
 ==
 bnz useroptinfee_3_l2
@@ -838,7 +838,7 @@ callsub validaterekeys_9
 int 2
 int 5
 callsub validatenoops_10
-byte "sandbox"
+byte "mainnet"
 byte "sandbox"
 ==
 bnz isvalidcreatoroptin_31_l2
@@ -894,7 +894,7 @@ txn Sender
 ==
 &&
 assert
-byte "sandbox"
+byte "mainnet"
 byte "sandbox"
 ==
 bnz registerchannel_32_l2

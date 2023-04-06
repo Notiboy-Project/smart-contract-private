@@ -5,17 +5,17 @@ from verify_dapp import verify_channel, unverify_channel
 from admin import rename_channel
 from lib.util import generate_notiboy_algorand_keypair, generate_user_algorand_keypair, \
     generate_creator_algorand_keypair, get_algod_client, print_creator_details, print_user_details, \
-    print_notiboy_details, print_app_details, print_stats
+    print_notiboy_details, print_app_details, print_stats, print_account_local_state
 from lib.constants import *
 from launch_sc import launch_app
 
 
 def print_data():
-    # print_creator_details()
-    # print_user_details()
+    print_creator_details()
+    print_user_details()
     print_notiboy_details()
-    # print_app_details()
-    # print_stats()
+    print_app_details()
+    print_stats()
 
 
 def optin():
@@ -55,15 +55,16 @@ def bootstrap():
 
 def main():
     # Update constants.py - APP_ID
-    launch_app(update=True, bootstrap=False, reset=False)
+    # launch_app(update=True, bootstrap=False, reset=False)
     # bootstrap()
     # optin()
-    rename_channel()
-    # verify_channel(DAPP_NAME)
+    # rename_channel()
+    verify_channel("Algogator")
     # msg()
     # unverify_channel(DAPP_NAME)
     # optout()
-    print_data()
+    # print_data()
+    # print_account_local_state("WWYET3KALUPE6O3XW67ET6WAMTLHPJMTC7AGJRJCIRGFVOLSGFFBUDHZMI")
 
 
 if __name__ == '__main__':

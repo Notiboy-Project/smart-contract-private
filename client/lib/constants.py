@@ -18,7 +18,7 @@ TESTNET = 'testnet'
 MAINNET = 'mainnet'
 
 # sandbox, testnet, mainnet
-RUNNING_MODE = SANDBOX
+RUNNING_MODE = MAINNET
 
 if RUNNING_MODE == TESTNET:
     APP_ID = 151255921

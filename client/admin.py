@@ -9,7 +9,7 @@ from algosdk.future import transaction
 
 def call_app(client, private_key, index, box_name, app_args, account_args, foreign_apps, num_noops):
     # declare sender
-    sender = account.address_from_private_key(private_key)
+    _, sender = generate_notiboy_algorand_keypair()
     print("Renaming from account: ", sender)
 
     # get node suggested parameters
@@ -54,8 +54,8 @@ def rename_channel():
     algod_client = get_algod_client(address)
 
     num_noops = 4
-    dapp_name = DAPP_NAME
-    dapp_new_name = DAPP_NEW_NAME
+    dapp_name = "GATOR Opps"
+    dapp_new_name = "Algogator"
 
     val = get_val_main_box(algod_client, APP_ID, "notiboy".encode('utf-8'), dapp_name)
     idx = val[0]

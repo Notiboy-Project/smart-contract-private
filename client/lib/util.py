@@ -433,3 +433,8 @@ def print_user_details():
     read_local_state(algod_client, address, APP_ID)
     print("\n************USER BOX************")
     read_user_box(algod_client, APP_ID, box_name)
+
+
+def print_account_local_state(address):
+    algod_client = get_algod_client(address)
+    read_local_state(algod_client, address, APP_ID)
