@@ -2,9 +2,11 @@ from creator_optin import creator_optin, creator_optout, create_creator_app
 from message import send_personal_notification, send_public_notification
 from user_optin import user_optin, user_optout, user_opt_in_to_creator_app, user_opt_out_from_creator_app
 from verify_dapp import verify_channel, unverify_channel
+from admin import rename_channel
 from lib.util import generate_notiboy_algorand_keypair, generate_user_algorand_keypair, \
     generate_creator_algorand_keypair, get_algod_client, print_creator_details, print_user_details, \
     print_notiboy_details, print_app_details, print_stats
+from lib.constants import *
 from launch_sc import launch_app
 
 
@@ -17,8 +19,8 @@ def print_data():
 
 
 def optin():
-    # creator_optin()
-    user_optin()
+    creator_optin()
+    # user_optin()
     # user_opt_in_to_creator_app()
 
 
@@ -28,9 +30,9 @@ def msg():
 
 
 def optout():
-    # user_opt_out_from_creator_app()
+    user_opt_out_from_creator_app()
     user_optout()
-    # creator_optout()
+    creator_optout()
 
 
 def generate_accounts():
@@ -53,12 +55,13 @@ def bootstrap():
 
 def main():
     # Update constants.py - APP_ID
-    # launch_app(update=True, bootstrap=False, reset=False)
+    launch_app(update=True, bootstrap=False, reset=False)
     # bootstrap()
-    optin()
-    # verify_channel("IRL.algo")
+    # optin()
+    rename_channel()
+    # verify_channel(DAPP_NAME)
     # msg()
-    # unverify_channel()
+    # unverify_channel(DAPP_NAME)
     # optout()
     print_data()
 

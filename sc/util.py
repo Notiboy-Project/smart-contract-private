@@ -20,8 +20,16 @@ def is_creator_onboarded(name, start_idx, app_id):
     )
 
 
+@Subroutine(TealType.bytes)
+# expects uint64 arg
+def extract_from_main_box(start_idx):
+    return Seq(
+        App.box_extract(NOTIBOY_BOX, start_idx, MAX_MAIN_BOX_MSG_SIZE)
+    )
+
+
 @Subroutine(TealType.uint64)
-def is_creator():
+def is_admin():
     return Eq(Txn.sender(), Global.creator_address())
 
 

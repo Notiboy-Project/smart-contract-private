@@ -241,17 +241,17 @@ def compile_program(client, source_code):
 
 def get_sandbox_creds(kind):
     if kind == "user":
-        mnemonic_string = "kingdom fetch cement drama winter universe elder animal mechanic torch bonus boy town they boost next tenant enjoy silk guess great park wrist ability few"
+        mnemonic_string = SANDBOX_USER_MNEMONIC
         private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "CC2TVHRQWPEBR37OX7UT4VTGILEAZR36PH3AZRAL54B67H2RQHGGH7XK4U"
+        address = SANDBOX_USER_ADDRESS
     elif kind == "creator":
-        mnemonic_string = "boy mule wait zebra betray also heavy quit dragon again program cliff enact ordinary catch width duty possible organ quit gravity salon veteran abstract public"
+        mnemonic_string = SANDBOX_CREATOR_MNEMONIC
+        address = SANDBOX_CREATOR_ADDRESS
         private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "D7XPB62RBZODMDRJGQAJ5CKRJCBO6QQ3WOYYTMWD3B7CM4HSVHOHFK4IYQ"
     elif kind == "notiboy":
-        mnemonic_string = "random tomorrow leave elder weird alert bounce flag clay tennis hill foil rhythm option swear flip equip junk chase rapid foot wrap chaos able slender"
+        mnemonic_string = SANDBOX_NOTIBOY_MNEMONIC
         private_key = mnemonic.to_private_key(mnemonic_string)
-        address = "EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE"
+        address = SANDBOX_NOTIBOY_ADDRESS
 
     return private_key, address
 

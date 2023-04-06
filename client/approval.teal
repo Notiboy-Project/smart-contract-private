@@ -2,23 +2,23 @@
 txn ApplicationID
 int 0
 ==
-bnz main_l35
+bnz main_l37
 txn OnCompletion
 int OptIn
 ==
-bnz main_l31
+bnz main_l33
 txn OnCompletion
 int CloseOut
 ==
-bnz main_l27
+bnz main_l29
 txn OnCompletion
 int UpdateApplication
 ==
-bnz main_l26
+bnz main_l28
 txn OnCompletion
 int DeleteApplication
 ==
-bnz main_l25
+bnz main_l27
 txn OnCompletion
 int NoOp
 ==
@@ -28,57 +28,68 @@ main_l7:
 txn NumAppArgs
 int 0
 ==
-bnz main_l24
+bnz main_l26
 txna ApplicationArgs 0
 byte "bootstrap"
 ==
-bnz main_l20
+bnz main_l22
 txna ApplicationArgs 0
 byte "test"
 ==
-bnz main_l19
+bnz main_l21
 txna ApplicationArgs 0
 byte "pub_notify"
 ==
-bnz main_l18
+bnz main_l20
 txna ApplicationArgs 0
 byte "pvt_notify"
 ==
-bnz main_l17
+bnz main_l19
 txna ApplicationArgs 0
 byte "verify"
 ==
-bnz main_l16
+bnz main_l18
 txna ApplicationArgs 0
 byte "unverify"
 ==
-bnz main_l15
+bnz main_l17
+txna ApplicationArgs 0
+byte "update_box"
+==
+bnz main_l16
 err
-main_l15:
-callsub ischannelvalidforverification_37
-assert
-callsub markchannelunverified_40
-return
 main_l16:
-callsub ischannelvalidforverification_37
+callsub isvalid_7
 assert
-callsub markchannelverified_39
+callsub isadmin_6
+assert
+callsub editbox_46
 return
 main_l17:
-callsub isvalidprivatenotification_41
+callsub ischannelvalidforverification_38
 assert
-callsub sendpersonalmsg_44
-int 1
+callsub markchannelunverified_41
 return
 main_l18:
-callsub isvalidpublicnotification_42
+callsub ischannelvalidforverification_38
 assert
-callsub sendpublicmsg_43
-int 1
+callsub markchannelverified_40
 return
 main_l19:
-callsub isvalid_6
-callsub iscreator_5
+callsub isvalidprivatenotification_42
+assert
+callsub sendpersonalmsg_45
+int 1
+return
+main_l20:
+callsub isvalidpublicnotification_43
+assert
+callsub sendpublicmsg_44
+int 1
+return
+main_l21:
+callsub isvalid_7
+callsub isadmin_6
 &&
 assert
 byte "notiboy"
@@ -86,9 +97,9 @@ box_del
 pop
 int 1
 return
-main_l20:
-callsub isvalid_6
-callsub iscreator_5
+main_l22:
+callsub isvalid_7
+callsub isadmin_6
 &&
 assert
 byte "index"
@@ -121,7 +132,7 @@ int 1
 assert
 int 0
 store 0
-main_l21:
+main_l23:
 load 0
 int 32
 <
@@ -131,10 +142,10 @@ int 1024
 int 32768
 <
 &&
-bnz main_l23
+bnz main_l25
 int 1
 return
-main_l23:
+main_l25:
 byte "notiboy"
 load 0
 int 1024
@@ -148,25 +159,25 @@ load 0
 int 1
 +
 store 0
-b main_l21
-main_l24:
+b main_l23
+main_l26:
 int 0
 int 0
-callsub validaterekeys_8
+callsub validaterekeys_9
 int 1
 return
-main_l25:
-callsub isvalid_6
-assert
-callsub iscreator_5
-return
-main_l26:
-callsub isvalid_6
-assert
-callsub iscreator_5
-return
 main_l27:
-callsub isvalidbaseoptout_7
+callsub isvalid_7
+assert
+callsub isadmin_6
+return
+main_l28:
+callsub isvalid_7
+assert
+callsub isadmin_6
+return
+main_l29:
+callsub isvalidbaseoptout_8
 assert
 gtxn 0 NumAppArgs
 int 3
@@ -179,20 +190,20 @@ gtxna 0 ApplicationArgs 0
 byte "dapp"
 ==
 &&
-bnz main_l30
-callsub isvaliduseroptout_34
+bnz main_l32
+callsub isvaliduseroptout_35
 assert
-callsub deregisteruser_35
-main_l29:
+callsub deregisteruser_36
+main_l31:
 int 1
 return
-main_l30:
-callsub isvalidcreatoroptout_29
+main_l32:
+callsub isvalidcreatoroptout_30
 assert
-callsub deregisterdapp_32
-b main_l29
-main_l31:
-callsub isvalidbaseoptin_10
+callsub deregisterdapp_33
+b main_l31
+main_l33:
+callsub isvalidbaseoptin_11
 assert
 gtxn 1 NumAppArgs
 int 2
@@ -205,31 +216,31 @@ gtxna 1 ApplicationArgs 0
 byte "dapp"
 ==
 &&
-bnz main_l34
-callsub isvaliduseroptin_33
+bnz main_l36
+callsub isvaliduseroptin_34
 assert
-callsub registeruser_36
-main_l33:
+callsub registeruser_37
+main_l35:
 int 1
 return
-main_l34:
-callsub isvalidcreatoroptin_30
+main_l36:
+callsub isvalidcreatoroptin_31
 assert
-callsub registerdapp_31
-b main_l33
-main_l35:
-callsub isvalid_6
+callsub registerchannel_32
+b main_l35
+main_l37:
+callsub isvalid_7
 assert
 int 1
 return
 
 // notiboy_sc_address
 notiboyscaddress_0:
-byte "mainnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz notiboyscaddress_0_l4
-byte "mainnet"
+byte "sandbox"
 byte "mainnet"
 ==
 bnz notiboyscaddress_0_l3
@@ -245,11 +256,11 @@ retsub
 
 // notiboy_address
 notiboyaddress_1:
-byte "mainnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz notiboyaddress_1_l4
-byte "mainnet"
+byte "sandbox"
 byte "mainnet"
 ==
 bnz notiboyaddress_1_l3
@@ -265,7 +276,7 @@ retsub
 
 // dapp_optin_fee
 dappoptinfee_2:
-byte "mainnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz dappoptinfee_2_l2
@@ -278,7 +289,7 @@ retsub
 
 // user_optin_fee
 useroptinfee_3:
-byte "mainnet"
+byte "sandbox"
 byte "sandbox"
 ==
 bnz useroptinfee_3_l2
@@ -309,22 +320,31 @@ load 44
 b==
 retsub
 
-// is_creator
-iscreator_5:
+// extract_from_main_box
+extractfrommainbox_5:
+store 83
+byte "notiboy"
+load 83
+int 19
+box_extract
+retsub
+
+// is_admin
+isadmin_6:
 txn Sender
 global CreatorAddress
 ==
 retsub
 
 // is_valid
-isvalid_6:
+isvalid_7:
 txn RekeyTo
 global ZeroAddress
 ==
 retsub
 
 // is_valid_base_optout
-isvalidbaseoptout_7:
+isvalidbaseoptout_8:
 gtxn 0 TypeEnum
 int appl
 ==
@@ -335,16 +355,16 @@ int CloseOut
 retsub
 
 // validate_rekeys
-validaterekeys_8:
+validaterekeys_9:
 store 2
 store 1
 load 1
 store 3
-validaterekeys_8_l1:
+validaterekeys_9_l1:
 load 3
 load 2
 <=
-bz validaterekeys_8_l3
+bz validaterekeys_9_l3
 load 3
 gtxns RekeyTo
 global ZeroAddress
@@ -354,21 +374,21 @@ load 3
 int 1
 +
 store 3
-b validaterekeys_8_l1
-validaterekeys_8_l3:
+b validaterekeys_9_l1
+validaterekeys_9_l3:
 retsub
 
 // validate_noops
-validatenoops_9:
+validatenoops_10:
 store 5
 store 4
 load 4
 store 6
-validatenoops_9_l1:
+validatenoops_10_l1:
 load 6
 load 5
 <=
-bz validatenoops_9_l3
+bz validatenoops_10_l3
 load 4
 gtxns TypeEnum
 int appl
@@ -383,12 +403,12 @@ load 6
 int 1
 +
 store 6
-b validatenoops_9_l1
-validatenoops_9_l3:
+b validatenoops_10_l1
+validatenoops_10_l3:
 retsub
 
 // is_valid_base_optin
-isvalidbaseoptin_10:
+isvalidbaseoptin_11:
 gtxn 1 TypeEnum
 int appl
 ==
@@ -399,18 +419,18 @@ int OptIn
 retsub
 
 // sanitize_dapp_name
-sanitizedappname_11:
+sanitizedappname_12:
 store 15
 store 14
 load 14
 load 15
-callsub trimstring_12
+callsub trimstring_13
 store 16
 load 16
 len
 int 10
 <
-bz sanitizedappname_11_l2
+bz sanitizedappname_12_l2
 byte "::::::::::"
 int 0
 int 10
@@ -421,31 +441,31 @@ extract3
 load 16
 concat
 store 16
-sanitizedappname_11_l2:
+sanitizedappname_12_l2:
 load 16
 retsub
 
 // trim_string
-trimstring_12:
+trimstring_13:
 store 18
 store 17
 load 17
 len
 load 18
 >
-bnz trimstring_12_l2
+bnz trimstring_13_l2
 load 17
-b trimstring_12_l3
-trimstring_12_l2:
+b trimstring_13_l3
+trimstring_13_l2:
 load 17
 int 0
 load 18
 extract3
-trimstring_12_l3:
+trimstring_13_l3:
 retsub
 
 // load_idx_from_lstate
-loadidxfromlstate_13:
+loadidxfromlstate_14:
 store 54
 load 54
 global CurrentApplicationID
@@ -455,20 +475,20 @@ store 56
 store 55
 load 56
 !
-bz loadidxfromlstate_13_l2
+bz loadidxfromlstate_14_l2
 load 54
 byte "index"
 int 0
 itob
 app_local_put
-loadidxfromlstate_13_l2:
+loadidxfromlstate_14_l2:
 load 54
 byte "index"
 app_local_get
 retsub
 
 // load_idx_gstate
-loadidxgstate_14:
+loadidxgstate_15:
 global CurrentApplicationID
 byte "index"
 app_global_get_ex
@@ -476,18 +496,18 @@ store 20
 store 19
 load 20
 !
-bz loadidxgstate_14_l2
+bz loadidxgstate_15_l2
 byte "index"
 int 0
 itob
 app_global_put
-loadidxgstate_14_l2:
+loadidxgstate_15_l2:
 byte "index"
 app_global_get
 retsub
 
 // set_idx_gstate
-setidxgstate_15:
+setidxgstate_16:
 store 21
 byte "index"
 load 21
@@ -495,22 +515,22 @@ app_global_put
 retsub
 
 // min_val
-minval_16:
+minval_17:
 store 36
 store 35
 load 35
 load 36
 >
-bnz minval_16_l2
+bnz minval_17_l2
 load 35
-b minval_16_l3
-minval_16_l2:
+b minval_17_l3
+minval_17_l2:
 load 36
-minval_16_l3:
+minval_17_l3:
 retsub
 
 // update_lstate_msg_count
-updatelstatemsgcount_17:
+updatelstatemsgcount_18:
 store 60
 store 59
 store 58
@@ -522,7 +542,7 @@ store 62
 store 61
 load 62
 !
-bz updatelstatemsgcount_17_l2
+bz updatelstatemsgcount_18_l2
 load 58
 byte "msgcount"
 int 0
@@ -533,7 +553,7 @@ int 0
 itob
 concat
 app_local_put
-updatelstatemsgcount_17_l2:
+updatelstatemsgcount_18_l2:
 load 58
 byte "msgcount"
 app_local_get
@@ -563,25 +583,25 @@ app_local_put
 retsub
 
 // inc_pvt_msg_count
-incpvtmsgcount_18:
+incpvtmsgcount_19:
 store 76
 load 76
 int 1
 int 0
-callsub updatelstatemsgcount_17
+callsub updatelstatemsgcount_18
 retsub
 
 // inc_pub_msg_count
-incpubmsgcount_19:
+incpubmsgcount_20:
 store 57
 load 57
 int 0
 int 1
-callsub updatelstatemsgcount_17
+callsub updatelstatemsgcount_18
 retsub
 
 // update_global_msg_count
-updateglobalmsgcount_20:
+updateglobalmsgcount_21:
 store 66
 store 65
 global CurrentApplicationID
@@ -596,7 +616,7 @@ len
 int 17
 <
 ||
-bz updateglobalmsgcount_20_l2
+bz updateglobalmsgcount_21_l2
 byte "msgcount"
 int 0
 itob
@@ -606,7 +626,7 @@ int 0
 itob
 concat
 app_global_put
-updateglobalmsgcount_20_l2:
+updateglobalmsgcount_21_l2:
 byte "msgcount"
 app_global_get
 extract 0 8
@@ -633,21 +653,21 @@ app_global_put
 retsub
 
 // inc_global_pvt_msg_count
-incglobalpvtmsgcount_21:
+incglobalpvtmsgcount_22:
 int 1
 int 0
-callsub updateglobalmsgcount_20
+callsub updateglobalmsgcount_21
 retsub
 
 // inc_global_pub_msg_count
-incglobalpubmsgcount_22:
+incglobalpubmsgcount_23:
 int 0
 int 1
-callsub updateglobalmsgcount_20
+callsub updateglobalmsgcount_21
 retsub
 
 // update_global_optin_count
-updateglobaloptincount_23:
+updateglobaloptincount_24:
 store 24
 store 23
 store 22
@@ -658,8 +678,8 @@ store 26
 store 25
 load 26
 !
-bnz updateglobaloptincount_23_l4
-updateglobaloptincount_23_l1:
+bnz updateglobaloptincount_24_l4
+updateglobaloptincount_24_l1:
 byte "optincount"
 app_global_get
 extract 0 8
@@ -671,7 +691,7 @@ store 28
 load 24
 byte "add"
 ==
-bnz updateglobaloptincount_23_l3
+bnz updateglobaloptincount_24_l3
 byte "optincount"
 load 27
 btoi
@@ -687,8 +707,8 @@ load 23
 itob
 concat
 app_global_put
-b updateglobaloptincount_23_l5
-updateglobaloptincount_23_l3:
+b updateglobaloptincount_24_l5
+updateglobaloptincount_24_l3:
 byte "optincount"
 load 27
 btoi
@@ -704,8 +724,8 @@ load 23
 itob
 concat
 app_global_put
-b updateglobaloptincount_23_l5
-updateglobaloptincount_23_l4:
+b updateglobaloptincount_24_l5
+updateglobaloptincount_24_l4:
 byte "optincount"
 int 2
 itob
@@ -715,44 +735,44 @@ int 142
 itob
 concat
 app_global_put
-b updateglobaloptincount_23_l1
-updateglobaloptincount_23_l5:
+b updateglobaloptincount_24_l1
+updateglobaloptincount_24_l5:
 retsub
 
 // inc_global_user_count
-incglobalusercount_24:
+incglobalusercount_25:
 int 0
 int 1
 byte "add"
-callsub updateglobaloptincount_23
+callsub updateglobaloptincount_24
 retsub
 
 // inc_global_creator_count
-incglobalcreatorcount_25:
+incglobalcreatorcount_26:
 int 1
 int 0
 byte "add"
-callsub updateglobaloptincount_23
+callsub updateglobaloptincount_24
 retsub
 
 // dec_global_user_count
-decglobalusercount_26:
+decglobalusercount_27:
 int 0
 int 1
 byte "minus"
-callsub updateglobaloptincount_23
+callsub updateglobaloptincount_24
 retsub
 
 // dec_global_creator_count
-decglobalcreatorcount_27:
+decglobalcreatorcount_28:
 int 1
 int 0
 byte "minus"
-callsub updateglobaloptincount_23
+callsub updateglobaloptincount_24
 retsub
 
 // write_to_box
-writetobox_28:
+writetobox_29:
 store 33
 store 32
 store 31
@@ -766,7 +786,7 @@ store 34
 load 33
 int 0
 ==
-bz writetobox_28_l2
+bz writetobox_29_l2
 load 29
 load 34
 load 32
@@ -777,7 +797,7 @@ load 32
 extract3
 ==
 assert
-writetobox_28_l2:
+writetobox_29_l2:
 load 29
 load 34
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
@@ -792,36 +812,36 @@ int 0
 load 32
 load 31
 len
-callsub minval_16
+callsub minval_17
 extract3
 box_replace
 retsub
 
 // is_valid_creator_optout
-isvalidcreatoroptout_29:
+isvalidcreatoroptout_30:
 int 0
 int 4
-callsub validaterekeys_8
+callsub validaterekeys_9
 int 1
 int 4
-callsub validatenoops_9
+callsub validatenoops_10
 global GroupSize
 int 5
 ==
 retsub
 
 // is_valid_creator_optin
-isvalidcreatoroptin_30:
+isvalidcreatoroptin_31:
 int 0
 int 5
-callsub validaterekeys_8
+callsub validaterekeys_9
 int 2
 int 5
-callsub validatenoops_9
-byte "mainnet"
+callsub validatenoops_10
+byte "sandbox"
 byte "sandbox"
 ==
-bnz isvalidcreatoroptin_30_l2
+bnz isvalidcreatoroptin_31_l2
 gtxn 0 TypeEnum
 int axfer
 ==
@@ -830,8 +850,8 @@ callsub notiboyaddress_1
 ==
 &&
 assert
-b isvalidcreatoroptin_30_l3
-isvalidcreatoroptin_30_l2:
+b isvalidcreatoroptin_31_l3
+isvalidcreatoroptin_31_l2:
 gtxn 0 TypeEnum
 int pay
 ==
@@ -840,17 +860,17 @@ callsub notiboyaddress_1
 ==
 &&
 assert
-isvalidcreatoroptin_30_l3:
+isvalidcreatoroptin_31_l3:
 global GroupSize
 int 6
 ==
 retsub
 
-// register_dapp
-registerdapp_31:
+// register_channel
+registerchannel_32:
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_11
+callsub sanitizedappname_12
 store 7
 txna Applications 1
 app_params_get AppCreator
@@ -874,10 +894,10 @@ txn Sender
 ==
 &&
 assert
-byte "mainnet"
+byte "sandbox"
 byte "sandbox"
 ==
-bnz registerdapp_31_l2
+bnz registerchannel_32_l2
 txna Assets 0
 asset_params_get AssetName
 store 11
@@ -894,14 +914,14 @@ byte "USDC"
 ==
 &&
 assert
-b registerdapp_31_l3
-registerdapp_31_l2:
+b registerchannel_32_l3
+registerchannel_32_l2:
 gtxn 0 Amount
 callsub dappoptinfee_2
 >=
 assert
-registerdapp_31_l3:
-callsub loadidxgstate_14
+registerchannel_32_l3:
+callsub loadidxgstate_15
 btoi
 int 1
 +
@@ -912,7 +932,7 @@ int 19
 itob
 store 12
 load 12
-callsub setidxgstate_15
+callsub setidxgstate_16
 load 7
 txna Applications 1
 itob
@@ -929,13 +949,13 @@ load 12
 load 13
 int 19
 int 0
-callsub writetobox_28
-callsub incglobalcreatorcount_25
+callsub writetobox_29
+callsub incglobalcreatorcount_26
 int 1
 return
 
 // deregister_dapp
-deregisterdapp_32:
+deregisterdapp_33:
 txna Applications 1
 app_params_get AppCreator
 store 39
@@ -956,13 +976,13 @@ load 39
 load 38
 txn Sender
 ==
-callsub iscreator_5
+callsub isadmin_6
 ||
 &&
 assert
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_11
+callsub sanitizedappname_12
 store 37
 txna ApplicationArgs 2
 btoi
@@ -974,23 +994,23 @@ load 40
 txna Applications 1
 itob
 callsub iscreatoronboarded_4
-bnz deregisterdapp_32_l2
+bnz deregisterdapp_33_l2
 int 0
 return
-deregisterdapp_32_l2:
+deregisterdapp_33_l2:
 byte "notiboy"
 load 40
 byte "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 extract 0 19
 box_replace
-callsub decglobalcreatorcount_27
+callsub decglobalcreatorcount_28
 retsub
 
 // is_valid_user_optin
-isvaliduseroptin_33:
+isvaliduseroptin_34:
 int 0
 int 1
-callsub validaterekeys_8
+callsub validaterekeys_9
 global GroupSize
 int 2
 ==
@@ -1005,26 +1025,26 @@ callsub notiboyscaddress_0
 retsub
 
 // is_valid_user_optout
-isvaliduseroptout_34:
+isvaliduseroptout_35:
 int 0
 int 0
-callsub validaterekeys_8
+callsub validaterekeys_9
 global GroupSize
 int 1
 ==
 retsub
 
 // deregister_user
-deregisteruser_35:
+deregisteruser_36:
 gtxn 0 Sender
 box_del
 assert
-callsub decglobalusercount_26
+callsub decglobalusercount_27
 int 1
 return
 
 // register_user
-registeruser_36:
+registeruser_37:
 gtxn 1 NumAppArgs
 int 1
 ==
@@ -1056,21 +1076,21 @@ byte "index"
 int 0
 itob
 app_local_put
-callsub incglobalusercount_24
+callsub incglobalusercount_25
 int 1
 return
 
 // is_channel_valid_for_verification
-ischannelvalidforverification_37:
+ischannelvalidforverification_38:
 int 0
 int 4
-callsub validaterekeys_8
+callsub validaterekeys_9
 int 0
 int 4
-callsub validatenoops_9
+callsub validatenoops_10
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_11
+callsub sanitizedappname_12
 store 45
 txna ApplicationArgs 2
 btoi
@@ -1088,7 +1108,7 @@ txn NumApplications
 int 1
 ==
 &&
-callsub iscreator_5
+callsub isadmin_6
 &&
 load 45
 load 46
@@ -1099,11 +1119,11 @@ callsub iscreatoronboarded_4
 retsub
 
 // set_verify_bit
-setverifybit_38:
+setverifybit_39:
 store 47
 txna ApplicationArgs 1
 int 10
-callsub sanitizedappname_11
+callsub sanitizedappname_12
 store 48
 load 48
 txna Applications 1
@@ -1121,27 +1141,27 @@ txna ApplicationArgs 2
 load 49
 int 19
 int 1
-callsub writetobox_28
+callsub writetobox_29
 int 1
 return
 
 // mark_channel_verified
-markchannelverified_39:
+markchannelverified_40:
 byte "v"
-callsub setverifybit_38
+callsub setverifybit_39
 retsub
 
 // mark_channel_unverified
-markchannelunverified_40:
+markchannelunverified_41:
 byte "u"
-callsub setverifybit_38
+callsub setverifybit_39
 retsub
 
 // is_valid_private_notification
-isvalidprivatenotification_41:
+isvalidprivatenotification_42:
 int 0
 int 0
-callsub validaterekeys_8
+callsub validaterekeys_9
 global GroupSize
 int 1
 ==
@@ -1172,7 +1192,7 @@ int 1
 retsub
 
 // is_valid_public_notification
-isvalidpublicnotification_42:
+isvalidpublicnotification_43:
 global GroupSize
 int 1
 ==
@@ -1203,7 +1223,7 @@ app_opted_in
 retsub
 
 // send_public_msg
-sendpublicmsg_43:
+sendpublicmsg_44:
 txna Applications 1
 app_params_get AppCreator
 store 51
@@ -1223,7 +1243,7 @@ txn Sender
 &&
 assert
 txn Sender
-callsub loadidxfromlstate_13
+callsub loadidxfromlstate_14
 btoi
 int 1
 +
@@ -1239,18 +1259,18 @@ byte "index"
 load 53
 app_local_put
 txn Sender
-callsub incpubmsgcount_19
-callsub incglobalpubmsgcount_22
+callsub incpubmsgcount_20
+callsub incglobalpubmsgcount_23
 txn Sender
 load 53
 txn Note
 int 120
-callsub trimstring_12
+callsub trimstring_13
 app_local_put
 retsub
 
 // send_personal_msg
-sendpersonalmsg_44:
+sendpersonalmsg_45:
 txn Sender
 byte "whoami"
 app_local_get
@@ -1270,7 +1290,7 @@ txn Sender
 &&
 assert
 txna Accounts 1
-callsub loadidxfromlstate_13
+callsub loadidxfromlstate_14
 btoi
 int 1
 +
@@ -1285,10 +1305,10 @@ byte "index"
 load 74
 app_local_put
 txn Sender
-callsub incpvtmsgcount_18
+callsub incpvtmsgcount_19
 txna Accounts 1
-callsub incpvtmsgcount_18
-callsub incglobalpvtmsgcount_21
+callsub incpvtmsgcount_19
+callsub incglobalpvtmsgcount_22
 global LatestTimestamp
 itob
 txna Applications 1
@@ -1299,7 +1319,7 @@ int 0
 int 280
 txn Note
 len
-callsub minval_16
+callsub minval_17
 extract3
 concat
 store 75
@@ -1308,5 +1328,71 @@ load 74
 load 75
 int 296
 int 1
-callsub writetobox_28
+callsub writetobox_29
 retsub
+
+// edit_box
+editbox_46:
+txna Applications 1
+app_params_get AppCreator
+store 80
+store 79
+txn NumAppArgs
+int 4
+==
+txn NumApplications
+int 1
+==
+&&
+txn NumAccounts
+int 1
+==
+&&
+load 80
+&&
+load 79
+txna Accounts 1
+==
+&&
+assert
+txna ApplicationArgs 2
+int 10
+callsub sanitizedappname_12
+store 77
+txna ApplicationArgs 3
+int 10
+callsub sanitizedappname_12
+store 78
+txna ApplicationArgs 1
+btoi
+int 19
+*
+store 81
+load 77
+load 81
+txna Applications 1
+itob
+callsub iscreatoronboarded_4
+bz editbox_46_l2
+load 78
+txna Applications 1
+itob
+concat
+load 81
+callsub extractfrommainbox_5
+extract 18 1
+concat
+store 82
+txna Accounts 1
+byte "whoami"
+load 82
+app_local_put
+byte "notiboy"
+txna ApplicationArgs 1
+load 82
+int 19
+int 1
+callsub writetobox_29
+editbox_46_l2:
+int 1
+return

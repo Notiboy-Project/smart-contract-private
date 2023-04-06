@@ -51,8 +51,8 @@ load 25
 b==
 retsub
 
-// is_creator
-iscreator_1:
+// is_admin
+isadmin_1:
 txn Sender
 global CreatorAddress
 ==
@@ -292,7 +292,7 @@ load 20
 load 19
 txn Sender
 ==
-callsub iscreator_1
+callsub isadmin_1
 ||
 &&
 assert

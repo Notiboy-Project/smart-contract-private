@@ -2,6 +2,7 @@ from sc.creator_registration import *
 from sc.user_registration import *
 from sc.creator_verify import *
 from sc.messaging import *
+from sc.admin import *
 
 '''
 app_args: verify dapp_name index_position
@@ -48,7 +49,7 @@ bootstrap = Seq([
     Assert(
         And(
             is_valid(),
-            is_creator()
+            is_admin()
         )
     ),
     App.globalPut(INDEX_KEY, Itob(Int(0))),
@@ -75,7 +76,7 @@ dev_test = Seq([
     Assert(
         And(
             is_valid(),
-            is_creator()
+            is_admin()
         )
     ),
     Pop(App.box_delete(NOTIBOY_BOX)),
@@ -106,7 +107,7 @@ handle_optin = Seq([
     )
     .Then(
         Assert(is_valid_creator_optin()),
-        register_dapp()
+        register_channel()
     )
     .Else(
         Assert(is_valid_user_optin()),
@@ -142,14 +143,22 @@ handle_optout = Seq([
 ])
 
 # txn can update the app only if initiated by creator
+# Use with extreme caution as this performs in place modification of box
+update_box = Seq([
+    Assert(is_valid()),
+    Assert(is_admin()),
+    Return(edit_box())
+])
+
+# txn can update the app only if initiated by creator
 handle_updateapp = Seq([
     Assert(is_valid()),
-    Return(is_creator())
+    Return(is_admin())
 ])
 # no txn should delete the app
 handle_deleteapp = Seq([
     Assert(is_valid()),
-    Return(is_creator())
+    Return(is_admin())
 ])
 
 # this is for dummy box budget txns
@@ -167,7 +176,8 @@ handle_noop = Seq([
         [Txn.application_args[0] == Bytes("pub_notify"), public_notify],
         [Txn.application_args[0] == Bytes("pvt_notify"), private_notify],
         [Txn.application_args[0] == Bytes("verify"), verify_dapp],
-        [Txn.application_args[0] == Bytes("unverify"), unverify_dapp]
+        [Txn.application_args[0] == Bytes("unverify"), unverify_dapp],
+        [Txn.application_args[0] == Bytes("update_box"), update_box]
     )
 ])
 

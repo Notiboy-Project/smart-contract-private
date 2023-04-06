@@ -1,9 +1,10 @@
 import os
 
 NOTIBOY_ADDR = "EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE"
-DAPP_NAME = "kraken"
+DAPP_NAME = "kraken5"
+DAPP_NEW_NAME = "kraken6"
 APP_ID = 114
-CREATOR_APP_ID = 3
+CREATOR_APP_ID = 10619  # 3
 MAIN_BOX = "notiboy"
 DAPP_NAME_MAX_LEN = 10
 MAX_BOX_SIZE = 32768
@@ -17,7 +18,7 @@ TESTNET = 'testnet'
 MAINNET = 'mainnet'
 
 # sandbox, testnet, mainnet
-RUNNING_MODE = MAINNET
+RUNNING_MODE = SANDBOX
 
 if RUNNING_MODE == TESTNET:
     APP_ID = 151255921
@@ -34,3 +35,12 @@ elif RUNNING_MODE == MAINNET:
     NOTIBOY_MNEMONIC = os.getenv("NOTIBOY_MNEMONIC")
     USER_MNEMONIC = os.getenv("USER_MNEMONIC")
     CREATOR_MNEMONIC = os.getenv("CREATOR_MNEMONIC")
+
+SANDBOX_USER_MNEMONIC = "kingdom fetch cement drama winter universe elder animal mechanic torch bonus boy town they boost next tenant enjoy silk guess great park wrist ability few"
+SANDBOX_USER_ADDRESS = "CC2TVHRQWPEBR37OX7UT4VTGILEAZR36PH3AZRAL54B67H2RQHGGH7XK4U"
+SANDBOX_NOTIBOY_MNEMONIC = "random tomorrow leave elder weird alert bounce flag clay tennis hill foil rhythm option swear flip equip junk chase rapid foot wrap chaos able slender"
+SANDBOX_NOTIBOY_ADDRESS = "EBM3V64MKXXIZ4ILJXLGJ6RDIOHXTSJ5HP7GD5MSPL2JWB34CIVE4JSOOE"
+SANDBOX_CREATOR_MNEMONIC = "kingdom fetch cement drama winter universe elder animal mechanic torch bonus boy town they boost next tenant enjoy silk guess great park wrist ability few"
+SANDBOX_CREATOR_ADDRESS = "CC2TVHRQWPEBR37OX7UT4VTGILEAZR36PH3AZRAL54B67H2RQHGGH7XK4U"
+# SANDBOX_CREATOR_MNEMONIC = "boy mule wait zebra betray also heavy quit dragon again program cliff enact ordinary catch width duty possible organ quit gravity salon veteran abstract public"
+# SANDBOX_CREATOR_ADDRESS = "D7XPB62RBZODMDRJGQAJ5CKRJCBO6QQ3WOYYTMWD3B7CM4HSVHOHFK4IYQ"

@@ -26,7 +26,7 @@ def is_channel_valid_for_verification():
             # is app id passed?
             Eq(Txn.applications.length(), Int(1)),
             # called by creator?
-            is_creator(),
+            is_admin(),
             is_creator_onboarded(name.load(), start_idx.load(), Itob(Txn.applications[1])),
         )
     )

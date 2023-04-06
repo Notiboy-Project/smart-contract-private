@@ -39,9 +39,7 @@ def is_valid_creator_optin():
 # invoked as part of dapp opt-in
 # app arg: "dapp" dapp_name
 # apps: app_id
-# global registry will have
-# Key: dapp_name (max 10B)
-# Value: app_id (8B)  dapp_idx (4B) verified (1B)
+# Layout: dapp_name (max 10B) + app_id (8B) + verified (1B)
 # App id is used to check if personal notification request comes from owner of app and
 # also to fetch public notification for a dapp.
 # Dapp_idx acts as dapp index aka replacement for dapp name for reference in personal msg box storage
@@ -51,7 +49,7 @@ def is_valid_creator_optin():
 #   1. what if someone claims the name prior to genuine party?
 #   2. verify should solve this issue
 @Subroutine(TealType.none)
-def register_dapp():
+def register_channel():
     name = ScratchVar(TealType.bytes)
 
     return Seq(
@@ -122,7 +120,8 @@ def register_dapp():
 # apps: app_id
 # 1. remove entry from global state
 # 2. decrement dapp count
-# TODO: 3. adjust index so that slot can be used (for reclaiming). A delete may happen in the middle of box. Reclamation can be a separate workflow
+# TODO: 3. adjust index so that slot can be used (for reclaiming). A delete may happen in the middle of box.
+#  Reclamation can be a separate workflow
 # Fetch all filled slots, write to box in maintenance mode i.e., when opt in is disabled
 # MO: we check if app_id is owned by sender. If yes, we search box for dapp_name:app_id prefix and delete the entry
 @Subroutine(TealType.none)
@@ -144,7 +143,7 @@ def deregister_dapp():
                         Txn.sender(),
                     ),
                     # if it is admin
-                    is_creator()
+                    is_admin()
                 ),
             ),
         ),
