@@ -2,7 +2,10 @@
 
 Smart contract is written [here](sc/main_sc.py)
 
-Supports:
+## Architecture
+![image](https://github.com/Notiboy-Project/smart-contract-private/assets/6995187/0aee8a31-c6a4-423b-80e7-993691adfe0e)
+
+## Supports
 
 1. Sending public notification
    https://github.com/Notiboy-Project/notiboy-sc/blob/842017f3ca35c390cacc128e98726b6cc8f36410/sc.py#L229
